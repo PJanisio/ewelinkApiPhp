@@ -32,7 +32,7 @@ try {
     $devices = $client->getDevices();
     var_dump($devices);
 
-    $deviceId = "your_device_id"; // Replace with actual device ID
+    $deviceId = $devices["Lights-bedroom"]; // Replace with actual device name from mobile app
 
     $deviceData = $client->getDeviceData($deviceId);
     var_dump($deviceData);
@@ -42,7 +42,7 @@ try {
     echo '</pre>';
 
 } catch (Exception $e) {
-    echo "An error occurred: " . $e->getMessage();
+    echo '<pre>An error occurred: ' . $e->getMessage() . '</pre>';
 }
 ?>
 ```

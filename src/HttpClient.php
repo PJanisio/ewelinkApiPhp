@@ -10,7 +10,8 @@ class HttpClient {
     private $credentials;
     private $sign;
     private $baseUrl;
-    
+    private $devices; // Added property to store devices
+
     public function __construct($password, $email = null, $phone = null, $region = 'us') {
         $this->password = $password;
         $this->email = $email;
@@ -21,6 +22,7 @@ class HttpClient {
         $this->credentials = null;
         $this->sign = null;
         $this->baseUrl = "https://{$region}-api.coolkit.cc:8080/api";
+        $this->devices = []; // Initialize the devices array
     }
 
     private function createSignature($payload) {
@@ -59,7 +61,7 @@ class HttpClient {
                 $this->baseUrl = "https://{$this->region}-api.coolkit.cc:8080/api";
                 return $this->login();
             } else {
-                throw new Exception('Login failed: ' . json_encode($response));
+                $this->handleError($response['error']);
             }
         } else {
             $this->token = $response['at'];
@@ -78,7 +80,14 @@ class HttpClient {
             'getTags' => 1
         ];
 
-        return $this->getRequest($url, $params);
+        $response = $this->getRequest($url, $params);
+        if (isset($response['devicelist'])) {
+            foreach ($response['devicelist'] as $device) {
+                $this->devices[$device['name']] = $device['deviceid'];
+            }
+        }
+
+        return $this->devices;
     }
 
     public function getDeviceData($deviceId) {
@@ -116,7 +125,12 @@ class HttpClient {
         $response = curl_exec($ch);
         curl_close($ch);
 
-        return json_decode($response, true);
+        $responseData = json_decode($response, true);
+        if (isset($responseData['error'])) {
+            $this->handleError($responseData['error']);
+        }
+
+        return $responseData;
     }
 
     private function getRequest($url, $params) {
@@ -130,7 +144,12 @@ class HttpClient {
         $response = curl_exec($ch);
         curl_close($ch);
 
-        return json_decode($response, true);
+        $responseData = json_decode($response, true);
+        if (isset($responseData['error'])) {
+            $this->handleError($responseData['error']);
+        }
+
+        return $responseData;
     }
 
     private function generateNonce() {
@@ -146,6 +165,14 @@ class HttpClient {
             mt_rand(0, 0x3fff) | 0x8000,
             mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
         );
+    }
+
+    private function handleError($errorCode) {
+        if (isset(Constants::ERROR_CODES[$errorCode])) {
+            throw new Exception(Constants::ERROR_CODES[$errorCode]);
+        } else {
+            throw new Exception('Unknown error occurred.');
+        }
     }
 }
 ?>
