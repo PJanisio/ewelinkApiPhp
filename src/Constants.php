@@ -1,12 +1,16 @@
 <?php
 
 class Constants {
-    const APP_ID = 'YOUR_APP_ID';
-    const APP_SECRET = 'YOUR_APP_SECRET';
-    const USER_AGENT = 'Your User Agent';
-    const DEVICE_MODEL = 'Device Model';
-    const ROM_VERSION = 'Rom Version';
-    const APP_VERSION = 'App Version';
+    const APP_ID = 'your_app_id';
+    const APP_SECRET = 'your_app_secret';
+    const DEVICE_MODEL = 'your_device_model';
+    const ROM_VERSION = 'your_rom_version';
+    const APP_VERSION = 'your_app_version';
+    const PHONE_NUMBER = 'your_phone_number';
+    const PHONE_PREFIX = '+48'; // Add the first three symbols of the phone number
+    const EMAIL = 'your_email@example.com'; // Your email
+    const PASSWORD = 'your_password'; // Your password
+    const REGION = 'us'; // Your region (e.g., 'us', 'eu', 'cn')
 
     const ERROR_CODES = [
         400 => 'Parameter error, usually the parameter required by the interface is missing, or the type or value of the parameter is wrong.',

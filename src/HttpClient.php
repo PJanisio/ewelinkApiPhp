@@ -1,7 +1,8 @@
 <?php
 
-class HttpClient
-{
+require_once 'Constants.php';
+
+class HttpClient {
     private $region;
     private $email;
     private $phone;
@@ -13,55 +14,59 @@ class HttpClient
     private $baseUrl;
     private $devices; // Added property to store devices
 
-    public function __construct($password, $email = null, $phone = null, $region = 'us')
-    {
-        $this->password = $password;
-        $this->email = $email;
-        $this->phone = $phone;
-        $this->region = $region;
+    public function __construct() {
+        $this->password = Constants::PASSWORD;
+        $this->region = Constants::REGION;
+        $this->email = Constants::EMAIL;
+        $this->phone = Constants::PHONE_NUMBER;
         $this->token = null;
         $this->refreshToken = null;
         $this->credentials = null;
         $this->sign = null;
-        $this->baseUrl = "https://{$region}-api.coolkit.cc:8080/api";
+        $this->baseUrl = "https://{$this->region}-api.coolkit.cc:8080/api";
         $this->devices = []; // Initialize the devices array
+
+        $this->prepareConnection();
     }
 
-    private function handleError($errorCode)
-    {
-        if (isset(Constants::ERROR_CODES[$errorCode])) {
-            throw new Exception(Constants::ERROR_CODES[$errorCode]);
+    private function prepareConnection() {
+        if ($this->region === 'cn') {
+            if (empty($this->phone)) {
+                throw new Exception("Phone number is required for region 'cn'");
+            }
+            $this->email = null; // Email is not necessary for region 'cn'
+        } elseif ($this->region === 'us' || $this->region === 'eu') {
+            if (empty($this->email)) {
+                throw new Exception("Email is required for region 'us' or 'eu'");
+            }
+            $this->phone = null; // Phone is not necessary for region 'us' or 'eu'
         } else {
-            throw new Exception('Unknown error occurred.');
+            throw new Exception("Unsupported region '{$this->region}'");
         }
     }
 
-    private function createSignature($payload)
-    {
+    private function createSignature($payload) {
         $secret = Constants::APP_SECRET;
         $data = json_encode($payload);
         $hmac = hash_hmac('sha256', $data, $secret, true);
         return base64_encode($hmac);
     }
 
-
-
-    public function login()
-    {
+    public function login() {
         $this->credentials = [
             'appid' => Constants::APP_ID,
             'password' => $this->password,
             'ts' => time(),
             'version' => 6,
             'nonce' => $this->generateNonce(),
-            'os' => 'Android',
+            'os' => 'iOS',
             'model' => Constants::DEVICE_MODEL,
             'romVersion' => Constants::ROM_VERSION,
             'appVersion' => Constants::APP_VERSION,
             'imei' => $this->generateUUID()
         ];
 
-        if ($this->email && !filter_var($this->email, FILTER_VALIDATE_EMAIL) && preg_match('/^(?:\+?\d{,4})?\d{10}$/', $this->phone)) {
+        if ($this->region === 'cn') {
             $this->credentials['phoneNumber'] = $this->phone;
         } else {
             $this->credentials['email'] = $this->email;
@@ -81,13 +86,11 @@ class HttpClient
         } else {
             $this->token = $response['at'];
             $this->refreshToken = $response['rt'];
-
             return $response['user'];
         }
     }
 
-    public function getDevices()
-    {
+    public function getDevices() {
         $url = $this->baseUrl . '/user/device';
         $params = [
             'lang' => 'en',
@@ -98,7 +101,6 @@ class HttpClient
         ];
 
         $response = $this->getRequest($url, $params);
-
         if (isset($response['devicelist'])) {
             foreach ($response['devicelist'] as $device) {
                 $this->devices[$device['name']] = $device['deviceid'];
@@ -108,8 +110,7 @@ class HttpClient
         return $this->devices;
     }
 
-    private function postRequest($url, $payload, $authorization)
-    {
+    private function postRequest($url, $payload, $authorization) {
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
@@ -120,20 +121,17 @@ class HttpClient
         ]);
 
         $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
         $responseData = json_decode($response, true);
-        if ($httpCode !== 200) {
+        if (isset($responseData['error'])) {
             $this->handleError($responseData['error']);
-            exit();
-        } else {
-            return $responseData;
         }
+
+        return $responseData;
     }
 
-    private function getRequest($url, $params)
-    {
+    private function getRequest($url, $params) {
         $url .= '?' . http_build_query($params);
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -146,35 +144,34 @@ class HttpClient
         curl_close($ch);
 
         $responseData = json_decode($response, true);
-        if ($httpCode !== 200) {
+        if ($httpCode !== 200 && isset($responseData['error'])) {
             $this->handleError($responseData['error']);
-            exit();
-        } else {
-            return $responseData;
         }
+
+        return $responseData;
     }
 
-
-
-    private function generateNonce()
-    {
+    private function generateNonce() {
         return bin2hex(random_bytes(16));
     }
 
-    private function generateUUID()
-    {
+    private function generateUUID() {
         return sprintf(
             '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-            mt_rand(0, 0xffff),
-            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
             mt_rand(0, 0xffff),
             mt_rand(0, 0x0fff) | 0x4000,
             mt_rand(0, 0x3fff) | 0x8000,
-            mt_rand(0, 0xffff),
-            mt_rand(0, 0xffff),
-            mt_rand(0, 0xffff)
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
         );
     }
 
-
+    private function handleError($errorCode) {
+        if (isset(Constants::ERROR_CODES[$errorCode])) {
+            throw new Exception(Constants::ERROR_CODES[$errorCode]);
+        } else {
+            throw new Exception('Unknown error occurred.');
+        }
+    }
 }
+?>

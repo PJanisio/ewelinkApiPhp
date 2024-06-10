@@ -1,14 +1,10 @@
 <?php
 
-require_once 'Constants.php'; // Include the Constants.php file
-require_once 'HttpClient.php'; // Assuming the HttpClient class is in the same directory
+require_once 'Constants.php';
+require_once 'HttpClient.php';
 
 try {
-    $password = 'your_password'; // Replace with your actual password
-    $email = 'your_email@example.com'; // Replace with your actual email
-    $region = 'us'; // Replace with your actual region
-
-    $client = new HttpClient($password, $email, null, $region);
+    $client = new HttpClient();
     $user = $client->login();
     
     $devices = $client->getDevices();
@@ -20,5 +16,3 @@ try {
 } catch (Exception $e) {
     echo 'Error: ' . $e->getMessage();
 }
-
-?>
