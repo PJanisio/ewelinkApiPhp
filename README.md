@@ -15,34 +15,27 @@ You can generate here: [dev.ewelink](https://dev.ewelink.cc/)
 ```php
 <?php
 
-require 'Constants.php';
-require 'HttpClient.php';
-
-$username = "your_username";
-$password = "your_password";
-$region = "eu"; // or other region like "eu", "cn", etc.
-
-$client = new HttpClient($password, $username, null, $region);
+require_once 'Constants.php'; // Include the Constants.php file
+require_once 'HttpClient.php'; // Assuming the HttpClient class is in the same directory
 
 try {
+    $password = 'your_password'; // Replace with your actual password
+    $email = 'your_email@example.com'; // Replace with your actual email
+    $region = 'us'; // Replace with your actual region
+
+    $client = new HttpClient($password, $email, null, $region);
     $user = $client->login();
+    
+    $devices = $client->getDevices();
+
     echo '<pre>';
     var_dump($user);
-
-    $devices = $client->getDevices();
     var_dump($devices);
-
-    $deviceId = $devices["Lights-bedroom"]; // Replace with actual device name from mobile app
-
-    $deviceData = $client->getDeviceData($deviceId);
-    var_dump($deviceData);
-
-    $refreshedDeviceData = $client->refreshDeviceParameters($deviceId);
-    var_dump($refreshedDeviceData);
     echo '</pre>';
-
 } catch (Exception $e) {
-    echo '<pre>An error occurred: ' . $e->getMessage() . '</pre>';
+    echo 'Error: ' . $e->getMessage();
 }
+
 ?>
+
 ```

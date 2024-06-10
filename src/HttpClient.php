@@ -1,6 +1,7 @@
 <?php
 
-class HttpClient {
+class HttpClient
+{
     private $region;
     private $email;
     private $phone;
@@ -12,7 +13,8 @@ class HttpClient {
     private $baseUrl;
     private $devices; // Added property to store devices
 
-    public function __construct($password, $email = null, $phone = null, $region = 'us') {
+    public function __construct($password, $email = null, $phone = null, $region = 'us')
+    {
         $this->password = $password;
         $this->email = $email;
         $this->phone = $phone;
@@ -25,21 +27,34 @@ class HttpClient {
         $this->devices = []; // Initialize the devices array
     }
 
-    private function createSignature($payload) {
+    private function handleError($errorCode)
+    {
+        if (isset(Constants::ERROR_CODES[$errorCode])) {
+            throw new Exception(Constants::ERROR_CODES[$errorCode]);
+        } else {
+            throw new Exception('Unknown error occurred.');
+        }
+    }
+
+    private function createSignature($payload)
+    {
         $secret = Constants::APP_SECRET;
         $data = json_encode($payload);
         $hmac = hash_hmac('sha256', $data, $secret, true);
         return base64_encode($hmac);
     }
 
-    public function login() {
+
+
+    public function login()
+    {
         $this->credentials = [
             'appid' => Constants::APP_ID,
             'password' => $this->password,
             'ts' => time(),
             'version' => 6,
             'nonce' => $this->generateNonce(),
-            'os' => 'iOS',
+            'os' => 'Android',
             'model' => Constants::DEVICE_MODEL,
             'romVersion' => Constants::ROM_VERSION,
             'appVersion' => Constants::APP_VERSION,
@@ -66,11 +81,13 @@ class HttpClient {
         } else {
             $this->token = $response['at'];
             $this->refreshToken = $response['rt'];
+
             return $response['user'];
         }
     }
 
-    public function getDevices() {
+    public function getDevices()
+    {
         $url = $this->baseUrl . '/user/device';
         $params = [
             'lang' => 'en',
@@ -81,6 +98,7 @@ class HttpClient {
         ];
 
         $response = $this->getRequest($url, $params);
+
         if (isset($response['devicelist'])) {
             foreach ($response['devicelist'] as $device) {
                 $this->devices[$device['name']] = $device['deviceid'];
@@ -90,29 +108,8 @@ class HttpClient {
         return $this->devices;
     }
 
-    public function getDeviceData($deviceId) {
-        $url = $this->baseUrl . '/user/device/' . $deviceId;
-        $params = [
-            'appid' => Constants::APP_ID,
-            'ts' => time(),
-            'version' => 8
-        ];
-
-        return $this->getRequest($url, $params);
-    }
-
-    public function refreshDeviceParameters($deviceId) {
-        $url = $this->baseUrl . '/user/device/' . $deviceId . '/status';
-        $params = [
-            'appid' => Constants::APP_ID,
-            'ts' => time(),
-            'version' => 8
-        ];
-
-        return $this->getRequest($url, $params);
-    }
-
-    private function postRequest($url, $payload, $authorization) {
+    private function postRequest($url, $payload, $authorization)
+    {
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
@@ -123,17 +120,20 @@ class HttpClient {
         ]);
 
         $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
         $responseData = json_decode($response, true);
-        if (isset($responseData['error'])) {
+        if ($httpCode !== 200) {
             $this->handleError($responseData['error']);
+            exit();
+        } else {
+            return $responseData;
         }
-
-        return $responseData;
     }
 
-    private function getRequest($url, $params) {
+    private function getRequest($url, $params)
+    {
         $url .= '?' . http_build_query($params);
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -142,37 +142,39 @@ class HttpClient {
         ]);
 
         $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
         $responseData = json_decode($response, true);
-        if (isset($responseData['error'])) {
+        if ($httpCode !== 200) {
             $this->handleError($responseData['error']);
+            exit();
+        } else {
+            return $responseData;
         }
-
-        return $responseData;
     }
 
-    private function generateNonce() {
+
+
+    private function generateNonce()
+    {
         return bin2hex(random_bytes(16));
     }
 
-    private function generateUUID() {
+    private function generateUUID()
+    {
         return sprintf(
             '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
             mt_rand(0, 0xffff),
             mt_rand(0, 0x0fff) | 0x4000,
             mt_rand(0, 0x3fff) | 0x8000,
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff)
         );
     }
 
-    private function handleError($errorCode) {
-        if (isset(Constants::ERROR_CODES[$errorCode])) {
-            throw new Exception(Constants::ERROR_CODES[$errorCode]);
-        } else {
-            throw new Exception('Unknown error occurred.');
-        }
-    }
+
 }
-?>
