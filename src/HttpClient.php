@@ -9,6 +9,7 @@ class HttpClient {
     private $password;
     private $token;
     private $refreshToken;
+    private $apikey;
     private $credentials;
     private $sign;
     private $baseUrl;
@@ -21,6 +22,7 @@ class HttpClient {
         $this->phone = Constants::PHONE_NUMBER;
         $this->token = null;
         $this->refreshToken = null;
+        $this->apikey = null;
         $this->credentials = null;
         $this->sign = null;
         $this->baseUrl = "https://{$this->region}-api.coolkit.cc:8080/api";
@@ -75,7 +77,7 @@ class HttpClient {
         $this->sign = $this->createSignature($this->credentials);
         $response = $this->postRequest($this->baseUrl . '/user/login', $this->credentials, "Sign {$this->sign}");
 
-        if (isset($response['error'])) {
+        if (isset($response['error']) && $response['error'] !== 0) {
             if (isset($response['region'])) {
                 $this->region = $response['region'];
                 $this->baseUrl = "https://{$this->region}-api.coolkit.cc:8080/api";
@@ -86,6 +88,7 @@ class HttpClient {
         } else {
             $this->token = $response['at'];
             $this->refreshToken = $response['rt'];
+            $this->apikey = $response['user']['apikey'];
             return $response['user'];
         }
     }
@@ -101,13 +104,21 @@ class HttpClient {
         ];
 
         $response = $this->getRequest($url, $params);
-        if (isset($response['devicelist'])) {
+        if (isset($response['error']) && $response['error'] === 0 && isset($response['devicelist'])) {
             foreach ($response['devicelist'] as $device) {
                 $this->devices[$device['name']] = $device['deviceid'];
             }
+        } else {
+            $this->handleError($response['error']);
         }
 
         return $this->devices;
+    }
+
+    public function getGateway() {
+        $url = $this->region === 'cn' ? 'https://cn-apia.coolkit.cn' : "https://{$this->region}-dispa.coolkit.cc/dispatch/app";
+        $response = $this->getRequest($url, []);
+        return $response;
     }
 
     private function postRequest($url, $payload, $authorization) {
@@ -124,7 +135,7 @@ class HttpClient {
         curl_close($ch);
 
         $responseData = json_decode($response, true);
-        if (isset($responseData['error'])) {
+        if (isset($responseData['error']) && $responseData['error'] !== 0) {
             $this->handleError($responseData['error']);
         }
 
@@ -140,11 +151,10 @@ class HttpClient {
         ]);
 
         $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
         $responseData = json_decode($response, true);
-        if ($httpCode !== 200 && isset($responseData['error'])) {
+        if (isset($responseData['error']) && $responseData['error'] !== 0) {
             $this->handleError($responseData['error']);
         }
 

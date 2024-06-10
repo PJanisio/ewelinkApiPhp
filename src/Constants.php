@@ -3,14 +3,18 @@
 class Constants {
     const APP_ID = 'your_app_id';
     const APP_SECRET = 'your_app_secret';
-    const DEVICE_MODEL = 'your_device_model';
-    const ROM_VERSION = 'your_rom_version';
-    const APP_VERSION = 'your_app_version';
-    const PHONE_NUMBER = 'your_phone_number';
+    const PHONE_NUMBER = '+48111222333'; // Remember to add country prfix code (+48 for Poland f.e)
     const PHONE_PREFIX = '+48'; // Add the first three symbols of the phone number
     const EMAIL = 'your_email@example.com'; // Your email
     const PASSWORD = 'your_password'; // Your password
-    const REGION = 'us'; // Your region (e.g., 'us', 'eu', 'cn')
+    const REGION = 'eu'; // Your region (e.g., 'us', 'eu', 'cn')
+
+    // do not change
+
+    const DEVICE_MODEL = 'Android';
+    const ROM_VERSION = '11.1.2';
+    const APP_VERSION = '5.6.0';
+    const USER_AGENT = 'ewelinkApiPhp';
 
     const ERROR_CODES = [
         400 => 'Parameter error, usually the parameter required by the interface is missing, or the type or value of the parameter is wrong.',
