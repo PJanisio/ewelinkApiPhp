@@ -36,6 +36,10 @@ if ($code && $region) {
             echo '<h1>Family Data</h1>';
             echo '<pre>' . print_r($familyData, true) . '</pre>';
             echo '<p>Current Family ID: ' . htmlspecialchars($httpClient->getCurrentFamilyId()) . '</p>';
+
+            $devicesData = $httpClient->getDevicesData();
+            echo '<h1>Devices Data</h1>';
+            echo '<pre>' . print_r($devicesData, true) . '</pre>';
         } catch (Exception $e) {
             echo 'Error: ' . $e->getMessage();
         }
