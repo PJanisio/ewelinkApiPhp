@@ -10,4 +10,25 @@ PHP 7.4+ required
 
 You can generate here: [dev.ewelink](https://dev.ewelink.cc/)
 
-## Example available at index.php
+## Structure
+
+All classes are located in src directory.
+
+Index.php works as a gateway to API.
+
+.json outputs will be saved in project_root
+
+`
+project_root/
+│
+├── src/
+│   ├── Constants.php
+│   ├── HttpClient.php
+│   └── Utils.php
+│
+└── index.php
+`
+
+## Example
+
+See **index.php**

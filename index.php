@@ -1,7 +1,7 @@
 <?php
 
-require_once 'HttpClient.php';
-require_once 'Constants.php';
+require_once __DIR__ . '/src/HttpClient.php';
+require_once __DIR__ . '/src/Constants.php';
 
 // Function to get query parameter
 function getQueryParam($name) {

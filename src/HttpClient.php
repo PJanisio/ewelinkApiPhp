@@ -1,7 +1,7 @@
 <?php
 
-require_once 'Utils.php';
-require_once 'Constants.php';
+require_once __DIR__ . '/Utils.php';
+require_once __DIR__ . '/Constants.php';
 
 class HttpClient {
     private $loginUrl;
