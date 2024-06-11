@@ -9,8 +9,10 @@ class HttpClient {
     private $region;
     private $authorization;
     private $tokenData;
+    private $familyData;
 
     public function __construct($state) {
+        $this->region = Constants::REGION; // Assign region from Constants
         $this->loginUrl = $this->createLoginUrl($state);
         $this->handleRedirect();
         $this->loadTokenData();
@@ -128,7 +130,7 @@ class HttpClient {
      * @return array The response data.
      * @throws Exception If the request fails.
      */
-    private function request($endpoint, $data, $method = 'POST') {
+    private function request($endpoint, $data = [], $method = 'POST') {
         $url = $this->getGatewayUrl() . $endpoint;
         $utils = new Utils();
         $nonce = $utils->generateNonce();
@@ -146,7 +148,44 @@ class HttpClient {
             'http' => [
                 'header'  => implode("\r\n", $headers) . "\r\n",
                 'method'  => $method,
-                'content' => $body,
+                'content' => $method === 'POST' ? $body : null,
+            ],
+        ];
+        $context  = stream_context_create($options);
+        $result = file_get_contents($url, false, $context);
+        if ($result === FALSE) {
+            throw new Exception('Error in request');
+        }
+
+        $response = json_decode($result, true);
+        if ($response['error'] !== 0) {
+            $errorCode = $response['error'];
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception("Error $errorCode: $errorMsg");
+        }
+
+        return $response['data'];
+    }
+
+    /**
+     * Make an HTTP GET request with the given endpoint and token.
+     *
+     * @param string $endpoint The endpoint to make the request to.
+     * @param array $params The query parameters to send in the request.
+     * @return array The response data.
+     * @throws Exception If the request fails.
+     */
+    private function getRequest($endpoint, $params = []) {
+        $url = $this->getGatewayUrl() . $endpoint . '?' . http_build_query($params);
+
+        $headers = [
+            "Authorization: Bearer " . $this->tokenData['accessToken']
+        ];
+
+        $options = [
+            'http' => [
+                'header'  => implode("\r\n", $headers) . "\r\n",
+                'method'  => 'GET',
             ],
         ];
         $context  = stream_context_create($options);
@@ -228,11 +267,44 @@ class HttpClient {
     }
 
     /**
+     * Get family data.
+     *
+     * @param string $lang The language parameter (default: 'en').
+     * @return array The family data.
+     * @throws Exception If the request fails.
+     */
+    public function getFamilyData($lang = 'en') {
+        $params = ['lang' => $lang];
+        $this->familyData = $this->getRequest('/v2/family', $params);
+        file_put_contents('family.json', json_encode($this->familyData));
+        return $this->familyData;
+    }
+
+    /**
+     * Redirect to a given URL after a delay.
+     *
+     * @param string $url The URL to redirect to.
+     * @param int $delay The delay in seconds before redirecting.
+     */
+    public function redirectToUrl($url, $delay = 2) {
+        echo '<meta http-equiv="refresh" content="' . $delay . ';url=' . htmlspecialchars($url) . '">';
+    }
+
+    /**
      * Get the stored token data.
      *
      * @return array|null The token data or null if not set.
      */
     public function getTokenData() {
         return $this->tokenData;
+    }
+
+    /**
+     * Get the stored family data.
+     *
+     * @return array|null The family data or null if not set.
+     */
+    public function getFamilyDataFromStorage() {
+        return $this->familyData;
     }
 }

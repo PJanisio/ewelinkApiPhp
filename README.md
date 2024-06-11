@@ -10,4 +10,4 @@ PHP 7.4+ required
 
 You can generate here: [dev.ewelink](https://dev.ewelink.cc/)
 
-## During development
+## Example available at index.php
