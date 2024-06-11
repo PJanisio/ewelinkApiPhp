@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/src/HttpClient.php';
+require_once __DIR__ . '/src/Utils.php';
 require_once __DIR__ . '/src/Constants.php';
 
 // Function to get query parameter
@@ -10,6 +11,7 @@ function getQueryParam($name) {
 
 $state = 'your_state_here';
 $httpClient = new HttpClient($state);
+$utils = new Utils();
 
 $code = getQueryParam('code');
 $region = getQueryParam('region');
@@ -19,7 +21,7 @@ if ($code && $region) {
         $tokenData = $httpClient->getToken();
         echo '<h1>Token Data</h1>';
         echo '<pre>' . print_r($tokenData, true) . '</pre>';
-        $httpClient->redirectToUrl(Constants::REDIRECT_URL);
+        $utils->redirectToUrl(Constants::REDIRECT_URL);
     } catch (Exception $e) {
         echo 'Error: ' . $e->getMessage();
     }

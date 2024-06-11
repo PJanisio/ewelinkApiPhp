@@ -8,7 +8,9 @@ PHP 7.4+ required
 
 ## Public key and secret
 
-You can generate here: [dev.ewelink](https://dev.ewelink.cc/)
+Generate here: [dev.ewelink](https://dev.ewelink.cc/)
+
+And put your keys and redirect Url in **Constants.php**
 
 ## Structure
 
@@ -18,7 +20,7 @@ Index.php works as a gateway to API.
 
 .json outputs will be saved in project_root
 
-`
+
 project_root/
 │
 ├── src/
@@ -27,7 +29,7 @@ project_root/
 │   └── Utils.php
 │
 └── index.php
-`
+
 
 ## Example
 

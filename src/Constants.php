@@ -1,25 +1,13 @@
 <?php
 
 class Constants {
-    // Application ID
-    const APPID = 'xxxxxxxxxxxx';
+    const APPID = 'your_app_id';
+    const APP_SECRET = 'your_app_secret';
+    const REDIRECT_URL = 'your_redirect_url';
+    const EMAIL = 'your_email';
+    const PASSWORD = 'your_password';
+    const REGION = 'your_region';
     
-    // Application Secret
-    const APP_SECRET = 'xxxxxxxxxxxxxxxxxxx';
-    
-    // Redirect URL
-    const REDIRECT_URL = 'xxxxxxxxxxxxxxxxxxxxx';
-    
-    // Email
-    const EMAIL = 'xxxxxxxxxxxxxxxxxxxxxx';
-    
-    // Password
-    const PASSWORD = 'xxxxxxxxxxxxxxxxxxxxxxx';
-    
-    // Region
-    const REGION = 'eu';
-
-    // Error Codes
     const ERROR_CODES = [
         400 => 'Parameter error, usually the parameter required by the interface is missing, or the type or value of the parameter is wrong.',
         401 => 'Access token authentication error. Usually, the account is logged in by others, resulting in the invalidation of the current access token.',
