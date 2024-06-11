@@ -1,21 +1,25 @@
 <?php
 
 class Constants {
-    const APP_ID = 'your_app_id';
-    const APP_SECRET = 'your_app_secret';
-    const PHONE_NUMBER = '+48111222333'; // Remember to add country prfix code (+48 for Poland f.e)
-    const PHONE_PREFIX = '+48'; // Add the first three symbols of the phone number
-    const EMAIL = 'your_email@example.com'; // Your email
-    const PASSWORD = 'your_password'; // Your password
-    const REGION = 'eu'; // Your region (e.g., 'us', 'eu', 'cn')
+    // Application ID
+    const APPID = 'xxxxxxxxxxxx';
+    
+    // Application Secret
+    const APP_SECRET = 'xxxxxxxxxxxxxxxxxxx';
+    
+    // Redirect URL
+    const REDIRECT_URL = 'xxxxxxxxxxxxxxxxxxxxx';
+    
+    // Email
+    const EMAIL = 'xxxxxxxxxxxxxxxxxxxxxx';
+    
+    // Password
+    const PASSWORD = 'xxxxxxxxxxxxxxxxxxxxxxx';
+    
+    // Region
+    const REGION = 'eu';
 
-    // do not change
-
-    const DEVICE_MODEL = 'Android';
-    const ROM_VERSION = '11.1.2';
-    const APP_VERSION = '5.6.0';
-    const USER_AGENT = 'ewelinkApiPhp';
-
+    // Error Codes
     const ERROR_CODES = [
         400 => 'Parameter error, usually the parameter required by the interface is missing, or the type or value of the parameter is wrong.',
         401 => 'Access token authentication error. Usually, the account is logged in by others, resulting in the invalidation of the current access token.',
@@ -30,4 +34,3 @@ class Constants {
         30022 => 'The device is offline and the operation fails. It will appear in batch updating the device status.'
     ];
 }
-

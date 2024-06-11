@@ -1,22 +1,30 @@
 <?php
 
-require_once 'Constants.php';
 require_once 'HttpClient.php';
 
-try {
-    $client = new HttpClient();
-    $user = $client->login();
-    
-    $devices = $client->getDevices();
-    $gateway = $client->getGateway();
-
-    echo '<pre>';
-    var_dump($user);
-    var_dump($devices);
-    var_dump($gateway);
-    echo '</pre>';
-} catch (Exception $e) {
-    echo 'Error: ' . $e->getMessage();
+// Function to get query parameter
+function getQueryParam($name) {
+    return isset($_GET[$name]) ? $_GET[$name] : null;
 }
 
-?>
+$state = 'your_state_here';
+$httpClient = new HttpClient($state);
+
+// Check if code and region are set and not empty
+$code = getQueryParam('code');
+$region = getQueryParam('region');
+
+if ($code && $region) {
+    try {
+        // Get the token using the provided code and region
+        $tokenData = $httpClient->getToken();
+        echo '<h1>Token Data</h1>';
+        echo '<pre>' . print_r($tokenData, true) . '</pre>';
+    } catch (Exception $e) {
+        echo 'Error: ' . $e->getMessage();
+    }
+} else {
+    // Display the login URL link
+    $loginUrl = $httpClient->getLoginUrl();
+    echo '<a href="' . htmlspecialchars($loginUrl) . '">Login with OAuth</a>';
+}

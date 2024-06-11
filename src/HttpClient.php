@@ -1,187 +1,109 @@
 <?php
 
+require_once 'Utils.php';
 require_once 'Constants.php';
 
 class HttpClient {
+    private $loginUrl;
+    private $code;
     private $region;
-    private $email;
-    private $phone;
-    private $password;
-    private $token;
-    private $refreshToken;
-    private $apikey;
-    private $credentials;
-    private $sign;
-    private $baseUrl;
-    private $devices; // Added property to store devices
+    private $authorization;
 
-    public function __construct() {
-        $this->password = Constants::PASSWORD;
-        $this->region = Constants::REGION;
-        $this->email = Constants::EMAIL;
-        $this->phone = Constants::PHONE_NUMBER;
-        $this->token = null;
-        $this->refreshToken = null;
-        $this->apikey = null;
-        $this->credentials = null;
-        $this->sign = null;
-        $this->baseUrl = "https://{$this->region}-api.coolkit.cc:8080/api";
-        $this->devices = []; // Initialize the devices array
-
-        $this->prepareConnection();
+    public function __construct($state) {
+        $this->loginUrl = $this->createLoginUrl($state);
+        $this->handleRedirect();
     }
 
-    private function prepareConnection() {
-        if ($this->region === 'cn') {
-            if (empty($this->phone)) {
-                throw new Exception("Phone number is required for region 'cn'");
-            }
-            $this->email = null; // Email is not necessary for region 'cn'
-        } elseif ($this->region === 'us' || $this->region === 'eu') {
-            if (empty($this->email)) {
-                throw new Exception("Email is required for region 'us' or 'eu'");
-            }
-            $this->phone = null; // Phone is not necessary for region 'us' or 'eu'
-        } else {
-            throw new Exception("Unsupported region '{$this->region}'");
-        }
-    }
-
-    private function createSignature($payload) {
-        $secret = Constants::APP_SECRET;
-        $data = json_encode($payload);
-        $hmac = hash_hmac('sha256', $data, $secret, true);
-        return base64_encode($hmac);
-    }
-
-    public function login() {
-        $this->credentials = [
-            'appid' => Constants::APP_ID,
-            'password' => $this->password,
-            'ts' => time(),
-            'version' => 6,
-            'nonce' => $this->generateNonce(),
-            'os' => 'iOS',
-            'model' => Constants::DEVICE_MODEL,
-            'romVersion' => Constants::ROM_VERSION,
-            'appVersion' => Constants::APP_VERSION,
-            'imei' => $this->generateUUID()
-        ];
-
-        if ($this->region === 'cn') {
-            $this->credentials['phoneNumber'] = $this->phone;
-        } else {
-            $this->credentials['email'] = $this->email;
-        }
-
-        $this->sign = $this->createSignature($this->credentials);
-        $response = $this->postRequest($this->baseUrl . '/user/login', $this->credentials, "Sign {$this->sign}");
-
-        if (isset($response['error']) && $response['error'] !== 0) {
-            if (isset($response['region'])) {
-                $this->region = $response['region'];
-                $this->baseUrl = "https://{$this->region}-api.coolkit.cc:8080/api";
-                return $this->login();
-            } else {
-                $this->handleError($response['error']);
-            }
-        } else {
-            $this->token = $response['at'];
-            $this->refreshToken = $response['rt'];
-            $this->apikey = $response['user']['apikey'];
-            return $response['user'];
-        }
-    }
-
-    public function getDevices() {
-        $url = $this->baseUrl . '/user/device';
+    private function createLoginUrl($state) {
+        $utils = new Utils();
+        $seq = time() * 1000; // current timestamp in milliseconds
+        $this->authorization = $this->sign(Constants::APPID . '_' . $seq, Constants::APP_SECRET);
         $params = [
-            'lang' => 'en',
-            'appid' => Constants::APP_ID,
-            'ts' => time(),
-            'version' => 8,
-            'getTags' => 1
+            'state' => $state,
+            'clientId' => Constants::APPID,
+            'authorization' => $this->authorization,
+            'seq' => strval($seq),
+            'redirectUrl' => Constants::REDIRECT_URL,
+            'nonce' => $utils->generateNonce(),
+            'grantType' => 'authorization_code' // default grant type
         ];
 
-        $response = $this->getRequest($url, $params);
-        if (isset($response['error']) && $response['error'] === 0 && isset($response['devicelist'])) {
-            foreach ($response['devicelist'] as $device) {
-                $this->devices[$device['name']] = $device['deviceid'];
-            }
-        } else {
-            $this->handleError($response['error']);
+        $queryString = http_build_query($params);
+        return "https://c2ccdn.coolkit.cc/oauth/index.html?" . $queryString;
+    }
+
+    private function sign($data, $secret) {
+        $hash = hash_hmac('sha256', $data, $secret, true);
+        return base64_encode($hash);
+    }
+
+    private function handleRedirect() {
+        if (isset($_GET['code']) && isset($_GET['region'])) {
+            $this->code = $_GET['code'];
+            $this->region = $_GET['region'];
+        }
+    }
+
+    public function getLoginUrl() {
+        return $this->loginUrl;
+    }
+
+    public function getCode() {
+        return $this->code;
+    }
+
+    public function getRegion() {
+        return $this->region;
+    }
+
+    public function getGatewayUrl() {
+        switch ($this->region) {
+            case 'cn':
+                return 'https://cn-apia.coolkit.cn';
+            case 'as':
+                return 'https://as-apia.coolkit.cc';
+            case 'us':
+                return 'https://us-apia.coolkit.cc';
+            case 'eu':
+                return 'https://eu-apia.coolkit.cc';
+            default:
+                throw new Exception('Invalid region');
+        }
+    }
+
+    public function getToken() {
+        $url = $this->getGatewayUrl() . '/v2/user/oauth/token';
+        $data = [
+            'grantType' => 'authorization_code',
+            'code' => $this->getCode(),
+            'redirectUrl' => Constants::REDIRECT_URL
+        ];
+
+        $utils = new Utils();
+        $nonce = $utils->generateNonce();
+        $body = json_encode($data);
+        $authorization = 'Sign ' . $this->sign($body, Constants::APP_SECRET);
+        $headers = [
+            "Content-type: application/json; charset=utf-8",
+            "X-CK-Appid: " . Constants::APPID,
+            "Authorization: " . $authorization,
+            "X-CK-Nonce: " . $nonce
+        ];
+
+        $options = [
+            'http' => [
+                'header'  => implode("\r\n", $headers) . "\r\n",
+                'method'  => 'POST',
+                'content' => $body,
+            ],
+        ];
+        $context  = stream_context_create($options);
+        $result = file_get_contents($url, false, $context);
+        if ($result === FALSE) {
+            throw new Exception('Error getting token');
         }
 
-        return $this->devices;
-    }
-
-    public function getGateway() {
-        $url = $this->region === 'cn' ? 'https://cn-apia.coolkit.cn' : "https://{$this->region}-dispa.coolkit.cc/dispatch/app";
-        $response = $this->getRequest($url, []);
-        return $response;
-    }
-
-    private function postRequest($url, $payload, $authorization) {
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            "Authorization: {$authorization}"
-        ]);
-
-        $response = curl_exec($ch);
-        curl_close($ch);
-
-        $responseData = json_decode($response, true);
-        if (isset($responseData['error']) && $responseData['error'] !== 0) {
-            $this->handleError($responseData['error']);
-        }
-
-        return $responseData;
-    }
-
-    private function getRequest($url, $params) {
-        $url .= '?' . http_build_query($params);
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            "Authorization: Bearer {$this->token}"
-        ]);
-
-        $response = curl_exec($ch);
-        curl_close($ch);
-
-        $responseData = json_decode($response, true);
-        if (isset($responseData['error']) && $responseData['error'] !== 0) {
-            $this->handleError($responseData['error']);
-        }
-
-        return $responseData;
-    }
-
-    private function generateNonce() {
-        return bin2hex(random_bytes(16));
-    }
-
-    private function generateUUID() {
-        return sprintf(
-            '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-            mt_rand(0, 0xffff),
-            mt_rand(0, 0x0fff) | 0x4000,
-            mt_rand(0, 0x3fff) | 0x8000,
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-        );
-    }
-
-    private function handleError($errorCode) {
-        if (isset(Constants::ERROR_CODES[$errorCode])) {
-            throw new Exception(Constants::ERROR_CODES[$errorCode]);
-        } else {
-            throw new Exception('Unknown error occurred.');
-        }
+        return json_decode($result, true);
     }
 }
-?>
+
