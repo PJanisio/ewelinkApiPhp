@@ -10,6 +10,7 @@ class HttpClient {
     private $authorization;
     private $tokenData;
     private $familyData;
+    private $currentFamilyId;
 
     public function __construct($state) {
         $utils = new Utils();
@@ -257,6 +258,7 @@ class HttpClient {
     public function getFamilyData($lang = 'en') {
         $params = ['lang' => $lang];
         $this->familyData = $this->getRequest('/v2/family', $params);
+        $this->currentFamilyId = $this->familyData['currentFamilyId'] ?? null;
         file_put_contents('family.json', json_encode($this->familyData));
         return $this->familyData;
     }
@@ -277,5 +279,14 @@ class HttpClient {
      */
     public function getFamilyDataFromStorage() {
         return $this->familyData;
+    }
+
+    /**
+     * Get the current family ID.
+     *
+     * @return string|null The current family ID.
+     */
+    public function getCurrentFamilyId() {
+        return $this->currentFamilyId;
     }
 }

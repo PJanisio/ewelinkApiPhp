@@ -14,12 +14,7 @@ And put your keys and redirect Url in **Constants.php**
 
 ## Structure
 
-All classes are located in src directory.
-
-Index.php works as a gateway to API.
-
-.json outputs will be saved in project_root
-
+```
 
 project_root/
 │
@@ -30,6 +25,13 @@ project_root/
 │
 └── index.php
 
+```
+
+All classes are located in src directory.
+
+Index.php works as a gateway to API.
+
+.json outputs will be saved in project_root
 
 ## Example
 
