@@ -13,6 +13,7 @@ class HttpClient {
     public function __construct($state) {
         $this->loginUrl = $this->createLoginUrl($state);
         $this->handleRedirect();
+        $this->loadTokenData();
     }
 
     /**
@@ -58,6 +59,15 @@ class HttpClient {
         if (isset($_GET['code']) && isset($_GET['region'])) {
             $this->code = $_GET['code'];
             $this->region = $_GET['region'];
+        }
+    }
+
+    /**
+     * Load token data from token.json file.
+     */
+    private function loadTokenData() {
+        if (file_exists('token.json')) {
+            $this->tokenData = json_decode(file_get_contents('token.json'), true);
         }
     }
 
@@ -145,7 +155,14 @@ class HttpClient {
             throw new Exception('Error in request');
         }
 
-        return json_decode($result, true);
+        $response = json_decode($result, true);
+        if ($response['error'] !== 0) {
+            $errorCode = $response['error'];
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception("Error $errorCode: $errorMsg");
+        }
+
+        return $response['data'];
     }
 
     /**
@@ -160,9 +177,54 @@ class HttpClient {
             'code' => $this->getCode(),
             'redirectUrl' => Constants::REDIRECT_URL
         ];
-        $this->tokenData = $this->request('/v2/user/oauth/token', $data, 'POST');
+        $responseData = $this->request('/v2/user/oauth/token', $data, 'POST');
+        $this->tokenData = $responseData;
         file_put_contents('token.json', json_encode($this->tokenData));
         return $this->tokenData;
+    }
+
+    /**
+     * Refresh the OAuth token using the refresh token.
+     *
+     * @return array The new token data.
+     * @throws Exception If the request fails.
+     */
+    public function refreshToken() {
+        if (!$this->tokenData || !isset($this->tokenData['refreshToken'])) {
+            throw new Exception('Refresh token not available. Please call getToken first.');
+        }
+        $data = [
+            'grantType' => 'refresh_token',
+            'rt' => strval($this->tokenData['refreshToken'])
+        ];
+        $responseData = $this->request('/v2/user/refresh', $data, 'POST');
+        $this->tokenData = [
+            'accessToken' => $responseData['at'],
+            'refreshToken' => $responseData['rt'],
+            'atExpiredTime' => $this->tokenData['atExpiredTime'],
+            'rtExpiredTime' => $this->tokenData['rtExpiredTime']
+        ];
+        file_put_contents('token.json', json_encode($this->tokenData));
+        return $this->tokenData;
+    }
+
+    /**
+     * Check if the token is valid and refresh if necessary.
+     *
+     * @return bool True if the token is valid or successfully refreshed, false otherwise.
+     */
+    public function checkAndRefreshToken() {
+        if (!$this->tokenData) {
+            return false;
+        }
+        $currentTime = time() * 1000;
+        if ($currentTime < $this->tokenData['atExpiredTime']) {
+            return true;
+        } elseif ($currentTime < $this->tokenData['rtExpiredTime']) {
+            $this->refreshToken();
+            return true;
+        }
+        return false;
     }
 
     /**
