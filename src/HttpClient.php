@@ -113,7 +113,7 @@ class HttpClient {
      * @return array The response data.
      * @throws Exception If the request fails.
      */
-    private function postRequest($endpoint, $data = []) {
+    public function postRequest($endpoint, $data = []) {
         $url = $this->getGatewayUrl() . $endpoint;
         $utils = new Utils();
         $nonce = $utils->generateNonce();
@@ -158,7 +158,7 @@ class HttpClient {
      * @return array The response data.
      * @throws Exception If the request fails.
      */
-    private function getRequest($endpoint, $params = []) {
+    public function getRequest($endpoint, $params = []) {
         $url = $this->getGatewayUrl() . $endpoint . '?' . http_build_query($params);
 
         $headers = [

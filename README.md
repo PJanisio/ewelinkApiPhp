@@ -1,10 +1,8 @@
 # ewelinkApiPhp
 
-API connector for Sonoff devices.
+API connector for Sonoff devices using OAuth2.
 
-Based on [ewelink-api-python](https://github.com/AceExpert/ewelink-api-python/tree/master)
-
-PHP 7.4+ required
+PHP 7.4+ required, no other dependencies.
 
 ## Public key and secret
 
@@ -22,6 +20,7 @@ project_root/
 │   ├── Constants.php
 │   ├── HttpClient.php
 │   └── Utils.php
+|   └── Devices.php
 │
 └── index.php
 
@@ -29,7 +28,7 @@ project_root/
 
 All classes are located in src directory.
 
-Index.php works as a gateway to API.
+Index.php works as a gateway to API and also as a debug for all methods.
 
 .json outputs will be saved in project_root
 

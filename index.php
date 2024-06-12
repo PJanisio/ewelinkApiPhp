@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/src/HttpClient.php';
 require_once __DIR__ . '/src/Utils.php';
+require_once __DIR__ . '/src/Devices.php';
 require_once __DIR__ . '/src/Constants.php';
 
 // Function to get query parameter
@@ -40,6 +41,27 @@ if ($code && $region) {
             $devicesData = $httpClient->getDevicesData();
             echo '<h1>Devices Data</h1>';
             echo '<pre>' . print_r($devicesData, true) . '</pre>';
+
+            $devices = new Devices($httpClient);
+            echo '<h1>Loaded Devices Data</h1>';
+            echo '<pre>' . print_r($devices->getDevicesData(), true) . '</pre>';
+
+            $devicesList = $devices->getDevicesList();
+            echo '<h1>Devices List</h1>';
+            echo '<pre>' . print_r($devicesList, true) . '</pre>';
+
+            // Example usage of searchDeviceParam
+            $searchKey = 'productModel'; // example key to search for
+            $deviceId = '10011015b6'; // example device ID
+            $searchResult = $devices->searchDeviceParam($searchKey, $deviceId);
+            echo '<h1>Search Result</h1>';
+            echo '<pre>' . print_r($searchResult, true) . '</pre>';
+
+            // Example usage of getDeviceParamLive
+            $liveParam = 'switch'; // example parameter to get
+            $liveResult = $devices->getDeviceParamLive($deviceId, $liveParam);
+            echo '<h1>Live Device Parameter</h1>';
+            echo '<pre>' . print_r($liveResult, true) . '</pre>';
         } catch (Exception $e) {
             echo 'Error: ' . $e->getMessage();
         }
