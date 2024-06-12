@@ -17,6 +17,7 @@ class HttpClient {
         $utils = new Utils();
         $this->region = Constants::REGION; // Assign region from Constants
         $this->loginUrl = $this->createLoginUrl($state);
+        
         list($this->code, $redirectRegion) = $utils->handleRedirect();
         if ($redirectRegion) {
             $this->region = $redirectRegion;
@@ -106,38 +107,44 @@ class HttpClient {
     }
 
     /**
-     * Make an HTTP POST request with the given endpoint and data.
+     * Make a POST request.
      *
-     * @param string $endpoint The endpoint to make the request to.
-     * @param array $data The data to send in the request.
+     * @param string $endpoint The endpoint to send the request to.
+     * @param array $data The data to send in the request body.
+     * @param bool $useTokenAuthorization Whether to use token-based authorization.
      * @return array The response data.
-     * @throws Exception If the request fails.
+     * @throws Exception If there is an error in the request.
      */
-    public function postRequest($endpoint, $data = []) {
-        $url = $this->getGatewayUrl() . $endpoint;
+    public function postRequest($endpoint, $data, $useTokenAuthorization = false) {
         $utils = new Utils();
-        $nonce = $utils->generateNonce();
-        $body = json_encode($data);
-        $authorization = 'Sign ' . $utils->sign($body, Constants::APP_SECRET);
-
+        $url = $this->getGatewayUrl() . $endpoint;
         $headers = [
             "Content-type: application/json; charset=utf-8",
             "X-CK-Appid: " . Constants::APPID,
-            "Authorization: " . $authorization,
-            "X-CK-Nonce: " . $nonce
+            "X-CK-Nonce: " . $utils->generateNonce()
         ];
+
+        if ($useTokenAuthorization) {
+            $token = $this->tokenData['accessToken'];
+            $headers[] = "Authorization: Bearer $token";
+        } else {
+            $authorization = $utils->sign(json_encode($data), Constants::APP_SECRET);
+            $headers[] = "Authorization: Sign $authorization";
+        }
 
         $options = [
             'http' => [
-                'header'  => implode("\r\n", $headers) . "\r\n",
-                'method'  => 'POST',
-                'content' => $body,
+                'header' => implode("\r\n", $headers),
+                'method' => 'POST',
+                'content' => json_encode($data),
             ],
         ];
-        $context  = stream_context_create($options);
+
+        $context = stream_context_create($options);
         $result = file_get_contents($url, false, $context);
+
         if ($result === FALSE) {
-            throw new Exception('Error in request');
+            throw new Exception('Error making POST request');
         }
 
         $response = json_decode($result, true);

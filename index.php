@@ -42,7 +42,7 @@ if ($code && $region) {
             echo '<h1>Devices Data</h1>';
             echo '<pre>' . print_r($devicesData, true) . '</pre>';
 
-            $devices = new Devices($httpClient);
+            $devices = new Devices();
             echo '<h1>Loaded Devices Data</h1>';
             echo '<pre>' . print_r($devices->getDevicesData(), true) . '</pre>';
 
@@ -59,9 +59,16 @@ if ($code && $region) {
 
             // Example usage of getDeviceParamLive
             $liveParam = 'switch'; // example parameter to get
-            $liveResult = $devices->getDeviceParamLive($deviceId, $liveParam);
+            $liveResult = $devices->getDeviceParamLive($httpClient, $deviceId, $liveParam);
             echo '<h1>Live Device Parameter</h1>';
             echo '<pre>' . print_r($liveResult, true) . '</pre>';
+
+            // Example usage of setDeviceStatus
+            $params = ['switch' => 'on']; // example parameters to update
+            $setStatusResult = $devices->setDeviceStatus($httpClient, $deviceId, $params);
+            echo '<h1>Set Device Status Result</h1>';
+            echo '<pre>' . print_r($setStatusResult, true) . '</pre>';
+
         } catch (Exception $e) {
             echo 'Error: ' . $e->getMessage();
         }

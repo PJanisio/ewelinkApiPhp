@@ -2,11 +2,11 @@
 
 class Devices {
     private $devicesData;
-    private $httpClient;
 
-    public function __construct(HttpClient $httpClient) {
-        $this->httpClient = $httpClient;
-        $this->loadDevicesData();
+    public function __construct() {
+        if (file_exists('devices.json')) {
+            $this->devicesData = json_decode(file_get_contents('devices.json'), true);
+        }
     }
 
     /**
@@ -18,6 +18,15 @@ class Devices {
         } else {
             $this->devicesData = null;
         }
+    }
+
+    /**
+     * Get the stored devices data.
+     *
+     * @return array|null The devices data or null if not set.
+     */
+    public function getDevicesDataFromStorage() {
+        return $this->devicesData;
     }
 
     /**
@@ -96,12 +105,13 @@ class Devices {
     /**
      * Get live device parameter using the API.
      *
+     * @param HttpClient $httpClient The HTTP client instance.
      * @param string $deviceId The ID of the device.
      * @param string $param The parameter to get.
      * @param int $type The type (default is 1).
      * @return mixed The specific parameter value from the API response or null if not found.
      */
-    public function getDeviceParamLive($deviceId, $param, $type = 1) {
+    public function getDeviceParamLive(HttpClient $httpClient, $deviceId, $param, $type = 1) {
         $endpoint = '/v2/device/thing/status';
         $queryParams = [
             'id' => $deviceId,
@@ -109,7 +119,7 @@ class Devices {
             'params' => urlencode($param)
         ];
 
-        $response = $this->httpClient->getRequest($endpoint, $queryParams);
+        $response = $httpClient->getRequest($endpoint, $queryParams);
 
         if (isset($response['error']) && $response['error'] != 0) {
             throw new Exception('Error: ' . $response['msg']);
@@ -120,5 +130,49 @@ class Devices {
         }
 
         return null;
+    }
+
+    /**
+     * Set the device status by updating a parameter.
+     *
+     * @param HttpClient $httpClient The HTTP client instance.
+     * @param string $deviceId The ID of the device.
+     * @param array $params The parameters to update.
+     * @return string The result message.
+     * @throws Exception If the parameter update fails.
+     */
+    public function setDeviceStatus(HttpClient $httpClient, $deviceId, $params) {
+        // Check if the parameter exists and get the current value
+        foreach ($params as $param => $newValue) {
+            $currentValue = $this->getDeviceParamLive($httpClient, $deviceId, $param);
+            if ($currentValue === null) {
+                return "Parameter $param does not exist for device $deviceId.";
+            }
+
+            // Compare the current value with the new value
+            if ($currentValue == $newValue) {
+                return "Parameter $param is already set to $newValue for device $deviceId.";
+            }
+
+            // Update the parameter
+            $data = [
+                'type' => 1,
+                'id' => $deviceId,
+                'params' => [$param => $newValue]
+            ];
+            $response = $httpClient->postRequest('/v2/device/thing/status', $data, true);
+
+            if (!isset($response['error']) || $response['error'] !== 0) {
+                throw new Exception('Failed to update parameter: ' . ($response['msg'] ?? 'Unknown error'));
+            }
+
+            // Verify the update
+            $updatedValue = $this->getDeviceParamLive($httpClient, $deviceId, $param);
+            if ($updatedValue == $newValue) {
+                return "Parameter $param successfully updated to $newValue for device $deviceId.";
+            } else {
+                return "Failed to update parameter $param to $newValue for device $deviceId. Current value is $updatedValue.";
+            }
+        }
     }
 }
