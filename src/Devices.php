@@ -2,8 +2,12 @@
 
 class Devices {
     private $devicesData;
+    private $currentFamilyId;
+    private $httpClient;
 
-    public function __construct() {
+    public function __construct($httpClient, $currentFamilyId = null) {
+        $this->httpClient = $httpClient;
+        $this->currentFamilyId = $currentFamilyId;
         if (file_exists('devices.json')) {
             $this->devicesData = json_decode(file_get_contents('devices.json'), true);
         }
@@ -26,6 +30,26 @@ class Devices {
      * @return array|null The devices data or null if not set.
      */
     public function getDevicesData() {
+        return $this->devicesData;
+    }
+
+    /**
+     * Get devices data from the API.
+     *
+     * @param string $lang The language parameter (default: 'en').
+     * @return array The devices data.
+     * @throws Exception If the request fails.
+     */
+    public function fetchDevicesData($lang = 'en') {
+        if (!$this->currentFamilyId) {
+            throw new Exception('Current family ID is not set. Please call getFamilyData first.');
+        }
+        $params = [
+            'lang' => $lang,
+            'familyId' => $this->currentFamilyId
+        ];
+        $this->devicesData = $this->httpClient->getRequest('/v2/device/thing', $params);
+        file_put_contents('devices.json', json_encode($this->devicesData));
         return $this->devicesData;
     }
 
@@ -179,5 +203,34 @@ class Devices {
                 return "Failed to update parameter $param to $newValue for device $deviceId. Current value is $updatedValue.";
             }
         }
+    }
+
+    /**
+     * Check if a device is online.
+     *
+     * @param string $identifier The device ID or name.
+     * @return bool True if the device is online, false otherwise.
+     */
+    public function isOnline($identifier) {
+        // Fetch the latest devices data
+        $this->fetchDevicesData();
+
+        // Get the devices list
+        $devicesList = $this->getDevicesList();
+
+        // Check if the identifier is a device name
+        if (isset($devicesList[$identifier])) {
+            return $devicesList[$identifier]['online'];
+        }
+
+        // If not a name, check by device ID
+        foreach ($devicesList as $device) {
+            if ($device['deviceid'] === $identifier) {
+                return $device['online'];
+            }
+        }
+
+        // Device not found
+        return false;
     }
 }

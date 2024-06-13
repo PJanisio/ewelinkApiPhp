@@ -38,8 +38,8 @@ if ($code && $region) {
             echo '<pre>' . print_r($familyData, true) . '</pre>';
             echo '<p>Current Family ID: ' . htmlspecialchars($httpClient->getCurrentFamilyId()) . '</p>';
 
-            $devices = new Devices();
-            $devicesData = $devices->getDevicesData();
+            $devices = new Devices($httpClient, $httpClient->getCurrentFamilyId());
+            $devicesData = $devices->fetchDevicesData();
             echo '<h1>Devices Data</h1>';
             echo '<pre>' . print_r($devicesData, true) . '</pre>';
 
@@ -66,6 +66,12 @@ if ($code && $region) {
             echo '<h1>Set Device Status Result</h1>';
             echo '<pre>' . print_r($setStatusResult, true) . '</pre>';
 
+            // Example usage of isOnline
+            $identifier = 'Ledy salon'; // example device name or ID
+            $isOnline = $devices->isOnline($identifier);
+            echo '<h1>Device Online Status</h1>';
+            echo '<p>Device ' . $identifier . ' is ' . ($isOnline ? 'online' : 'offline') . '.</p>';
+
         } catch (Exception $e) {
             echo 'Error: ' . $e->getMessage();
         }
@@ -74,3 +80,4 @@ if ($code && $region) {
         echo '<a href="' . htmlspecialchars($loginUrl) . '">Login with OAuth</a>';
     }
 }
+?>
