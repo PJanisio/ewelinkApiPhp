@@ -11,7 +11,6 @@ class HttpClient {
     private $tokenData;
     private $familyData;
     private $currentFamilyId;
-    private $devicesData;
 
     public function __construct($state) {
         $utils = new Utils();
@@ -141,23 +140,21 @@ class HttpClient {
         ];
 
         $context = stream_context_create($options);
-        $result = file_get_contents($url, false, $context);
+        $response = file_get_contents($url, false, $context);
 
-        if ($result === FALSE) {
+        if ($response === FALSE) {
             throw new Exception('Error making POST request');
         }
-        
-        
 
-        $response = json_decode($result, true);
-        
-        if ($response['error'] !== 0) {
-            $errorCode = $response['error'];
+        $result = json_decode($response, true);
+
+        if ($result['error'] !== 0) {
+            $errorCode = $result['error'];
             $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
             throw new Exception("Error $errorCode: $errorMsg");
         }
 
-        return $response['data'];
+        return $result['data'];
     }
 
     /**
@@ -177,7 +174,7 @@ class HttpClient {
 
         $options = [
             'http' => [
-                'header'  => implode("\r\n", $headers) . "\r\n",
+                'header'  => implode("\r\n", $headers),
                 'method'  => 'GET',
             ],
         ];
@@ -275,26 +272,6 @@ class HttpClient {
     }
 
     /**
-     * Get devices data.
-     *
-     * @param string $lang The language parameter (default: 'en').
-     * @return array The devices data.
-     * @throws Exception If the request fails.
-     */
-    public function getDevicesData($lang = 'en') {
-        if (!$this->currentFamilyId) {
-            throw new Exception('Current family ID is not set. Please call getFamilyData first.');
-        }
-        $params = [
-            'lang' => $lang,
-            'familyId' => $this->currentFamilyId
-        ];
-        $this->devicesData = $this->getRequest('/v2/device/thing', $params);
-        file_put_contents('devices.json', json_encode($this->devicesData));
-        return $this->devicesData;
-    }
-
-    /**
      * Get the stored token data.
      *
      * @return array|null The token data or null if not set.
@@ -319,14 +296,5 @@ class HttpClient {
      */
     public function getCurrentFamilyId() {
         return $this->currentFamilyId;
-    }
-
-    /**
-     * Get the stored devices data.
-     *
-     * @return array|null The devices data or null if not set.
-     */
-    public function getDevicesDataFromStorage() {
-        return $this->devicesData;
     }
 }

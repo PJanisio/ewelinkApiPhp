@@ -38,13 +38,10 @@ if ($code && $region) {
             echo '<pre>' . print_r($familyData, true) . '</pre>';
             echo '<p>Current Family ID: ' . htmlspecialchars($httpClient->getCurrentFamilyId()) . '</p>';
 
-            $devicesData = $httpClient->getDevicesData();
+            $devices = new Devices();
+            $devicesData = $devices->getDevicesData();
             echo '<h1>Devices Data</h1>';
             echo '<pre>' . print_r($devicesData, true) . '</pre>';
-
-            $devices = new Devices();
-            echo '<h1>Loaded Devices Data</h1>';
-            echo '<pre>' . print_r($devices->getDevicesData(), true) . '</pre>';
 
             $devicesList = $devices->getDevicesList();
             echo '<h1>Devices List</h1>';

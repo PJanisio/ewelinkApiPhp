@@ -21,7 +21,7 @@ class Devices {
     }
 
     /**
-     * Get the loaded devices data.
+     * Get the stored devices data.
      *
      * @return array|null The devices data or null if not set.
      */
@@ -47,7 +47,7 @@ class Devices {
     }
 
     /**
-     * Create a list of devices containing name, deviceid, productModel, online status, and isSupportChannelSplit status.
+     * Create a list of devices containing name, deviceid, productModel, online status, and channel support.
      * The list is an associative array with device names as keys.
      *
      * @return array The list of devices.
@@ -57,16 +57,32 @@ class Devices {
         if ($this->devicesData && isset($this->devicesData['thingList'])) {
             foreach ($this->devicesData['thingList'] as $device) {
                 $itemData = $device['itemData'];
-                $deviceId = $itemData['deviceid'];
                 $devicesList[$itemData['name']] = [
-                    'deviceid' => $deviceId,
+                    'deviceid' => $itemData['deviceid'],
                     'productModel' => $itemData['productModel'],
                     'online' => $itemData['online'],
-                    'isSupportChannelSplit' => $this->isMultiChannel($deviceId)
+                    'isSupportChannelSplit' => $this->isMultiChannel($itemData['deviceid'])
                 ];
             }
         }
         return $devicesList;
+    }
+
+    /**
+     * Check if a device supports multiple channels.
+     *
+     * @param string $deviceId The ID of the device to check.
+     * @return bool True if the device supports multiple channels, false otherwise.
+     */
+    public function isMultiChannel($deviceId) {
+        if ($this->devicesData && isset($this->devicesData['thingList'])) {
+            foreach ($this->devicesData['thingList'] as $device) {
+                if ($device['itemData']['deviceid'] === $deviceId && isset($device['itemData']['isSupportChannelSplit'])) {
+                    return $device['itemData']['isSupportChannelSplit'] == 1;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -98,13 +114,13 @@ class Devices {
     /**
      * Get live device parameter using the API.
      *
-     * @param HttpClient $httpClient The HTTP client instance.
+     * @param HttpClient $httpClient The HttpClient instance.
      * @param string $deviceId The ID of the device.
      * @param string $param The parameter to get.
      * @param int $type The type (default is 1).
      * @return mixed The specific parameter value from the API response or null if not found.
      */
-    public function getDeviceParamLive(HttpClient $httpClient, $deviceId, $param, $type = 1) {
+    public function getDeviceParamLive($httpClient, $deviceId, $param, $type = 1) {
         $endpoint = '/v2/device/thing/status';
         $queryParams = [
             'id' => $deviceId,
@@ -128,13 +144,13 @@ class Devices {
     /**
      * Set the device status by updating a parameter.
      *
-     * @param HttpClient $httpClient The HTTP client instance.
+     * @param HttpClient $httpClient The HttpClient instance.
      * @param string $deviceId The ID of the device.
      * @param array $params The parameters to update.
      * @return string The result message.
      * @throws Exception If the parameter update fails.
      */
-    public function setDeviceStatus(HttpClient $httpClient, $deviceId, $params) {
+    public function setDeviceStatus($httpClient, $deviceId, $params) {
         // Check if the parameter exists and get the current value
         foreach ($params as $param => $newValue) {
             $currentValue = $this->getDeviceParamLive($httpClient, $deviceId, $param);
@@ -163,19 +179,5 @@ class Devices {
                 return "Failed to update parameter $param to $newValue for device $deviceId. Current value is $updatedValue.";
             }
         }
-    }
-
-    /**
-     * Check if a device supports multiple channels.
-     *
-     * @param string $deviceId The ID of the device to check.
-     * @return bool True if the device supports multiple channels, false otherwise.
-     */
-    public function isMultiChannel($deviceId) {
-        $device = $this->getDeviceById($deviceId);
-        if ($device && isset($device['isSupportChannelSplit'])) {
-            return $device['isSupportChannelSplit'] == 1;
-        }
-        return false;
     }
 }
