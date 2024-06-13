@@ -146,8 +146,11 @@ class HttpClient {
         if ($result === FALSE) {
             throw new Exception('Error making POST request');
         }
+        
+        
 
         $response = json_decode($result, true);
+        
         if ($response['error'] !== 0) {
             $errorCode = $response['error'];
             $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';

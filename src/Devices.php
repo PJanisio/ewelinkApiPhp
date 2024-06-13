@@ -21,15 +21,6 @@ class Devices {
     }
 
     /**
-     * Get the stored devices data.
-     *
-     * @return array|null The devices data or null if not set.
-     */
-    public function getDevicesDataFromStorage() {
-        return $this->devicesData;
-    }
-
-    /**
      * Get the loaded devices data.
      *
      * @return array|null The devices data or null if not set.
@@ -56,7 +47,7 @@ class Devices {
     }
 
     /**
-     * Create a list of devices containing name, deviceid, productModel, and online status.
+     * Create a list of devices containing name, deviceid, productModel, online status, and isSupportChannelSplit status.
      * The list is an associative array with device names as keys.
      *
      * @return array The list of devices.
@@ -66,10 +57,12 @@ class Devices {
         if ($this->devicesData && isset($this->devicesData['thingList'])) {
             foreach ($this->devicesData['thingList'] as $device) {
                 $itemData = $device['itemData'];
+                $deviceId = $itemData['deviceid'];
                 $devicesList[$itemData['name']] = [
-                    'deviceid' => $itemData['deviceid'],
+                    'deviceid' => $deviceId,
                     'productModel' => $itemData['productModel'],
-                    'online' => $itemData['online']
+                    'online' => $itemData['online'],
+                    'isSupportChannelSplit' => $this->isMultiChannel($deviceId)
                 ];
             }
         }
@@ -162,10 +155,6 @@ class Devices {
             ];
             $response = $httpClient->postRequest('/v2/device/thing/status', $data, true);
 
-            if (!isset($response['error']) || $response['error'] !== 0) {
-                throw new Exception('Failed to update parameter: ' . ($response['msg'] ?? 'Unknown error'));
-            }
-
             // Verify the update
             $updatedValue = $this->getDeviceParamLive($httpClient, $deviceId, $param);
             if ($updatedValue == $newValue) {
@@ -174,5 +163,19 @@ class Devices {
                 return "Failed to update parameter $param to $newValue for device $deviceId. Current value is $updatedValue.";
             }
         }
+    }
+
+    /**
+     * Check if a device supports multiple channels.
+     *
+     * @param string $deviceId The ID of the device to check.
+     * @return bool True if the device supports multiple channels, false otherwise.
+     */
+    public function isMultiChannel($deviceId) {
+        $device = $this->getDeviceById($deviceId);
+        if ($device && isset($device['isSupportChannelSplit'])) {
+            return $device['isSupportChannelSplit'] == 1;
+        }
+        return false;
     }
 }
