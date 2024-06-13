@@ -11,8 +11,8 @@ Version **0.10.7** is currently operative and ***pre released***, but not yet te
 - login and authorization to ewelink (with refresh token)
 - get devices list with all parameters
 - saving devices and other outputs from API to .json
-- search value of parameter for each device (f.e switch status, productName, MAC etc.)
-- update parameter of device
+- get any value of parameter for each device (f.e switch status, productName, MAC etc.)
+- update parameter of device (switch on, off)
 - check if device has MultiChannel support
 
 ## Public key and secret

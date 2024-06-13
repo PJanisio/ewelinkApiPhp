@@ -2,12 +2,10 @@
 
 class Devices {
     private $devicesData;
-    private $currentFamilyId;
     private $httpClient;
 
-    public function __construct($httpClient, $currentFamilyId = null) {
+    public function __construct(HttpClient $httpClient) {
         $this->httpClient = $httpClient;
-        $this->currentFamilyId = $currentFamilyId;
         if (file_exists('devices.json')) {
             $this->devicesData = json_decode(file_get_contents('devices.json'), true);
         }
@@ -25,31 +23,32 @@ class Devices {
     }
 
     /**
-     * Get the stored devices data.
-     *
-     * @return array|null The devices data or null if not set.
-     */
-    public function getDevicesData() {
-        return $this->devicesData;
-    }
-
-    /**
-     * Get devices data from the API.
+     * Fetch devices data from the API and save to devices.json.
      *
      * @param string $lang The language parameter (default: 'en').
      * @return array The devices data.
      * @throws Exception If the request fails.
      */
     public function fetchDevicesData($lang = 'en') {
-        if (!$this->currentFamilyId) {
+        $familyId = $this->httpClient->getCurrentFamilyId();
+        if (!$familyId) {
             throw new Exception('Current family ID is not set. Please call getFamilyData first.');
         }
         $params = [
             'lang' => $lang,
-            'familyId' => $this->currentFamilyId
+            'familyId' => $familyId
         ];
         $this->devicesData = $this->httpClient->getRequest('/v2/device/thing', $params);
         file_put_contents('devices.json', json_encode($this->devicesData));
+        return $this->devicesData;
+    }
+
+    /**
+     * Get the stored devices data.
+     *
+     * @return array|null The devices data or null if not set.
+     */
+    public function getDevicesData() {
         return $this->devicesData;
     }
 
@@ -84,7 +83,7 @@ class Devices {
                 $devicesList[$itemData['name']] = [
                     'deviceid' => $itemData['deviceid'],
                     'productModel' => $itemData['productModel'],
-                    'online' => $itemData['online'],
+                    'online' => $itemData['online'] == 1,
                     'isSupportChannelSplit' => $this->isMultiChannel($itemData['deviceid'])
                 ];
             }
@@ -138,13 +137,12 @@ class Devices {
     /**
      * Get live device parameter using the API.
      *
-     * @param HttpClient $httpClient The HttpClient instance.
      * @param string $deviceId The ID of the device.
      * @param string $param The parameter to get.
      * @param int $type The type (default is 1).
      * @return mixed The specific parameter value from the API response or null if not found.
      */
-    public function getDeviceParamLive($httpClient, $deviceId, $param, $type = 1) {
+    public function getDeviceParamLive($deviceId, $param, $type = 1) {
         $endpoint = '/v2/device/thing/status';
         $queryParams = [
             'id' => $deviceId,
@@ -152,7 +150,7 @@ class Devices {
             'params' => urlencode($param)
         ];
 
-        $response = $httpClient->getRequest($endpoint, $queryParams);
+        $response = $this->httpClient->getRequest($endpoint, $queryParams);
 
         if (isset($response['error']) && $response['error'] != 0) {
             throw new Exception('Error: ' . $response['msg']);
@@ -168,16 +166,15 @@ class Devices {
     /**
      * Set the device status by updating a parameter.
      *
-     * @param HttpClient $httpClient The HttpClient instance.
      * @param string $deviceId The ID of the device.
      * @param array $params The parameters to update.
      * @return string The result message.
      * @throws Exception If the parameter update fails.
      */
-    public function setDeviceStatus($httpClient, $deviceId, $params) {
+    public function setDeviceStatus($deviceId, $params) {
         // Check if the parameter exists and get the current value
         foreach ($params as $param => $newValue) {
-            $currentValue = $this->getDeviceParamLive($httpClient, $deviceId, $param);
+            $currentValue = $this->getDeviceParamLive($deviceId, $param);
             if ($currentValue === null) {
                 return "Parameter $param does not exist for device $deviceId.";
             }
@@ -193,10 +190,10 @@ class Devices {
                 'id' => $deviceId,
                 'params' => [$param => $newValue]
             ];
-            $response = $httpClient->postRequest('/v2/device/thing/status', $data, true);
+            $response = $this->httpClient->postRequest('/v2/device/thing/status', $data, true);
 
             // Verify the update
-            $updatedValue = $this->getDeviceParamLive($httpClient, $deviceId, $param);
+            $updatedValue = $this->getDeviceParamLive($deviceId, $param);
             if ($updatedValue == $newValue) {
                 return "Parameter $param successfully updated to $newValue for device $deviceId.";
             } else {
@@ -212,25 +209,15 @@ class Devices {
      * @return bool True if the device is online, false otherwise.
      */
     public function isOnline($identifier) {
-        // Fetch the latest devices data
         $this->fetchDevicesData();
+        $deviceList = $this->getDevicesList();
 
-        // Get the devices list
-        $devicesList = $this->getDevicesList();
-
-        // Check if the identifier is a device name
-        if (isset($devicesList[$identifier])) {
-            return $devicesList[$identifier]['online'];
-        }
-
-        // If not a name, check by device ID
-        foreach ($devicesList as $device) {
-            if ($device['deviceid'] === $identifier) {
+        foreach ($deviceList as $name => $device) {
+            if ($device['deviceid'] === $identifier || $name === $identifier) {
                 return $device['online'];
             }
         }
 
-        // Device not found
         return false;
     }
 }

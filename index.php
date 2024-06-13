@@ -38,10 +38,13 @@ if ($code && $region) {
             echo '<pre>' . print_r($familyData, true) . '</pre>';
             echo '<p>Current Family ID: ' . htmlspecialchars($httpClient->getCurrentFamilyId()) . '</p>';
 
-            $devices = new Devices($httpClient, $httpClient->getCurrentFamilyId());
+            $devices = new Devices($httpClient);
             $devicesData = $devices->fetchDevicesData();
             echo '<h1>Devices Data</h1>';
             echo '<pre>' . print_r($devicesData, true) . '</pre>';
+
+            echo '<h1>Loaded Devices Data</h1>';
+            echo '<pre>' . print_r($devices->getDevicesData(), true) . '</pre>';
 
             $devicesList = $devices->getDevicesList();
             echo '<h1>Devices List</h1>';
@@ -56,21 +59,21 @@ if ($code && $region) {
 
             // Example usage of getDeviceParamLive
             $liveParam = 'switch'; // example parameter to get
-            $liveResult = $devices->getDeviceParamLive($httpClient, $deviceId, $liveParam);
+            $liveResult = $devices->getDeviceParamLive($deviceId, $liveParam);
             echo '<h1>Live Device Parameter</h1>';
             echo '<pre>' . print_r($liveResult, true) . '</pre>';
 
             // Example usage of setDeviceStatus
-            $params = ['switch' => 'on']; // example parameters to update
-            $setStatusResult = $devices->setDeviceStatus($httpClient, $deviceId, $params);
+            $params = ['switch' => 'off']; // example parameters to update
+            $setStatusResult = $devices->setDeviceStatus($deviceId, $params);
             echo '<h1>Set Device Status Result</h1>';
             echo '<pre>' . print_r($setStatusResult, true) . '</pre>';
 
             // Example usage of isOnline
-            $identifier = 'Ledy salon'; // example device name or ID
-            $isOnline = $devices->isOnline($identifier);
-            echo '<h1>Device Online Status</h1>';
-            echo '<p>Device ' . $identifier . ' is ' . ($isOnline ? 'online' : 'offline') . '.</p>';
+            $deviceIdentifier = 'Ledy salon'; // example device name or ID
+            $isOnlineResult = $devices->isOnline($deviceIdentifier);
+            echo '<h1>Is Device Online?</h1>';
+            echo $deviceIdentifier . ' is ' . ($isOnlineResult ? 'online' : 'offline') . '.';
 
         } catch (Exception $e) {
             echo 'Error: ' . $e->getMessage();
@@ -80,4 +83,3 @@ if ($code && $region) {
         echo '<a href="' . htmlspecialchars($loginUrl) . '">Login with OAuth</a>';
     }
 }
-?>
