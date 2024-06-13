@@ -4,7 +4,7 @@ API connector for Sonoff/ewelink devices using simple webapi based on OAuth2.
 
 PHP 7.4+, no other dependiencies required.
 
-Version **0.10.7** is currently operative and ***pre released***, but not yet tested in 100%, so feedback is appreciated  **create issues / PR** if needed.
+Version **0.10.7** is currently operative and ***pre released***, but not yet tested in 100% and in active development, so feedback is appreciated  **create issues / PR** if needed.
 
 ## Current features
 
@@ -25,15 +25,17 @@ And put your keys and redirect Url in **Constants.php**
 
 ```
 
-project_root/
+your_project/
 │
 ├── src/
-│ ├── Constants.php
-│ ├── HttpClient.php
-│ └── Utils.php
-| └── Devices.php
+│   ├── Constants.php
+│   ├── Devices.php
+│   ├── HttpClient.php
+│   └── Utils.php
 │
+├── autoloader.php
 └── index.php
+
 
 ```
 
@@ -49,6 +51,9 @@ Examples will follow with stable release, for now - see **index.php**
 
 ## More inside info about current development
 
+- released version is expected to be ready on **01.07.2024** latest
+- main branch when commited used to be operative. **Means:** better to get last commit data than tags before stable release
 - with next stable release methods and invoking functions structure can be changed (keep this in mind)
 - branch **websockets** will probably be not maintened anymore
 - there could be some incosistency in the code still, like f.e handling error messages
+- index.php is a quasi-test file which helps me to check new methods and it is also a great example

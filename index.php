@@ -1,9 +1,6 @@
 <?php
 
-require_once __DIR__ . '/src/HttpClient.php';
-require_once __DIR__ . '/src/Utils.php';
-require_once __DIR__ . '/src/Devices.php';
-require_once __DIR__ . '/src/Constants.php';
+require_once __DIR__ . '/autoloader.php';
 
 // Function to get query parameter
 function getQueryParam($name) {
