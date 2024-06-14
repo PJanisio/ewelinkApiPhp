@@ -8,7 +8,8 @@ function getQueryParam($name) {
 }
 
 $state = 'your_state_here';
-$httpClient = new HttpClient($state);
+$httpClient = new HttpClient();
+$token = new Token($httpClient, $state);
 $utils = new Utils();
 
 $code = getQueryParam('code');
@@ -16,7 +17,7 @@ $region = getQueryParam('region');
 
 if ($code && $region) {
     try {
-        $tokenData = $httpClient->getToken();
+        $tokenData = $token->getToken();
         echo '<h1>Token Data</h1>';
         echo '<pre>' . print_r($tokenData, true) . '</pre>';
         $utils->redirectToUrl(Constants::REDIRECT_URL);
@@ -24,8 +25,8 @@ if ($code && $region) {
         echo 'Error: ' . $e->getMessage();
     }
 } else {
-    if ($httpClient->checkAndRefreshToken()) {
-        $tokenData = $httpClient->getTokenData();
+    if ($token->checkAndRefreshToken()) {
+        $tokenData = $token->getTokenData();
         echo '<h1>Token is valid</h1>';
         echo '<p>Token expiry time: ' . date('Y-m-d H:i:s', $tokenData['atExpiredTime'] / 1000) . '</p>';
 
@@ -76,7 +77,7 @@ if ($code && $region) {
             echo 'Error: ' . $e->getMessage();
         }
     } else {
-        $loginUrl = $httpClient->getLoginUrl();
+        $loginUrl = $token->getLoginUrl();
         echo '<a href="' . htmlspecialchars($loginUrl) . '">Login with OAuth</a>';
     }
 }

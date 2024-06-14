@@ -25,17 +25,17 @@ And put your keys and redirect Url in **Constants.php**
 
 ```
 
-your_project/
+project_root/
 │
 ├── src/
 │   ├── Constants.php
 │   ├── Devices.php
 │   ├── HttpClient.php
+│   ├── Token.php
 │   └── Utils.php
 │
 ├── autoloader.php
 └── index.php
-
 
 ```
 
