@@ -6,9 +6,6 @@ $httpClient = new HttpClient();
 $token = new Token($httpClient);
 
 if (isset($_GET['code']) && isset($_GET['region'])) {
-    $code = $_GET['code'];
-    $region = $_GET['region'];
-
     try {
         $tokenData = $token->getToken();
         echo '<h1>Token Data</h1>';
@@ -66,6 +63,13 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
             $setStatusResult = $devices->setDeviceStatus($multiChannelDeviceId, $multiChannelParams);
             echo '<h1>Set Multi-Channel Device Status Result</h1>';
             echo '<pre>' . print_r($setStatusResult, true) . '</pre>';
+
+            // Example usage of setDeviceStatus for single-channel device
+            $singleChannelDeviceId = '10011015b6';
+            $singleChannelParams = ['switch' => 'off'];
+            $setStatusResultSingle = $devices->setDeviceStatus($singleChannelDeviceId, $singleChannelParams);
+            echo '<h1>Set Single-Channel Device Status Result</h1>';
+            echo '<pre>' . print_r($setStatusResultSingle, true) . '</pre>';
 
             // Example usage of isOnline
             $deviceIdentifier = 'Ledy salon'; // example device name or ID

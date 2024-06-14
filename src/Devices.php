@@ -147,13 +147,12 @@ class Devices {
     }
 
     /**
-     * Gets a live device parameter using the API.
+     * Gets live device parameter using the API.
      *
      * @param string $deviceId The ID of the device.
      * @param string $param The parameter to get.
      * @param int $type The type (default is 1).
      * @return mixed The specific parameter value from the API response or null if not found.
-     * @throws Exception If there is an error in the request.
      */
     public function getDeviceParamLive($deviceId, $param, $type = 1) {
         $endpoint = '/v2/device/thing/status';
