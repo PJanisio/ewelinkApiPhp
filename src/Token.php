@@ -9,7 +9,7 @@ class Token {
     private $state;
     private $tokenData;
 
-    public function __construct(HttpClient $httpClient, $state) {
+    public function __construct(HttpClient $httpClient, $state = 'ewelinkapiphp') {
         $this->httpClient = $httpClient;
         $this->state = $state;
         $this->loadTokenData();

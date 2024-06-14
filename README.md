@@ -4,7 +4,7 @@ API connector for Sonoff/ewelink devices using simple webapi based on OAuth2.
 
 PHP 7.4+, no other dependiencies required.
 
-Version **0.10.7** is currently operative and ***pre released***, but not yet tested in 100% and in active development, so feedback is appreciated  **create issues / PR** if needed.
+Current version from branch **main** is operative, but not yet tested in 100% and in active development, so feedback is appreciated  **create issues / PR** if needed.
 
 ## Current features
 
@@ -23,21 +23,20 @@ And put your keys and redirect Url in **Constants.php**
 
 ## Structure
 
-```
-
-project_root/
+``
+ewelinkApiPhp/
 │
 ├── src/
 │   ├── Constants.php
 │   ├── Devices.php
+│   ├── Home.php
 │   ├── HttpClient.php
 │   ├── Token.php
 │   └── Utils.php
 │
 ├── autoloader.php
 └── index.php
-
-```
+``
 
 All classes are located in src directory.
 

@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/Utils.php';
 require_once __DIR__ . '/Constants.php';
+require_once __DIR__ . '/Home.php';
 
 class HttpClient {
     private $loginUrl;
@@ -9,18 +10,43 @@ class HttpClient {
     private $region;
     private $authorization;
     private $tokenData;
-    private $familyData;
-    private $currentFamilyId;
+    private $home;
 
-    public function __construct() {
+    public function __construct($state = 'ewelinkapiphp') {
         $utils = new Utils();
         $this->region = Constants::REGION; // Assign region from Constants
+        $this->loginUrl = $this->createLoginUrl($state);
         
         list($this->code, $redirectRegion) = $utils->handleRedirect();
         if ($redirectRegion) {
             $this->region = $redirectRegion;
         }
         $this->loadTokenData();
+        $this->home = new Home($this); // Instantiate Home class
+    }
+
+    /**
+     * Create a login URL for OAuth.
+     *
+     * @param string $state The state parameter for the OAuth flow.
+     * @return string The constructed login URL.
+     */
+    private function createLoginUrl($state) {
+        $utils = new Utils();
+        $seq = time() * 1000; // current timestamp in milliseconds
+        $this->authorization = $utils->sign(Constants::APPID . '_' . $seq, Constants::APP_SECRET);
+        $params = [
+            'state' => $state,
+            'clientId' => Constants::APPID,
+            'authorization' => $this->authorization,
+            'seq' => strval($seq),
+            'redirectUrl' => Constants::REDIRECT_URL,
+            'nonce' => $utils->generateNonce(),
+            'grantType' => 'authorization_code' // default grant type
+        ];
+
+        $queryString = http_build_query($params);
+        return "https://c2ccdn.coolkit.cc/oauth/index.html?" . $queryString;
     }
 
     /**
@@ -30,6 +56,15 @@ class HttpClient {
         if (file_exists('token.json')) {
             $this->tokenData = json_decode(file_get_contents('token.json'), true);
         }
+    }
+
+    /**
+     * Get the login URL.
+     *
+     * @return string The login URL.
+     */
+    public function getLoginUrl() {
+        return $this->loginUrl;
     }
 
     /**
@@ -114,7 +149,7 @@ class HttpClient {
 
         $result = json_decode($response, true);
 
-        if ($result['error'] !== 0) {
+        if (isset($result['error']) && $result['error'] !== 0) {
             $errorCode = $result['error'];
             $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
             throw new Exception("Error $errorCode: $errorMsg");
@@ -140,7 +175,7 @@ class HttpClient {
 
         $options = [
             'http' => [
-                'header'  => implode("\r\n", $headers) . "\r\n",
+                'header'  => implode("\r\n", $headers),
                 'method'  => 'GET',
             ],
         ];
@@ -161,27 +196,23 @@ class HttpClient {
     }
 
     /**
-     * Get family data.
+     * Get the stored token data.
+     *
+     * @return array|null The token data or null if not set.
+     */
+    public function getTokenData() {
+        return $this->tokenData;
+    }
+
+    /**
+     * Get the family data.
      *
      * @param string $lang The language parameter (default: 'en').
      * @return array The family data.
      * @throws Exception If the request fails.
      */
     public function getFamilyData($lang = 'en') {
-        $params = ['lang' => $lang];
-        $this->familyData = $this->getRequest('/v2/family', $params);
-        $this->currentFamilyId = $this->familyData['currentFamilyId'] ?? null;
-        file_put_contents('family.json', json_encode($this->familyData));
-        return $this->familyData;
-    }
-
-    /**
-     * Get the stored family data.
-     *
-     * @return array|null The family data or null if not set.
-     */
-    public function getFamilyDataFromStorage() {
-        return $this->familyData;
+        return $this->home->getFamilyData($lang);
     }
 
     /**
@@ -190,6 +221,6 @@ class HttpClient {
      * @return string|null The current family ID.
      */
     public function getCurrentFamilyId() {
-        return $this->currentFamilyId;
+        return $this->home->getCurrentFamilyId();
     }
 }

@@ -152,10 +152,6 @@ class Devices {
 
         $response = $this->httpClient->getRequest($endpoint, $queryParams);
 
-        if (isset($response['error']) && $response['error'] != 0) {
-            throw new Exception('Error: ' . $response['msg']);
-        }
-
         if (isset($response['params'][$param])) {
             return $response['params'][$param];
         }

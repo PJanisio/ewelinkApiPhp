@@ -7,8 +7,8 @@ function getQueryParam($name) {
     return isset($_GET[$name]) ? $_GET[$name] : null;
 }
 
-$state = 'your_state_here';
 $httpClient = new HttpClient();
+$state = getQueryParam('state') ?? 'ewelinkapiphp';
 $token = new Token($httpClient, $state);
 $utils = new Utils();
 
