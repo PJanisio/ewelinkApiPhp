@@ -23,7 +23,7 @@ And put your keys and redirect Url in **Constants.php**
 
 ## Structure
 
-``
+``` rust
 ewelinkApiPhp/
 │
 ├── src/
@@ -36,7 +36,7 @@ ewelinkApiPhp/
 │
 ├── autoloader.php
 └── index.php
-``
+```
 
 All classes are located in src directory.
 

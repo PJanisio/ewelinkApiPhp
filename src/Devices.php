@@ -5,26 +5,37 @@ class Devices {
     private $httpClient;
     private $home;
 
+    /**
+     * Constructor for the Devices class.
+     * Initializes the class with an instance of HttpClient.
+     * Ensures family data is fetched and devices data is loaded.
+     * 
+     * @param HttpClient $httpClient The HttpClient instance.
+     * @throws Exception If devices data is not found.
+     */
     public function __construct(HttpClient $httpClient) {
         $this->httpClient = $httpClient;
-        $this->home = $httpClient->getHome(); // Get Home instance from HttpClient
-        $this->home->fetchFamilyData(); // Ensure family data is fetched
+        $this->home = $this->httpClient->getHome();
+        $this->home->fetchFamilyData();
         $this->loadDevicesData();
+        if ($this->devicesData === null) {
+            $this->fetchDevicesData();
+        }
     }
 
     /**
-     * Load devices data from devices.json file.
+     * Loads devices data from devices.json file.
      */
     private function loadDevicesData() {
         if (file_exists('devices.json')) {
             $this->devicesData = json_decode(file_get_contents('devices.json'), true);
         } else {
-            $this->devicesData = $this->fetchDevicesData();
+            $this->devicesData = null;
         }
     }
 
     /**
-     * Fetch devices data from the API and save to devices.json.
+     * Fetches devices data from the API and saves it to devices.json.
      *
      * @param string $lang The language parameter (default: 'en').
      * @return array The devices data.
@@ -45,7 +56,7 @@ class Devices {
     }
 
     /**
-     * Get the stored devices data.
+     * Gets the stored devices data.
      *
      * @return array|null The devices data or null if not set.
      */
@@ -54,7 +65,7 @@ class Devices {
     }
 
     /**
-     * Get a specific device by its ID.
+     * Gets a specific device by its ID.
      *
      * @param string $deviceId The ID of the device to retrieve.
      * @return array|null The device data or null if not found.
@@ -71,7 +82,7 @@ class Devices {
     }
 
     /**
-     * Create a list of devices containing name, deviceid, productModel, online status, and channel support.
+     * Creates a list of devices containing name, deviceid, productModel, online status, and channel support.
      * The list is an associative array with device names as keys.
      *
      * @return array The list of devices.
@@ -93,7 +104,7 @@ class Devices {
     }
 
     /**
-     * Check if a device supports multiple channels.
+     * Checks if a device supports multiple channels.
      *
      * @param string $deviceId The ID of the device to check.
      * @return bool True if the device supports multiple channels, false otherwise.
@@ -110,7 +121,7 @@ class Devices {
     }
 
     /**
-     * Search for a specific parameter within a device's data.
+     * Searches for a specific parameter within a device's data.
      *
      * @param string $searchKey The key to search for.
      * @param string $deviceId The ID of the device to search within.
@@ -136,12 +147,13 @@ class Devices {
     }
 
     /**
-     * Get live device parameter using the API.
+     * Gets a live device parameter using the API.
      *
      * @param string $deviceId The ID of the device.
      * @param string $param The parameter to get.
      * @param int $type The type (default is 1).
      * @return mixed The specific parameter value from the API response or null if not found.
+     * @throws Exception If there is an error in the request.
      */
     public function getDeviceParamLive($deviceId, $param, $type = 1) {
         $endpoint = '/v2/device/thing/status';
@@ -165,7 +177,7 @@ class Devices {
     }
 
     /**
-     * Set the device status by updating a parameter.
+     * Sets the device status by updating a parameter.
      *
      * @param string $deviceId The ID of the device.
      * @param array $params The parameters to update.
@@ -173,38 +185,81 @@ class Devices {
      * @throws Exception If the parameter update fails.
      */
     public function setDeviceStatus($deviceId, $params) {
-        // Check if the parameter exists and get the current value
-        foreach ($params as $param => $newValue) {
-            $currentValue = $this->getDeviceParamLive($deviceId, $param);
-            if ($currentValue === null) {
-                return "Parameter $param does not exist for device $deviceId.";
+        $currentValue = $this->getDeviceParamLive($deviceId, 'switches');
+        if ($currentValue === null) {
+            return "Device $deviceId does not have any switches.";
+        }
+
+        $isMultiChannel = $this->isMultiChannel($deviceId);
+        $allSet = true;
+        $messages = [];
+
+        if ($isMultiChannel) {
+            foreach ($params as $param) {
+                $found = false;
+                foreach ($currentValue as &$currentSwitch) {
+                    if ($currentSwitch['outlet'] == $param['outlet']) {
+                        $found = true;
+                        if ($currentSwitch['switch'] != $param['switch']) {
+                            $currentSwitch['switch'] = $param['switch'];
+                            $allSet = false;
+                        } else {
+                            $messages[] = "Parameter switch for outlet {$param['outlet']} is already set to {$param['switch']} for device $deviceId.";
+                        }
+                    }
+                }
+                if (!$found) {
+                    return "Parameter switch for outlet {$param['outlet']} does not exist for device $deviceId.";
+                }
             }
-
-            // Compare the current value with the new value
-            if ($currentValue == $newValue) {
-                return "Parameter $param is already set to $newValue for device $deviceId.";
-            }
-
-            // Update the parameter
-            $data = [
-                'type' => 1,
-                'id' => $deviceId,
-                'params' => [$param => $newValue]
-            ];
-            $response = $this->httpClient->postRequest('/v2/device/thing/status', $data, true);
-
-            // Verify the update
-            $updatedValue = $this->getDeviceParamLive($deviceId, $param);
-            if ($updatedValue == $newValue) {
-                return "Parameter $param successfully updated to $newValue for device $deviceId.";
-            } else {
-                return "Failed to update parameter $param to $newValue for device $deviceId. Current value is $updatedValue.";
+        } else {
+            foreach ($params as $key => $value) {
+                if (isset($currentValue[$key]) && $currentValue[$key] != $value) {
+                    $currentValue[$key] = $value;
+                    $allSet = false;
+                } else {
+                    $messages[] = "Parameter $key is already set to $value for device $deviceId.";
+                }
             }
         }
+
+        if ($allSet) {
+            return implode("\n", $messages);
+        }
+
+        $data = [
+            'type' => 1,
+            'id' => $deviceId,
+            'params' => ['switches' => $currentValue]
+        ];
+
+        $response = $this->httpClient->postRequest('/v2/device/thing/status', $data, true);
+
+        $updatedValue = $this->getDeviceParamLive($deviceId, 'switches');
+
+        if ($isMultiChannel) {
+            foreach ($params as $param) {
+                foreach ($updatedValue as $updatedSwitch) {
+                    if ($updatedSwitch['outlet'] == $param['outlet']) {
+                        if ($updatedSwitch['switch'] != $param['switch']) {
+                            return "Failed to update parameter switch to {$param['switch']} for outlet {$param['outlet']} for device $deviceId.";
+                        }
+                    }
+                }
+            }
+        } else {
+            foreach ($params as $key => $value) {
+                if ($updatedValue[$key] != $value) {
+                    return "Failed to update parameter $key to $value for device $deviceId. Current value is {$updatedValue[$key]}.";
+                }
+            }
+        }
+
+        return "Parameters successfully updated for device $deviceId.";
     }
 
     /**
-     * Check if a device is online.
+     * Checks if a device is online.
      *
      * @param string $identifier The device ID or name.
      * @return bool True if the device is online, false otherwise.

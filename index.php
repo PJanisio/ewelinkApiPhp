@@ -2,18 +2,13 @@
 
 require_once __DIR__ . '/autoloader.php';
 
-// Function to get query parameter
-function getQueryParam($name) {
-    return isset($_GET[$name]) ? $_GET[$name] : null;
-}
-
 $httpClient = new HttpClient();
 $token = new Token($httpClient);
 
-$code = getQueryParam('code');
-$region = getQueryParam('region');
+if (isset($_GET['code']) && isset($_GET['region'])) {
+    $code = $_GET['code'];
+    $region = $_GET['region'];
 
-if ($code && $region) {
     try {
         $tokenData = $token->getToken();
         echo '<h1>Token Data</h1>';
@@ -60,10 +55,16 @@ if ($code && $region) {
             echo '<h1>Live Device Parameter</h1>';
             echo '<pre>' . print_r($liveResult, true) . '</pre>';
 
-            // Example usage of setDeviceStatus
-            $params = ['switch' => 'off']; // example parameters to update
-            $setStatusResult = $devices->setDeviceStatus($deviceId, $params);
-            echo '<h1>Set Device Status Result</h1>';
+            // Example usage of setDeviceStatus for multi-channel device
+            $multiChannelDeviceId = '1000663128';
+            $multiChannelParams = [
+                ['switch' => 'off', 'outlet' => 0],
+                ['switch' => 'off', 'outlet' => 1],
+                ['switch' => 'off', 'outlet' => 2],
+                ['switch' => 'off', 'outlet' => 3]
+            ];
+            $setStatusResult = $devices->setDeviceStatus($multiChannelDeviceId, $multiChannelParams);
+            echo '<h1>Set Multi-Channel Device Status Result</h1>';
             echo '<pre>' . print_r($setStatusResult, true) . '</pre>';
 
             // Example usage of isOnline
