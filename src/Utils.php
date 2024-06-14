@@ -54,13 +54,4 @@ class Utils {
         return [$code, $region];
     }
 
-    /**
-     * Redirect to a given URL after a delay.
-     *
-     * @param string $url The URL to redirect to.
-     * @param int $delay The delay in seconds before redirecting.
-     */
-    public function redirectToUrl($url, $delay = 2) {
-        echo '<meta http-equiv="refresh" content="' . $delay . ';url=' . htmlspecialchars($url) . '">';
-    }
 }

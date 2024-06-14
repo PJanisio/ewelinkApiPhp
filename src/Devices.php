@@ -3,12 +3,13 @@
 class Devices {
     private $devicesData;
     private $httpClient;
+    private $home;
 
     public function __construct(HttpClient $httpClient) {
         $this->httpClient = $httpClient;
-        if (file_exists('devices.json')) {
-            $this->devicesData = json_decode(file_get_contents('devices.json'), true);
-        }
+        $this->home = $httpClient->getHome(); // Get Home instance from HttpClient
+        $this->home->fetchFamilyData(); // Ensure family data is fetched
+        $this->loadDevicesData();
     }
 
     /**
@@ -18,7 +19,7 @@ class Devices {
         if (file_exists('devices.json')) {
             $this->devicesData = json_decode(file_get_contents('devices.json'), true);
         } else {
-            $this->devicesData = null;
+            $this->devicesData = $this->fetchDevicesData();
         }
     }
 
@@ -30,7 +31,7 @@ class Devices {
      * @throws Exception If the request fails.
      */
     public function fetchDevicesData($lang = 'en') {
-        $familyId = $this->httpClient->getCurrentFamilyId();
+        $familyId = $this->home->getCurrentFamilyId();
         if (!$familyId) {
             throw new Exception('Current family ID is not set. Please call getFamilyData first.');
         }
@@ -151,6 +152,10 @@ class Devices {
         ];
 
         $response = $this->httpClient->getRequest($endpoint, $queryParams);
+
+        if (isset($response['error']) && $response['error'] != 0) {
+            throw new Exception('Error: ' . $response['msg']);
+        }
 
         if (isset($response['params'][$param])) {
             return $response['params'][$param];

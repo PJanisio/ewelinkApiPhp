@@ -12,17 +12,17 @@ class HttpClient {
     private $tokenData;
     private $home;
 
-    public function __construct($state = 'ewelinkapiphp') {
+    public function __construct() {
         $utils = new Utils();
         $this->region = Constants::REGION; // Assign region from Constants
-        $this->loginUrl = $this->createLoginUrl($state);
-        
+        $this->loginUrl = $this->createLoginUrl('ewelinkapiphp'); // Default state
+
         list($this->code, $redirectRegion) = $utils->handleRedirect();
         if ($redirectRegion) {
             $this->region = $redirectRegion;
         }
         $this->loadTokenData();
-        $this->home = new Home($this); // Instantiate Home class
+        $this->home = new Home($this); // Initialize the Home class
     }
 
     /**
@@ -31,7 +31,7 @@ class HttpClient {
      * @param string $state The state parameter for the OAuth flow.
      * @return string The constructed login URL.
      */
-    private function createLoginUrl($state) {
+    public function createLoginUrl($state) {
         $utils = new Utils();
         $seq = time() * 1000; // current timestamp in milliseconds
         $this->authorization = $utils->sign(Constants::APPID . '_' . $seq, Constants::APP_SECRET);
@@ -149,7 +149,7 @@ class HttpClient {
 
         $result = json_decode($response, true);
 
-        if (isset($result['error']) && $result['error'] !== 0) {
+        if ($result['error'] !== 0) {
             $errorCode = $result['error'];
             $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
             throw new Exception("Error $errorCode: $errorMsg");
@@ -175,7 +175,7 @@ class HttpClient {
 
         $options = [
             'http' => [
-                'header'  => implode("\r\n", $headers),
+                'header'  => implode("\r\n", $headers) . "\r\n",
                 'method'  => 'GET',
             ],
         ];
@@ -186,7 +186,7 @@ class HttpClient {
         }
 
         $response = json_decode($result, true);
-        if (isset($response['error']) && $response['error'] !== 0) {
+        if ($response['error'] !== 0) {
             $errorCode = $response['error'];
             $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
             throw new Exception("Error $errorCode: $errorMsg");
@@ -195,7 +195,7 @@ class HttpClient {
         return $response['data'];
     }
 
-    /**
+  /**
      * Get the stored token data.
      *
      * @return array|null The token data or null if not set.
@@ -205,14 +205,12 @@ class HttpClient {
     }
 
     /**
-     * Get the family data.
+     * Get the Home instance.
      *
-     * @param string $lang The language parameter (default: 'en').
-     * @return array The family data.
-     * @throws Exception If the request fails.
+     * @return Home The Home instance.
      */
-    public function getFamilyData($lang = 'en') {
-        return $this->home->getFamilyData($lang);
+    public function getHome() {
+        return $this->home;
     }
 
     /**

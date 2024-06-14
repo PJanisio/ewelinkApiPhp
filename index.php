@@ -8,9 +8,7 @@ function getQueryParam($name) {
 }
 
 $httpClient = new HttpClient();
-$state = getQueryParam('state') ?? 'ewelinkapiphp';
-$token = new Token($httpClient, $state);
-$utils = new Utils();
+$token = new Token($httpClient);
 
 $code = getQueryParam('code');
 $region = getQueryParam('region');
@@ -20,7 +18,7 @@ if ($code && $region) {
         $tokenData = $token->getToken();
         echo '<h1>Token Data</h1>';
         echo '<pre>' . print_r($tokenData, true) . '</pre>';
-        $utils->redirectToUrl(Constants::REDIRECT_URL);
+        $token->redirectToUrl(Constants::REDIRECT_URL);
     } catch (Exception $e) {
         echo 'Error: ' . $e->getMessage();
     }
@@ -31,10 +29,11 @@ if ($code && $region) {
         echo '<p>Token expiry time: ' . date('Y-m-d H:i:s', $tokenData['atExpiredTime'] / 1000) . '</p>';
 
         try {
-            $familyData = $httpClient->getFamilyData();
+            $home = $httpClient->getHome();
+            $familyData = $home->fetchFamilyData();
             echo '<h1>Family Data</h1>';
             echo '<pre>' . print_r($familyData, true) . '</pre>';
-            echo '<p>Current Family ID: ' . htmlspecialchars($httpClient->getCurrentFamilyId()) . '</p>';
+            echo '<p>Current Family ID: ' . htmlspecialchars($home->getCurrentFamilyId()) . '</p>';
 
             $devices = new Devices($httpClient);
             $devicesData = $devices->fetchDevicesData();
@@ -77,7 +76,7 @@ if ($code && $region) {
             echo 'Error: ' . $e->getMessage();
         }
     } else {
-        $loginUrl = $token->getLoginUrl();
+        $loginUrl = $httpClient->getLoginUrl();
         echo '<a href="' . htmlspecialchars($loginUrl) . '">Login with OAuth</a>';
     }
 }

@@ -1,31 +1,33 @@
 <?php
 
 require_once __DIR__ . '/HttpClient.php';
-require_once __DIR__ . '/Utils.php';
-require_once __DIR__ . '/Constants.php';
 
 class Token {
     private $httpClient;
-    private $state;
     private $tokenData;
+    private $state;
 
-    public function __construct(HttpClient $httpClient, $state = 'ewelinkapiphp') {
+    public function __construct(HttpClient $httpClient) {
         $this->httpClient = $httpClient;
-        $this->state = $state;
+        $this->state = 'ewelinkapiphp';
         $this->loadTokenData();
     }
 
     /**
      * Create a login URL for OAuth.
      *
+     * @param string $state The state parameter for the OAuth flow.
      * @return string The constructed login URL.
      */
-    public function getLoginUrl() {
+    public function createLoginUrl($state = null) {
+        if ($state === null) {
+            $state = $this->state;
+        }
         $utils = new Utils();
         $seq = time() * 1000; // current timestamp in milliseconds
         $authorization = $utils->sign(Constants::APPID . '_' . $seq, Constants::APP_SECRET);
         $params = [
-            'state' => $this->state,
+            'state' => $state,
             'clientId' => Constants::APPID,
             'authorization' => $authorization,
             'seq' => strval($seq),
@@ -36,6 +38,15 @@ class Token {
 
         $queryString = http_build_query($params);
         return "https://c2ccdn.coolkit.cc/oauth/index.html?" . $queryString;
+    }
+
+    /**
+     * Load token data from token.json file.
+     */
+    private function loadTokenData() {
+        if (file_exists('token.json')) {
+            $this->tokenData = json_decode(file_get_contents('token.json'), true);
+        }
     }
 
     /**
@@ -101,20 +112,21 @@ class Token {
     }
 
     /**
-     * Load token data from token.json file.
-     */
-    private function loadTokenData() {
-        if (file_exists('token.json')) {
-            $this->tokenData = json_decode(file_get_contents('token.json'), true);
-        }
-    }
-
-    /**
      * Get the stored token data.
      *
      * @return array|null The token data or null if not set.
      */
     public function getTokenData() {
         return $this->tokenData;
+    }
+
+    /**
+     * Redirect to a given URL after a delay.
+     *
+     * @param string $url The URL to redirect to.
+     * @param int $delay The delay in seconds before redirecting.
+     */
+    public function redirectToUrl($url, $delay = 2) {
+        echo '<meta http-equiv="refresh" content="' . $delay . ';url=' . htmlspecialchars($url) . '">';
     }
 }

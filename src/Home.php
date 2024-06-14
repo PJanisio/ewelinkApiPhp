@@ -1,7 +1,5 @@
 <?php
 
-require_once __DIR__ . '/HttpClient.php';
-
 class Home {
     private $httpClient;
     private $familyData;
@@ -12,13 +10,13 @@ class Home {
     }
 
     /**
-     * Get family data.
+     * Fetch family data from the API and save to family.json.
      *
      * @param string $lang The language parameter (default: 'en').
      * @return array The family data.
      * @throws Exception If the request fails.
      */
-    public function getFamilyData($lang = 'en') {
+    public function fetchFamilyData($lang = 'en') {
         $params = ['lang' => $lang];
         $response = $this->httpClient->getRequest('/v2/family', $params);
 
@@ -28,8 +26,14 @@ class Home {
             throw new Exception("Error $errorCode: $errorMsg");
         }
 
-        $this->familyData = $response;
+        $this->familyData = [
+            'familyList' => $response['familyList'],
+            'currentFamilyId' => $response['currentFamilyId'],
+            'hasChangedCurrentFamily' => $response['hasChangedCurrentFamily']
+        ];
+
         $this->currentFamilyId = $this->familyData['currentFamilyId'] ?? null;
+
         file_put_contents('family.json', json_encode($this->familyData));
         return $this->familyData;
     }
