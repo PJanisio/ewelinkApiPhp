@@ -1,16 +1,26 @@
 <?php
 
-require_once __DIR__ . '/HttpClient.php';
+require_once __DIR__ . '/Utils.php';
+require_once __DIR__ . '/Constants.php';
 
 class Token {
     private $httpClient;
     private $tokenData;
     private $state;
 
-    public function __construct(HttpClient $httpClient) {
+    public function __construct(HttpClient $httpClient, $state = 'ewelinkapiphp') {
         $this->httpClient = $httpClient;
-        $this->state = 'ewelinkapiphp';
+        $this->state = $state;
         $this->loadTokenData();
+    }
+
+    /**
+     * Load token data from token.json file.
+     */
+    private function loadTokenData() {
+        if (file_exists('token.json')) {
+            $this->tokenData = json_decode(file_get_contents('token.json'), true);
+        }
     }
 
     /**
@@ -41,12 +51,12 @@ class Token {
     }
 
     /**
-     * Load token data from token.json file.
+     * Get the login URL.
+     *
+     * @return string The login URL.
      */
-    private function loadTokenData() {
-        if (file_exists('token.json')) {
-            $this->tokenData = json_decode(file_get_contents('token.json'), true);
-        }
+    public function getLoginUrl() {
+        return $this->createLoginUrl();
     }
 
     /**
@@ -118,6 +128,16 @@ class Token {
      */
     public function getTokenData() {
         return $this->tokenData;
+    }
+
+    /**
+     * Clear the content of token.json file.
+     */
+    public function clearToken() {
+        if (file_exists('token.json')) {
+            file_put_contents('token.json', '');
+            $this->tokenData = null;
+        }
     }
 
     /**

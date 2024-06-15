@@ -80,7 +80,7 @@ class Devices {
     }
 
     /**
-     * Create a list of devices containing name, deviceid, productModel, online status, and channel support.
+     * Create a list of devices containing name, deviceid, productModel, online status, channel support, and switch status.
      * The list is an associative array with device names as keys.
      * 
      * @return array The list of devices.
@@ -90,12 +90,19 @@ class Devices {
         if ($this->devicesData && isset($this->devicesData['thingList'])) {
             foreach ($this->devicesData['thingList'] as $device) {
                 $itemData = $device['itemData'];
-                $devicesList[$itemData['name']] = [
+                $deviceStatus = [
                     'deviceid' => $itemData['deviceid'],
                     'productModel' => $itemData['productModel'],
                     'online' => $itemData['online'] == 1,
                     'isSupportChannelSplit' => $this->isMultiChannel($itemData['deviceid'])
                 ];
+                
+                // Get current switch status
+                $statusParam = $this->isMultiChannel($itemData['deviceid']) ? 'switches' : 'switch';
+                $switchStatus = $this->getDeviceParamLive($itemData['deviceid'], $statusParam);
+                $deviceStatus[$statusParam] = $switchStatus;
+
+                $devicesList[$itemData['name']] = $deviceStatus;
             }
         }
         return $devicesList;

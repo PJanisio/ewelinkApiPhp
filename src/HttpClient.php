@@ -3,6 +3,7 @@
 require_once __DIR__ . '/Utils.php';
 require_once __DIR__ . '/Constants.php';
 require_once __DIR__ . '/Home.php';
+require_once __DIR__ . '/Token.php';
 
 class HttpClient {
     private $loginUrl;
@@ -11,6 +12,7 @@ class HttpClient {
     private $authorization;
     private $tokenData;
     private $home;
+    private $token;
 
     public function __construct() {
         $utils = new Utils();
@@ -23,6 +25,7 @@ class HttpClient {
         }
         $this->loadTokenData();
         $this->home = new Home($this); // Initialize the Home class
+        $this->token = new Token($this); // Initialize the Token class
     }
 
     /**
@@ -150,6 +153,10 @@ class HttpClient {
         $result = json_decode($response, true);
 
         if ($result['error'] !== 0) {
+            if ($result['error'] === 401) {
+                $this->token->clearToken();
+                $this->token->redirectToUrl($this->getLoginUrl(), 1);
+            }
             $errorCode = $result['error'];
             $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
             throw new Exception("Error $errorCode: $errorMsg");
@@ -187,6 +194,10 @@ class HttpClient {
 
         $response = json_decode($result, true);
         if ($response['error'] !== 0) {
+            if ($response['error'] === 401) {
+                $this->token->clearToken();
+                $this->token->redirectToUrl($this->getLoginUrl(), 1);
+            }
             $errorCode = $response['error'];
             $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
             throw new Exception("Error $errorCode: $errorMsg");
@@ -195,7 +206,7 @@ class HttpClient {
         return $response['data'];
     }
 
-  /**
+    /**
      * Get the stored token data.
      *
      * @return array|null The token data or null if not set.
