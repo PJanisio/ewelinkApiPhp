@@ -35,49 +35,35 @@ This is a single case example to turn on device, look at **index.php** in your r
 Example Turn device ON
 */
 
-//load all classes
 require_once __DIR__ . '/autoloader.php';
 
-//initizilze core classes to authorize
+//initialize core classes
 $httpClient = new HttpClient();
 $token = new Token($httpClient);
 
-//check if we already logged into ewelink app with email and password
-if (isset($_GET['code']) && isset($_GET['region'])) {
-    //if yes - redirect to main page
-        $token->redirectToUrl(Constants::REDIRECT_URL);
-} else {
-    
-    //time to check token or get token if neccessary and start requests to API
+try {
     if ($token->checkAndRefreshToken()) {
-        $tokenData = $token->getTokenData();
+        // Initialize Devices class which will also initialize Home class and fetch family data
+        $devices = new Devices($httpClient);
 
-            //at this place you should have token.json in you directory
-            //its neccesary to get familyID before we contiunue with devices
-            $home = $httpClient->getHome();
-            $familyData = $home->fetchFamilyData();
-            
-            //lets initialize devices class 
-            $devices = new Devices($httpClient);
-            $devicesData = $devices->fetchDevicesData();
+        // Device ID to be turned on
+        $deviceId = '100xxxxxx'; // Replace with your actual device ID
 
-            //Set the device status (f.e turn off the device)
-            $deviceId = '100xxxxxxxx'; //put here your DeviceID
-            $params = ['switch' => 'on'];
-            
-            //get output
-            $setStatusResultSingle = $devices->setDeviceStatus($deviceId, $params);
-            echo '<h1>Set Single-Channel Device Status Result</h1>';
-            echo '<pre>' . print_r($setStatusResultSingle, true) . '</pre>';
+        // Turn on the device
+        $setStatusResult = $devices->setDeviceStatus($deviceId, ['switch' => 'on']);
+        echo '<h1>Turn Device On Result</h1>';
+        echo '<pre>' . print_r($setStatusResult, true) . '</pre>';
 
     } else {
 
-            //if we have not valid token or not authenticated - put link to log in
-
+        //if we have no token, or we are not authorized paste link to authorization
         $loginUrl = $httpClient->getLoginUrl();
         echo '<a href="' . htmlspecialchars($loginUrl) . '">Login with OAuth</a>';
     }
+} catch (Exception $e) {
+    echo 'Error: ' . $e->getMessage();
 }
+
 
 ```
 

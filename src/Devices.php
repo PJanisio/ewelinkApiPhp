@@ -13,8 +13,8 @@ class Devices {
      */
     public function __construct(HttpClient $httpClient) {
         $this->httpClient = $httpClient;
-        $this->home = $this->httpClient->getHome();
-        $this->home->fetchFamilyData();
+        $this->home = new Home($httpClient);  // Initialize Home class here
+        $this->home->fetchFamilyData();       // Fetch family data automatically
         $this->loadDevicesData();
         if ($this->devicesData === null) {
             $this->fetchDevicesData();
@@ -217,6 +217,9 @@ class Devices {
                         foreach ($currentParams['switches'] as &$switch) {
                             if ($switch['outlet'] == $outlet) {
                                 $found = true;
+                                if (is_numeric($value) && is_string($value)) {
+                                    $messages[] = "Warning: Parameter $key value is numeric but given as a string. You may want to use an integer for device $deviceId.";
+                                }
                                 if ($switch[$key] != $value) {
                                     $changes[] = "For device $deviceId, parameter $key for outlet $outlet has changed from {$switch[$key]} to $value.";
                                     $switch[$key] = $value;
@@ -237,6 +240,10 @@ class Devices {
                 foreach ($param as $key => $value) {
                     if (!array_key_exists($key, $currentParams)) {
                         return "Parameter $key does not exist for device $deviceId.";
+                    }
+
+                    if (is_numeric($value) && is_string($value)) {
+                        $messages[] = "Warning: Parameter $key value is numeric but given as a string. You may want to use an integer for device $deviceId.";
                     }
 
                     if ($currentParams[$key] != $value) {
@@ -270,7 +277,7 @@ class Devices {
             }
         }
 
-        return "Parameters successfully updated for device $deviceId.\n" . implode("\n", $changes);
+        return "Parameters successfully updated for device $deviceId.\n" . implode("\n", $changes) . "\n" . implode("\n", $messages);
     }
 
     /**

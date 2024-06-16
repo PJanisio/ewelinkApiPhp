@@ -21,12 +21,7 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
         echo '<p>Token expiry time: ' . date('Y-m-d H:i:s', $tokenData['atExpiredTime'] / 1000) . '</p>';
 
         try {
-            $home = $httpClient->getHome();
-            $familyData = $home->fetchFamilyData();
-            echo '<h1>Family Data</h1>';
-            echo '<pre>' . print_r($familyData, true) . '</pre>';
-            echo '<p>Current Family ID: ' . htmlspecialchars($home->getCurrentFamilyId()) . '</p>';
-
+            // Initialize Devices class which will also initialize Home class and fetch family data
             $devices = new Devices($httpClient);
             $devicesData = $devices->fetchDevicesData();
             echo '<h1>Devices Data</h1>';
@@ -51,24 +46,22 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
             $liveResult = $devices->getDeviceParamLive($deviceId, $liveParam);
             echo '<h1>Live Device Parameter</h1>';
             echo '<pre>' . print_r($liveResult, true) . '</pre>';
-            
+
             // Example usage of setDeviceStatus for multi-channel device
             $multiChannelDeviceId = '1000663128';
             $multiChannelParams = [
-                ['switch' => 'off', 'outlet' => 0],
-                ['switch' => 'off', 'outlet' => 1],
-                ['switch' => 'off', 'outlet' => 2],
-                ['switch' => 'off', 'outlet' => 3]
+               ['switch' => 'off', 'outlet' => 0],
+               ['switch' => 'off', 'outlet' => 1],
+               ['switch' => 'off', 'outlet' => 2],
+               ['switch' => 'off', 'outlet' => 3]
             ];
             $setStatusResult = $devices->setDeviceStatus($multiChannelDeviceId, $multiChannelParams);
             echo '<h1>Set Multi-Channel Device Status Result</h1>';
             echo '<pre>' . print_r($setStatusResult, true) . '</pre>';
-            
 
-            
-                // Example usage of setDeviceStatus for single-channel device
+            // Example usage of setDeviceStatus for single-channel device
             $singleChannelDeviceId = '10011015b6';
-            $singleChannelParams = ['bright' => 99];
+            $singleChannelParams = ['bright' => 80];
             $setStatusResultSingle = $devices->setDeviceStatus($singleChannelDeviceId, $singleChannelParams);
             echo '<h1>Set Single-Channel Device Status Result</h1>';
             echo '<pre>' . print_r($setStatusResultSingle, true) . '</pre>';
@@ -84,10 +77,17 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
             echo '<pre>' . print_r($setStatusResultSingleMultiple, true) . '</pre>';
 
             // Example usage of isOnline
-            $deviceIdentifier = '10008ee076'; // example device name or ID
+            $deviceIdentifier = 'Ledy salon'; // example device name or ID
             $isOnlineResult = $devices->isOnline($deviceIdentifier);
             echo '<h1>Is Device Online?</h1>';
             echo $deviceIdentifier . ' is ' . ($isOnlineResult ? 'online' : 'offline') . '.';
+
+            // Example usage of getFamilyData
+            $home = $httpClient->getHome();
+            $familyData = $home->fetchFamilyData();
+            echo '<h1>Family Data</h1>';
+            echo '<pre>' . print_r($familyData, true) . '</pre>';
+            echo '<p>Current Family ID: ' . htmlspecialchars($home->getCurrentFamilyId()) . '</p>';
 
             /*
             // Example usage of getDeviceHistory
