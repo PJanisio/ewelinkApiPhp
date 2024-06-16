@@ -66,16 +66,33 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
 
             // Example usage of setDeviceStatus for single-channel device
             $singleChannelDeviceId = '10011015b6';
-            $singleChannelParams = ['switch' => 'off'];
+            $singleChannelParams = ['bright' => '80'];
             $setStatusResultSingle = $devices->setDeviceStatus($singleChannelDeviceId, $singleChannelParams);
             echo '<h1>Set Single-Channel Device Status Result</h1>';
             echo '<pre>' . print_r($setStatusResultSingle, true) . '</pre>';
 
+            // Example usage of setDeviceStatus for single-channel device with multiple parameters
+            $singleChannelParamsMultiple = [
+                ['bright' => '80'],
+                ['colorR' => '255']
+            ];
+            $setStatusResultSingleMultiple = $devices->setDeviceStatus($singleChannelDeviceId, $singleChannelParamsMultiple);
+            echo '<h1>Set Single-Channel Device Status Result (Multiple Parameters)</h1>';
+            echo '<pre>' . print_r($setStatusResultSingleMultiple, true) . '</pre>';
+
             // Example usage of isOnline
-            $deviceIdentifier = 'Ledy salon'; // example device name or ID
+            $deviceIdentifier = '10008ee076'; // example device name or ID
             $isOnlineResult = $devices->isOnline($deviceIdentifier);
             echo '<h1>Is Device Online?</h1>';
             echo $deviceIdentifier . ' is ' . ($isOnlineResult ? 'online' : 'offline') . '.';
+
+            /*
+            // Example usage of getDeviceHistory
+            $deviceIdForHistory = '10011015b6'; // example device ID for history
+            $deviceHistory = $devices->getDeviceHistory($deviceIdForHistory);
+            echo '<h1>Device History</h1>';
+            echo '<pre>' . print_r($deviceHistory, true) . '</pre>';
+            */
 
         } catch (Exception $e) {
             echo 'Error: ' . $e->getMessage();

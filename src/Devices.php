@@ -182,7 +182,7 @@ class Devices {
     }
 
     /**
-     * Set the device status by updating a parameter.
+     * Set the device status by updating parameters.
      * 
      * @param string $deviceId The ID of the device.
      * @param array $params The parameters to update.
@@ -190,41 +190,60 @@ class Devices {
      * @throws Exception If the parameter update fails.
      */
     public function setDeviceStatus($deviceId, $params) {
-        $isMultiChannel = $this->isMultiChannel($deviceId);
-        $currentValue = $this->getDeviceParamLive($deviceId, $isMultiChannel ? 'switches' : 'switch');
+        $device = $this->getDeviceById($deviceId);
+        $currentParams = $device['params'] ?? null;
 
-        if ($currentValue === null) {
-            return "Device $deviceId does not have any " . ($isMultiChannel ? 'switches.' : 'switch.');
+        if ($currentParams === null) {
+            return "Device $deviceId does not have any parameters to update.";
         }
 
+        $isMultiChannel = $this->isMultiChannel($deviceId);
         $allSet = true;
         $messages = [];
+        $updatedParams = [];
 
-        if ($isMultiChannel) {
-            foreach ($params as $param) {
-                $found = false;
-                foreach ($currentValue as &$currentSwitch) {
-                    if ($currentSwitch['outlet'] == $param['outlet']) {
-                        $found = true;
-                        if ($currentSwitch['switch'] != $param['switch']) {
-                            $currentSwitch['switch'] = $param['switch'];
-                            $allSet = false;
-                        } else {
-                            $messages[] = "Parameter switch for outlet {$param['outlet']} is already set to {$param['switch']} for device $deviceId.";
+        if (!is_array(reset($params))) {
+            $params = [$params];
+        }
+
+        foreach ($params as $param) {
+            if ($isMultiChannel) {
+                $outlet = $param['outlet'];
+                foreach ($param as $key => $value) {
+                    if ($key == 'outlet') continue;
+                    if (isset($currentParams['switches']) && is_array($currentParams['switches'])) {
+                        $found = false;
+                        foreach ($currentParams['switches'] as &$switch) {
+                            if ($switch['outlet'] == $outlet) {
+                                $found = true;
+                                if ($switch[$key] != $value) {
+                                    $switch[$key] = $value;
+                                    $allSet = false;
+                                    $updatedParams['switches'] = $currentParams['switches'];
+                                } else {
+                                    $messages[] = "Parameter $key for outlet $outlet is already set to $value for device $deviceId.";
+                                }
+                                break;
+                            }
+                        }
+                        if (!$found) {
+                            return "Outlet $outlet does not exist for device $deviceId.";
                         }
                     }
                 }
-                if (!$found) {
-                    return "Parameter switch for outlet {$param['outlet']} does not exist for device $deviceId.";
-                }
-            }
-        } else {
-            foreach ($params as $key => $value) {
-                if ($currentValue != $value) {
-                    $currentValue = $value;
-                    $allSet = false;
-                } else {
-                    $messages[] = "Parameter switch is already set to $value for device $deviceId.";
+            } else {
+                foreach ($param as $key => $value) {
+                    if (!array_key_exists($key, $currentParams)) {
+                        return "Parameter $key does not exist for device $deviceId.";
+                    }
+
+                    if ($currentParams[$key] != $value) {
+                        $currentParams[$key] = $value;
+                        $allSet = false;
+                        $updatedParams[$key] = $value;
+                    } else {
+                        $messages[] = "Parameter $key is already set to $value for device $deviceId.";
+                    }
                 }
             }
         }
@@ -236,26 +255,15 @@ class Devices {
         $data = [
             'type' => 1,
             'id' => $deviceId,
-            'params' => [$isMultiChannel ? 'switches' : 'switch' => $currentValue]
+            'params' => $updatedParams
         ];
 
         $response = $this->httpClient->postRequest('/v2/device/thing/status', $data, true);
 
-        $updatedValue = $this->getDeviceParamLive($deviceId, $isMultiChannel ? 'switches' : 'switch');
-
-        if ($isMultiChannel) {
-            foreach ($params as $param) {
-                foreach ($updatedValue as $updatedSwitch) {
-                    if ($updatedSwitch['outlet'] == $param['outlet']) {
-                        if ($updatedSwitch['switch'] != $param['switch']) {
-                            return "Failed to update parameter switch to {$param['switch']} for outlet {$param['outlet']} for device $deviceId.";
-                        }
-                    }
-                }
-            }
-        } else {
-            if ($updatedValue != $params['switch']) {
-                return "Failed to update parameter switch to {$params['switch']} for device $deviceId. Current value is {$updatedValue}.";
+        foreach ($updatedParams as $key => $value) {
+            $updatedValue = $this->getDeviceParamLive($deviceId, $key);
+            if ($updatedValue != $value) {
+                return "Failed to update parameter $key to $value for device $deviceId. Current value is $updatedValue.";
             }
         }
 
@@ -279,5 +287,25 @@ class Devices {
         }
 
         return false;
+    }
+
+    /**
+     * Get device history using the API.
+     * 
+     * @param string $deviceId The ID of the device.
+     * @return array The device history.
+     * @throws Exception If there is an error in the request.
+     */
+    public function getDeviceHistory($deviceId) {
+        $endpoint = '/v2/device/history';
+        $queryParams = ['deviceid' => $deviceId];
+
+        $response = $this->httpClient->getRequest($endpoint, $queryParams);
+
+        if (isset($response['error']) && $response['error'] != 0) {
+            throw new Exception('Error: ' . $response['msg']);
+        }
+
+        return $response;
     }
 }
