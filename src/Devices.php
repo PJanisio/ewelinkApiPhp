@@ -182,6 +182,34 @@ class Devices {
     }
 
     /**
+     * Refresh device status live using the API.
+     * 
+     * @param string $deviceId The ID of the device.
+     * @param int $type The type (default is 1).
+     * @return mixed The updated device status from the API response or null if not found.
+     * @throws Exception If there is an error in the request.
+     */
+    public function refreshDeviceStatusLive($deviceId, $type = 1) {
+        $endpoint = '/v2/device/thing/status';
+        $queryParams = [
+            'id' => $deviceId,
+            'type' => $type
+        ];
+
+        $response = $this->httpClient->getRequest($endpoint, $queryParams);
+
+        if (isset($response['error']) && $response['error'] != 0) {
+            throw new Exception('Error: ' . $response['msg']);
+        }
+
+        if (isset($response['params'])) {
+            return $response['params'];
+        }
+
+        return null;
+    }
+
+    /**
      * Set the device status by updating parameters.
      * 
      * @param string $deviceId The ID of the device.

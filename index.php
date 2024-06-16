@@ -27,25 +27,27 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
             echo '<h1>Devices Data</h1>';
             echo '<pre>' . print_r($devicesData, true) . '</pre>';
 
-            echo '<h1>Loaded Devices Data</h1>';
-            echo '<pre>' . print_r($devices->getDevicesData(), true) . '</pre>';
-
             $devicesList = $devices->getDevicesList();
             echo '<h1>Devices List</h1>';
             echo '<pre>' . print_r($devicesList, true) . '</pre>';
 
             // Example usage of searchDeviceParam
             $searchKey = 'productModel'; // example key to search for
-            $deviceId = '10011015b6'; // example device ID
+            $deviceId = '100142b205'; // example device ID
             $searchResult = $devices->searchDeviceParam($searchKey, $deviceId);
             echo '<h1>Search Result</h1>';
             echo '<pre>' . print_r($searchResult, true) . '</pre>';
 
             // Example usage of getDeviceParamLive
-            $liveParam = 'switch'; // example parameter to get
+            $liveParam = 'voltage'; // example parameter to get
             $liveResult = $devices->getDeviceParamLive($deviceId, $liveParam);
             echo '<h1>Live Device Parameter</h1>';
             echo '<pre>' . print_r($liveResult, true) . '</pre>';
+            
+            // Example usage of refreshDeviceStatusLive
+            $refreshResult = $devices->refreshDeviceStatusLive($deviceId);
+            echo '<h1>Refresh Device Status Live</h1>';
+            echo '<pre>' . print_r($refreshResult, true) . '</pre>';
 
             // Example usage of setDeviceStatus for multi-channel device
             $multiChannelDeviceId = '1000663128';
