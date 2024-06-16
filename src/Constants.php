@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * Class: ewelinkApiPhp
+ * Author: Paweł 'Pavlus' Janisio
+ * Website: https://github.com/AceExpert/ewelink-api-python
+ * Dependencies: PHP 7.4+
+ * Description: API connector for Sonoff / ewelink devices
+ */
+
 class Constants {
     // Your eWeLink application ID, obtained from the eWeLink developer platform
     const APPID = 'your_app_id';

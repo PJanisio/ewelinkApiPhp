@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * Class: ewelinkApiPhp
+ * Author: Paweł 'Pavlus' Janisio
+ * Website: https://github.com/AceExpert/ewelink-api-python
+ * Dependencies: PHP 7.4+
+ * Description: API connector for Sonoff / ewelink devices
+ */
+
 class Devices {
     private $devicesData;
     private $httpClient;
@@ -182,14 +190,14 @@ class Devices {
     }
 
     /**
-     * Refresh device status live using the API.
+     * Get all device parameters live using the API.
      * 
      * @param string $deviceId The ID of the device.
      * @param int $type The type (default is 1).
      * @return mixed The updated device status from the API response or null if not found.
      * @throws Exception If there is an error in the request.
      */
-    public function refreshDeviceStatusLive($deviceId, $type = 1) {
+    public function getAllDeviceParamLive($deviceId, $type = 1) {
         $endpoint = '/v2/device/thing/status';
         $queryParams = [
             'id' => $deviceId,
@@ -219,7 +227,7 @@ class Devices {
      */
     public function setDeviceStatus($deviceId, $params) {
         $device = $this->getDeviceById($deviceId);
-        $currentParams = $device['params'] ?? null;
+        $currentParams = $this->getAllDeviceParamLive($deviceId) ?? null; // Use getAllDeviceParamLive to get current state
 
         if ($currentParams === null) {
             return "Device $deviceId does not have any parameters to update.";

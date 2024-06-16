@@ -4,9 +4,6 @@ API connector for Sonoff/ewelink devices using simple webapi based on OAuth2.
 
 PHP 7.4+, no other dependiencies required.
 
-Current version from branch **main** should be operative, but not yet tested in 100% and in active development, so please keep this in mind.
-For pre released versions look at recent released  [Tagged versions](https://github.com/PJanisio/ewelinkApiPhp/tags)
-
 ## Current features
 
 - login and authorization to ewelink (with refresh token)
@@ -50,15 +47,14 @@ try {
         $deviceId = '100xxxxxx'; // Replace with your actual device ID
 
         // Turn on the device
-        $setStatusResult = $devices->setDeviceStatus($deviceId, ['switch' => 'on']);
-        echo '<h1>Turn Device On Result</h1>';
-        echo '<pre>' . print_r($setStatusResult, true) . '</pre>';
+        $param = ['switch' => 'on'];
+        $setStatusResult = $devices->setDeviceStatus($deviceId, $param);
 
     } else {
 
         //if we have no token, or we are not authorized paste link to authorization
         $loginUrl = $httpClient->getLoginUrl();
-        echo '<a href="' . htmlspecialchars($loginUrl) . '">Login with OAuth</a>';
+        echo '<a href="' . htmlspecialchars($loginUrl) . '">Authorize ewelinkApiPhp</a>';
     }
 } catch (Exception $e) {
     echo 'Error: ' . $e->getMessage();
@@ -92,7 +88,6 @@ Index.php works as a gateway to API and also as a debug for all availablemethods
 
 ## More inside info about current development
 
-- released version is expected to be ready on **01.07.2024** latest
 - main branch when commited used to be operative.
 - with next stable release methods and invoking functions structure can be changed (keep this in mind)
 - branch **websockets** will probably be not maintened anymore

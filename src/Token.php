@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * Class: ewelinkApiPhp
+ * Author: Paweł 'Pavlus' Janisio
+ * Website: https://github.com/AceExpert/ewelink-api-python
+ * Dependencies: PHP 7.4+
+ * Description: API connector for Sonoff / ewelink devices
+ */
+
 require_once __DIR__ . '/Utils.php';
 require_once __DIR__ . '/Constants.php';
 

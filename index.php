@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * Class: ewelinkApiPhp
+ * Author: Paweł 'Pavlus' Janisio
+ * Website: https://github.com/AceExpert/ewelink-api-python
+ * Dependencies: PHP 7.4+
+ * Description: API connector for Sonoff / ewelink devices
+ */
+
 require_once __DIR__ . '/autoloader.php';
 
 $httpClient = new HttpClient();
@@ -44,9 +52,9 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
             echo '<h1>Live Device Parameter</h1>';
             echo '<pre>' . print_r($liveResult, true) . '</pre>';
             
-            // Example usage of refreshDeviceStatusLive
-            $refreshResult = $devices->refreshDeviceStatusLive($deviceId);
-            echo '<h1>Refresh Device Status Live</h1>';
+            // Example usage of getAllDeviceParamLive
+            $refreshResult = $devices->getAllDeviceParamLive($deviceId);
+            echo '<h1>Get All Device Parameters Live</h1>';
             echo '<pre>' . print_r($refreshResult, true) . '</pre>';
 
             // Example usage of setDeviceStatus for multi-channel device
@@ -63,7 +71,7 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
 
             // Example usage of setDeviceStatus for single-channel device
             $singleChannelDeviceId = '10011015b6';
-            $singleChannelParams = ['bright' => 80];
+            $singleChannelParams = ['switch' => 'off'];
             $setStatusResultSingle = $devices->setDeviceStatus($singleChannelDeviceId, $singleChannelParams);
             echo '<h1>Set Single-Channel Device Status Result</h1>';
             echo '<pre>' . print_r($setStatusResultSingle, true) . '</pre>';
@@ -104,6 +112,6 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
         }
     } else {
         $loginUrl = $httpClient->getLoginUrl();
-        echo '<a href="' . htmlspecialchars($loginUrl) . '">Login with OAuth</a>';
+        echo '<a href="' . htmlspecialchars($loginUrl) . '">Authorize ewelinkApiPhp</a>';
     }
 }

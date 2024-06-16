@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * Class: ewelinkApiPhp
+ * Author: Paweł 'Pavlus' Janisio
+ * Website: https://github.com/AceExpert/ewelink-api-python
+ * Dependencies: PHP 7.4+
+ * Description: API connector for Sonoff / ewelink devices
+ */
+
 require_once __DIR__ . '/Utils.php';
 require_once __DIR__ . '/Constants.php';
 require_once __DIR__ . '/Home.php';
@@ -16,6 +24,22 @@ class HttpClient {
 
     public function __construct() {
         $utils = new Utils();
+        
+        // Validate constants
+        $validationResults = $utils->validateConstants();
+        $errors = [];
+        foreach ($validationResults as $key => $result) {
+            if (!$result['is_valid']) {
+                $errors[] = "Invalid {$key}: " . $result['value'];
+            }
+        }
+        if (!empty($errors)) {
+            foreach ($errors as $error) {
+                echo "<p>$error</p>";
+            }
+            exit;
+        }
+
         $this->region = Constants::REGION; // Assign region from Constants
         $this->loginUrl = $this->createLoginUrl('ewelinkapiphp'); // Default state
 
