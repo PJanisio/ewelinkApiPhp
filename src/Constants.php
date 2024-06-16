@@ -1,13 +1,32 @@
 <?php
 
 class Constants {
+    // Your eWeLink application ID, obtained from the eWeLink developer platform
     const APPID = 'your_app_id';
+    
+    // Your eWeLink application secret, obtained from the eWeLink developer platform
     const APP_SECRET = 'your_app_secret';
+    
+    // The URL to which eWeLink will redirect after OAuth authentication
     const REDIRECT_URL = 'your_redirect_url';
+    
+    // Your eWeLink account email
     const EMAIL = 'your_email';
+    
+    // Your eWeLink account password
     const PASSWORD = 'your_password';
+    
+    // The region in which your eWeLink account is registered
+    // Supported regions:
+    // Mainland China: 'cn'
+    // Americas: 'us'
+    // Europe: 'eu'
+    // Asia: 'as'
     const REGION = 'your_region';
     
+
+
+    //do not change
     const ERROR_CODES = [
         400 => 'Parameter error, usually the parameter required by the interface is missing, or the type or value of the parameter is wrong.',
         401 => 'Access token authentication error. Usually, the account is logged in by others, resulting in the invalidation of the current access token.',
@@ -22,3 +41,4 @@ class Constants {
         30022 => 'The device is offline and the operation fails. It will appear in batch updating the device status.'
     ];
 }
+

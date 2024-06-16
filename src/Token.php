@@ -24,39 +24,12 @@ class Token {
     }
 
     /**
-     * Create a login URL for OAuth.
-     *
-     * @param string $state The state parameter for the OAuth flow.
-     * @return string The constructed login URL.
-     */
-    public function createLoginUrl($state = null) {
-        if ($state === null) {
-            $state = $this->state;
-        }
-        $utils = new Utils();
-        $seq = time() * 1000; // current timestamp in milliseconds
-        $authorization = $utils->sign(Constants::APPID . '_' . $seq, Constants::APP_SECRET);
-        $params = [
-            'state' => $state,
-            'clientId' => Constants::APPID,
-            'authorization' => $authorization,
-            'seq' => strval($seq),
-            'redirectUrl' => Constants::REDIRECT_URL,
-            'nonce' => $utils->generateNonce(),
-            'grantType' => 'authorization_code' // default grant type
-        ];
-
-        $queryString = http_build_query($params);
-        return "https://c2ccdn.coolkit.cc/oauth/index.html?" . $queryString;
-    }
-
-    /**
      * Get the login URL.
      *
      * @return string The login URL.
      */
     public function getLoginUrl() {
-        return $this->createLoginUrl();
+        return $this->httpClient->getLoginUrl();
     }
 
     /**
@@ -146,7 +119,8 @@ class Token {
      * @param string $url The URL to redirect to.
      * @param int $delay The delay in seconds before redirecting.
      */
-    public function redirectToUrl($url, $delay = 2) {
+    public function redirectToUrl($url, $delay = 1) {
+        echo '<p>You will be redirected in 1 second...</p>';
         echo '<meta http-equiv="refresh" content="' . $delay . ';url=' . htmlspecialchars($url) . '">';
     }
 }
