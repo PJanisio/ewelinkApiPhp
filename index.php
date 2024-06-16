@@ -51,7 +51,7 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
             $liveResult = $devices->getDeviceParamLive($deviceId, $liveParam);
             echo '<h1>Live Device Parameter</h1>';
             echo '<pre>' . print_r($liveResult, true) . '</pre>';
-
+            
             // Example usage of setDeviceStatus for multi-channel device
             $multiChannelDeviceId = '1000663128';
             $multiChannelParams = [
@@ -63,18 +63,21 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
             $setStatusResult = $devices->setDeviceStatus($multiChannelDeviceId, $multiChannelParams);
             echo '<h1>Set Multi-Channel Device Status Result</h1>';
             echo '<pre>' . print_r($setStatusResult, true) . '</pre>';
+            
 
-            // Example usage of setDeviceStatus for single-channel device
+            
+                // Example usage of setDeviceStatus for single-channel device
             $singleChannelDeviceId = '10011015b6';
-            $singleChannelParams = ['bright' => '80'];
+            $singleChannelParams = ['bright' => 99];
             $setStatusResultSingle = $devices->setDeviceStatus($singleChannelDeviceId, $singleChannelParams);
             echo '<h1>Set Single-Channel Device Status Result</h1>';
             echo '<pre>' . print_r($setStatusResultSingle, true) . '</pre>';
 
             // Example usage of setDeviceStatus for single-channel device with multiple parameters
             $singleChannelParamsMultiple = [
-                ['bright' => '80'],
-                ['colorR' => '255']
+                ['colorR' => 255],
+                ['colorG' => 0],
+                ['colorB' => 0],
             ];
             $setStatusResultSingleMultiple = $devices->setDeviceStatus($singleChannelDeviceId, $singleChannelParamsMultiple);
             echo '<h1>Set Single-Channel Device Status Result (Multiple Parameters)</h1>';

@@ -201,6 +201,7 @@ class Devices {
         $allSet = true;
         $messages = [];
         $updatedParams = [];
+        $changes = [];
 
         if (!is_array(reset($params))) {
             $params = [$params];
@@ -217,6 +218,7 @@ class Devices {
                             if ($switch['outlet'] == $outlet) {
                                 $found = true;
                                 if ($switch[$key] != $value) {
+                                    $changes[] = "For device $deviceId, parameter $key for outlet $outlet has changed from {$switch[$key]} to $value.";
                                     $switch[$key] = $value;
                                     $allSet = false;
                                     $updatedParams['switches'] = $currentParams['switches'];
@@ -238,6 +240,7 @@ class Devices {
                     }
 
                     if ($currentParams[$key] != $value) {
+                        $changes[] = "For device $deviceId, parameter $key has changed from {$currentParams[$key]} to $value.";
                         $currentParams[$key] = $value;
                         $allSet = false;
                         $updatedParams[$key] = $value;
@@ -267,7 +270,7 @@ class Devices {
             }
         }
 
-        return "Parameters successfully updated for device $deviceId.";
+        return "Parameters successfully updated for device $deviceId.\n" . implode("\n", $changes);
     }
 
     /**
