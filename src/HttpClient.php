@@ -21,12 +21,13 @@ class HttpClient {
     private $tokenData;
     private $home;
     private $token;
+    private $utils;
 
     public function __construct() {
-        $utils = new Utils();
+        $this->utils = new Utils();
         
         // Validate constants
-        $validationResults = $utils->validateConstants();
+        $validationResults = $this->utils->validateConstants();
         $errors = [];
         foreach ($validationResults as $key => $result) {
             if (!$result['is_valid']) {
@@ -43,7 +44,7 @@ class HttpClient {
         $this->region = Constants::REGION; // Assign region from Constants
         $this->loginUrl = $this->createLoginUrl('ewelinkapiphp'); // Default state
 
-        list($this->code, $redirectRegion) = $utils->handleRedirect();
+        list($this->code, $redirectRegion) = $this->utils->handleRedirect();
         if ($redirectRegion) {
             $this->region = $redirectRegion;
         }
@@ -176,6 +177,14 @@ class HttpClient {
 
         $result = json_decode($response, true);
 
+        // Log debug information
+        if (Constants::DEBUG) {
+            $backtrace = debug_backtrace();
+            $callerClass = $backtrace[1]['class'] ?? 'N/A';
+            $callerMethod = $backtrace[1]['function'] ?? 'N/A';
+            $this->utils->debugLog(__CLASS__, __FUNCTION__, $data, $headers, $result, $callerClass, $callerMethod);
+        }
+
         if ($result['error'] !== 0) {
             if ($result['error'] === 401) {
                 $this->token->clearToken();
@@ -198,48 +207,46 @@ class HttpClient {
      * @throws Exception If the request fails.
      */
     public function getRequest($endpoint, $params = []) {
-    $url = $this->getGatewayUrl() . $endpoint . '?' . http_build_query($params);
+        $url = $this->getGatewayUrl() . $endpoint . '?' . http_build_query($params);
 
-    $headers = [
-        "Authorization: Bearer " . $this->tokenData['accessToken']
-    ];
+        $headers = [
+            "Authorization: Bearer " . $this->tokenData['accessToken']
+        ];
 
-    $options = [
-        'http' => [
-            'header'  => implode("\r\n", $headers) . "\r\n",
-            'method'  => 'GET',
-        ],
-    ];
+        $options = [
+            'http' => [
+                'header'  => implode("\r\n", $headers) . "\r\n",
+                'method'  => 'GET',
+            ],
+        ];
 
-    $context  = stream_context_create($options);
-    $result = file_get_contents($url, false, $context);
-    if ($result === FALSE) {
-        throw new Exception('Error in request');
-    }
-
-    $response = json_decode($result, true);
-
-    // Debugging step: print the raw response
-    // Remove or comment this line in production
-    //echo "<pre>URL: " . htmlspecialchars($url) . "</pre>";
-    //echo "<pre>Raw response: " . htmlspecialchars($result) . "</pre>";
-    //var_dump($response);
-
-    if ($response['error'] !== 0) {
-        if ($response['error'] === 401) {
-            $this->token->clearToken();
-            $this->token->redirectToUrl($this->getLoginUrl(), 1);
+        $context  = stream_context_create($options);
+        $result = file_get_contents($url, false, $context);
+        if ($result === FALSE) {
+            throw new Exception('Error in request');
         }
-        $errorCode = $response['error'];
-        $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
-        throw new Exception("Error $errorCode: $errorMsg");
+
+        $response = json_decode($result, true);
+
+        // Log debug information
+        if (Constants::DEBUG) {
+            $backtrace = debug_backtrace();
+            $callerClass = $backtrace[1]['class'] ?? 'N/A';
+            $callerMethod = $backtrace[1]['function'] ?? 'N/A';
+            $this->utils->debugLog(__CLASS__, __FUNCTION__, $params, $headers, $response, $callerClass, $callerMethod);
+        }
+
+        if ($response['error'] !== 0) {
+            if ($response['error'] === 401) {
+                $this->token->clearToken();
+                $this->token->redirectToUrl($this->getLoginUrl(), 1);
+            }
+            $errorCode = $response['error'];
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception("Error $errorCode: $errorMsg");
+        }
+        return $response['data'];
     }
-    return $response['data'];
-}
-
-
-
-
 
     /**
      * Get the stored token data.

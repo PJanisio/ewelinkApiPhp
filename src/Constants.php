@@ -31,7 +31,9 @@ class Constants {
     // Europe: 'eu'
     // Asia: 'as'
     const REGION = 'your_region';
-    
+
+    // Enable or disable debug logging
+    const DEBUG = 0; // Change to 1 to enable debug logging
 
 
     //do not change
@@ -49,4 +51,3 @@ class Constants {
         30022 => 'The device is offline and the operation fails. It will appear in batch updating the device status.'
     ];
 }
-

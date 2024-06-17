@@ -89,6 +89,7 @@ Index.php works as a gateway to API and also as a debug for all availablemethods
 ## More inside info about current development
 
 - main branch when commited used to be operative.
+- enable DEBUG = 1; in Constants to log every get and postRequest with output and parameters to **debug.log**
 - with next stable release methods and invoking functions structure can be changed (keep this in mind)
 - branch **websockets** will probably be not maintened anymore
 - there could be some incosistency in the code still, like f.e handling error messages or orphan methods

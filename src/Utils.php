@@ -124,4 +124,22 @@ class Utils {
 
         return $results;
     }
+
+    /**
+     * Log debug information to a file.
+     *
+     * @param string $class The class name.
+     * @param string $method The method name.
+     * @param array $params The parameters sent in the request.
+     * @param array $headers The headers sent in the request.
+     * @param mixed $output The output of the request.
+     * @param string $callerClass The calling class name.
+     * @param string $callerMethod The calling method name.
+     */
+    public function debugLog($class, $method, $params, $headers, $output, $callerClass, $callerMethod) {
+        $date = date('Y-m-d H:i:s');
+        $logEntry = sprintf("[%s] %s::%s invoked by %s::%s\nParameters: %s\nHeaders: %s\nOutput: %s\n\n", 
+                            $date, $class, $method, $callerClass, $callerMethod, json_encode($params), json_encode($headers), var_export($output, true));
+        file_put_contents('debug.log', $logEntry, FILE_APPEND);
+    }
 }
