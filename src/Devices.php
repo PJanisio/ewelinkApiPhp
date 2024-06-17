@@ -163,31 +163,54 @@ class Devices {
      * Get live device parameter using the API.
      * 
      * @param string $deviceId The ID of the device.
-     * @param string $param The parameter to get.
+     * @param mixed $param The parameter(s) to get, either a string or an array of strings.
      * @param int $type The type (default is 1).
-     * @return mixed The specific parameter value from the API response or null if not found.
+     * @return mixed The specific parameter value(s) from the API response or null if not found.
      * @throws Exception If there is an error in the request.
      */
     public function getDeviceParamLive($deviceId, $param, $type = 1) {
-        $endpoint = '/v2/device/thing/status';
-        $queryParams = [
-            'id' => $deviceId,
-            'type' => $type,
-            'params' => urlencode($param)
-        ];
+    $endpoint = '/v2/device/thing/status';
+    if (is_array($param)) {
+        $paramString = implode('|', $param);
+    } else {
+        $paramString = $param;
+    }
+    // Do not URL encode here
+    $queryParams = [
+        'id' => $deviceId,
+        'type' => $type,
+        'params' => $paramString
+    ];
 
-        $response = $this->httpClient->getRequest($endpoint, $queryParams);
+    $response = $this->httpClient->getRequest($endpoint, $queryParams);
 
-        if (isset($response['error']) && $response['error'] != 0) {
-            throw new Exception('Error: ' . $response['msg']);
+    // Debugging step: Print the params being sent
+    //echo "<pre>Params being sent: " . htmlspecialchars(json_encode($queryParams)) . "</pre>";
+
+    if (isset($response['error']) && $response['error'] != 0) {
+        throw new Exception('Error: ' . $response['msg']);
+    }
+
+    $responseParams = $response['params'] ?? [];
+
+    if (is_array($param)) {
+        $result = [];
+        foreach ($param as $p) {
+            if (isset($responseParams[$p])) {
+                $result[$p] = $responseParams[$p];
+            } else {
+                $result[$p] = null;
+            }
         }
-
-        if (isset($response['params'][$param])) {
-            return $response['params'][$param];
+        return $result;
+    } else {
+        if (isset($responseParams[$param])) {
+            return $responseParams[$param];
         }
-
         return null;
     }
+}
+
 
     /**
      * Get all device parameters live using the API.
@@ -307,9 +330,9 @@ class Devices {
         $response = $this->httpClient->postRequest('/v2/device/thing/status', $data, true);
 
         foreach ($updatedParams as $key => $value) {
-            $updatedValue = $this->getDeviceParamLive($deviceId, $key);
-            if ($updatedValue != $value) {
-                return "Failed to update parameter $key to $value for device $deviceId. Current value is $updatedValue.";
+            $updatedValue = $this->getDeviceParamLive($deviceId, [$key]);
+            if ($updatedValue[$key] != $value) {
+                return "Failed to update parameter $key to $value for device $deviceId. Current value is $updatedValue[$key].";
             }
         }
 

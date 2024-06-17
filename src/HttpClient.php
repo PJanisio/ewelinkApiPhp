@@ -198,37 +198,48 @@ class HttpClient {
      * @throws Exception If the request fails.
      */
     public function getRequest($endpoint, $params = []) {
-        $url = $this->getGatewayUrl() . $endpoint . '?' . http_build_query($params);
+    $url = $this->getGatewayUrl() . $endpoint . '?' . http_build_query($params);
 
-        $headers = [
-            "Authorization: Bearer " . $this->tokenData['accessToken']
-        ];
+    $headers = [
+        "Authorization: Bearer " . $this->tokenData['accessToken']
+    ];
 
-        $options = [
-            'http' => [
-                'header'  => implode("\r\n", $headers) . "\r\n",
-                'method'  => 'GET',
-            ],
-        ];
-        $context  = stream_context_create($options);
-        $result = file_get_contents($url, false, $context);
-        if ($result === FALSE) {
-            throw new Exception('Error in request');
-        }
+    $options = [
+        'http' => [
+            'header'  => implode("\r\n", $headers) . "\r\n",
+            'method'  => 'GET',
+        ],
+    ];
 
-        $response = json_decode($result, true);
-        if ($response['error'] !== 0) {
-            if ($response['error'] === 401) {
-                $this->token->clearToken();
-                $this->token->redirectToUrl($this->getLoginUrl(), 1);
-            }
-            $errorCode = $response['error'];
-            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
-            throw new Exception("Error $errorCode: $errorMsg");
-        }
-
-        return $response['data'];
+    $context  = stream_context_create($options);
+    $result = file_get_contents($url, false, $context);
+    if ($result === FALSE) {
+        throw new Exception('Error in request');
     }
+
+    $response = json_decode($result, true);
+
+    // Debugging step: print the raw response
+    // Remove or comment this line in production
+    //echo "<pre>URL: " . htmlspecialchars($url) . "</pre>";
+    //echo "<pre>Raw response: " . htmlspecialchars($result) . "</pre>";
+    //var_dump($response);
+
+    if ($response['error'] !== 0) {
+        if ($response['error'] === 401) {
+            $this->token->clearToken();
+            $this->token->redirectToUrl($this->getLoginUrl(), 1);
+        }
+        $errorCode = $response['error'];
+        $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+        throw new Exception("Error $errorCode: $errorMsg");
+    }
+    return $response['data'];
+}
+
+
+
+
 
     /**
      * Get the stored token data.

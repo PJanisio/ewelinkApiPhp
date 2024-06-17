@@ -47,7 +47,7 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
             echo '<pre>' . print_r($searchResult, true) . '</pre>';
 
             // Example usage of getDeviceParamLive
-            $liveParam = 'voltage'; // example parameter to get
+            $liveParam = ['voltage','current','power']; // example parameter to get
             $liveResult = $devices->getDeviceParamLive($deviceId, $liveParam);
             echo '<h1>Live Device Parameter</h1>';
             echo '<pre>' . print_r($liveResult, true) . '</pre>';
@@ -80,7 +80,7 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
             $singleChannelParamsMultiple = [
                 ['colorR' => 255],
                 ['colorG' => 0],
-                ['colorB' => 0],
+                ['colorB' => 0]
             ];
             $setStatusResultSingleMultiple = $devices->setDeviceStatus($singleChannelDeviceId, $singleChannelParamsMultiple);
             echo '<h1>Set Single-Channel Device Status Result (Multiple Parameters)</h1>';
