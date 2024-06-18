@@ -178,12 +178,10 @@ class HttpClient {
         $result = json_decode($response, true);
 
         // Log debug information
-        if (Constants::DEBUG) {
-            $backtrace = debug_backtrace();
-            $callerClass = $backtrace[1]['class'] ?? 'N/A';
-            $callerMethod = $backtrace[1]['function'] ?? 'N/A';
-            $this->utils->debugLog(__CLASS__, __FUNCTION__, $data, $headers, $result, $callerClass, $callerMethod);
-        }
+        $backtrace = debug_backtrace();
+        $callerClass = $backtrace[1]['class'] ?? 'N/A';
+        $callerMethod = $backtrace[1]['function'] ?? 'N/A';
+        $this->utils->debugLog(__CLASS__, __FUNCTION__, $data, $headers, $result, $callerClass, $callerMethod, $url);
 
         if ($result['error'] !== 0) {
             if ($result['error'] === 401) {
@@ -206,9 +204,13 @@ class HttpClient {
      * @return array The response data.
      * @throws Exception If the request fails.
      */
-    public function getRequest($endpoint, $params = []) {
-        $url = $this->getGatewayUrl() . $endpoint . '?' . http_build_query($params);
-
+    public function getRequest($endpoint, $params = [], $useFullUrl = false) {
+        if ($useFullUrl) {
+            $url = $endpoint . '?' . http_build_query($params);
+        } else {
+            $url = $this->getGatewayUrl() . $endpoint . '?' . http_build_query($params);
+        }
+        
         $headers = [
             "Authorization: Bearer " . $this->tokenData['accessToken']
         ];
@@ -229,14 +231,12 @@ class HttpClient {
         $response = json_decode($result, true);
 
         // Log debug information
-        if (Constants::DEBUG) {
-            $backtrace = debug_backtrace();
-            $callerClass = $backtrace[1]['class'] ?? 'N/A';
-            $callerMethod = $backtrace[1]['function'] ?? 'N/A';
-            $this->utils->debugLog(__CLASS__, __FUNCTION__, $params, $headers, $response, $callerClass, $callerMethod);
-        }
+        $backtrace = debug_backtrace();
+        $callerClass = $backtrace[1]['class'] ?? 'N/A';
+        $callerMethod = $backtrace[1]['function'] ?? 'N/A';
+        $this->utils->debugLog(__CLASS__, __FUNCTION__, $params, $headers, $response, $callerClass, $callerMethod, $url);
 
-        if ($response['error'] !== 0) {
+        if (isset($response['error']) && $response['error'] !== 0) {
             if ($response['error'] === 401) {
                 $this->token->clearToken();
                 $this->token->redirectToUrl($this->getLoginUrl(), 1);
@@ -245,7 +245,8 @@ class HttpClient {
             $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
             throw new Exception("Error $errorCode: $errorMsg");
         }
-        return $response['data'];
+        
+        return $useFullUrl ? $response : $response['data'];
     }
 
     /**
@@ -275,3 +276,4 @@ class HttpClient {
         return $this->home->getCurrentFamilyId();
     }
 }
+?>

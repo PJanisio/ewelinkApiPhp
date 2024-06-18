@@ -47,7 +47,7 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
             echo '<pre>' . print_r($searchResult, true) . '</pre>';
 
             // Example usage of getDeviceParamLive
-            $liveParam = ['voltage','current','power']; // example parameter to get
+            $liveParam = ['voltage', 'current', 'power']; // example parameter to get
             $liveResult = $devices->getDeviceParamLive($deviceId, $liveParam);
             echo '<h1>Live Device Parameter</h1>';
             echo '<pre>' . print_r($liveResult, true) . '</pre>';
@@ -71,15 +71,15 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
 
             // Example usage of setDeviceStatus for single-channel device
             $singleChannelDeviceId = '10011015b6';
-            $singleChannelParams = ['switch' => 'off'];
+            $singleChannelParams = ['switch' => 'on'];
             $setStatusResultSingle = $devices->setDeviceStatus($singleChannelDeviceId, $singleChannelParams);
             echo '<h1>Set Single-Channel Device Status Result</h1>';
             echo '<pre>' . print_r($setStatusResultSingle, true) . '</pre>';
 
             // Example usage of setDeviceStatus for single-channel device with multiple parameters
             $singleChannelParamsMultiple = [
-                ['colorR' => 255],
-                ['colorG' => 0],
+                ['colorR' => 0],
+                ['colorG' => 153],
                 ['colorB' => 0]
             ];
             $setStatusResultSingleMultiple = $devices->setDeviceStatus($singleChannelDeviceId, $singleChannelParamsMultiple);
@@ -99,13 +99,11 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
             echo '<pre>' . print_r($familyData, true) . '</pre>';
             echo '<p>Current Family ID: ' . htmlspecialchars($home->getCurrentFamilyId()) . '</p>';
 
-            /*
-            // Example usage of getDeviceHistory
-            $deviceIdForHistory = '10011015b6'; // example device ID for history
-            $deviceHistory = $devices->getDeviceHistory($deviceIdForHistory);
-            echo '<h1>Device History</h1>';
-            echo '<pre>' . print_r($deviceHistory, true) . '</pre>';
-            */
+            // Example usage of forceUpdate with three parameters
+            $forceUpdateParams = ['current', 'power', 'voltage'];
+            $forceUpdateResult = $devices->forceUpdate($deviceId, $forceUpdateParams);
+            echo '<h1>Force Update Result</h1>';
+            echo '<pre>' . print_r($forceUpdateResult, true) . '</pre>';
 
         } catch (Exception $e) {
             echo 'Error: ' . $e->getMessage();
@@ -115,3 +113,4 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
         echo '<a href="' . htmlspecialchars($loginUrl) . '">Authorize ewelinkApiPhp</a>';
     }
 }
+?>

@@ -2,18 +2,19 @@
 
 API connector for Sonoff/ewelink devices using simple webapi based on OAuth2.
 
-PHP 7.4+, no other dependiencies required.
+PHP 7.4+, **no other dependiencies required**.
 
 ## Current features
 
-- login and authorization to ewelink (with refresh token)
-- get devices list with all parameters
+- log-in and authorization to ewelink APP via web or websockets
+- get devices list with all or chosen parameters
 - saving devices and other outputs from API to .json
-- get any value of parameter for each device (f.e switch status, productName, MAC etc.)
-- set parameter of device (switch on, off)
+- search for any value of parameter for each device (f.e switch status, productName, MAC etc.)
+- set any parameter/state of device
 - check if device has MultiChannel support
 - set parameter for Multichannel devices
 - check if device is Online
+- debug all requests and responses to debug.log
 
 ## Public key and secret
 
@@ -38,7 +39,6 @@ require_once __DIR__ . '/autoloader.php';
 $httpClient = new HttpClient();
 $token = new Token($httpClient);
 
-try {
     if ($token->checkAndRefreshToken()) {
         // Initialize Devices class which will also initialize Home class and fetch family data
         $devices = new Devices($httpClient);
@@ -56,10 +56,6 @@ try {
         $loginUrl = $httpClient->getLoginUrl();
         echo '<a href="' . htmlspecialchars($loginUrl) . '">Authorize ewelinkApiPhp</a>';
     }
-} catch (Exception $e) {
-    echo 'Error: ' . $e->getMessage();
-}
-
 
 ```
 

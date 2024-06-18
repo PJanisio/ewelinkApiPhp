@@ -9,8 +9,28 @@
  */
 
 class Utils {
+
+    public function __construct() {
+        $this->checkDisabledFunctions();
+    }
+
     /**
-     * Generate a nonce (an 8-digit alphanumeric random string).
+     * Check for disabled functions and print a warning if any are disabled.
+     */
+    private function checkDisabledFunctions() {
+        $requiredFunctions = ['pcntl_fork', 'posix_kill'];
+        $disabledFunctions = explode(',', ini_get('disable_functions'));
+        $disabledFunctions = array_map('trim', $disabledFunctions);
+
+        foreach ($requiredFunctions as $function) {
+            if (in_array($function, $disabledFunctions)) {
+                echo "Warning: The function $function is disabled on this server. Some functionality may be limited.\n";
+            }
+        }
+    }
+
+    /**
+     * Generate a nonce (an 7-digit alphanumeric random string).
      *
      * @return string The generated nonce.
      */
@@ -126,6 +146,16 @@ class Utils {
     }
 
     /**
+     * Sanitize a string by removing non-printable characters.
+     *
+     * @param string $string The string to be sanitized.
+     * @return string The sanitized string.
+     */
+    public function sanitizeString($string) {
+        return preg_replace('/[[:^print:]]/', '', $string);
+    }
+
+    /**
      * Log debug information to a file.
      *
      * @param string $class The class name.
@@ -135,11 +165,27 @@ class Utils {
      * @param mixed $output The output of the request.
      * @param string $callerClass The calling class name.
      * @param string $callerMethod The calling method name.
+     * @param string $url The URL of the request.
      */
-    public function debugLog($class, $method, $params, $headers, $output, $callerClass, $callerMethod) {
+    public function debugLog($class, $method, $params, $headers, $output, $callerClass, $callerMethod, $url) {
+        if (Constants::DEBUG !== 1) {
+            return;
+        }
         $date = date('Y-m-d H:i:s');
-        $logEntry = sprintf("[%s] %s::%s invoked by %s::%s\nParameters: %s\nHeaders: %s\nOutput: %s\n\n", 
-                            $date, $class, $method, $callerClass, $callerMethod, json_encode($params), json_encode($headers), var_export($output, true));
+        $output = is_array($output) ? array_map([$this, 'sanitizeString'], $output) : $this->sanitizeString($output);
+        $logEntry = sprintf(
+            "[%s] %s::%s invoked by %s::%s\nParameters: %s\nHeaders: %s\nOutput: %s\nURL: %s\n\n", 
+            $date, 
+            $class, 
+            $method, 
+            $callerClass, 
+            $callerMethod, 
+            json_encode($params), 
+            json_encode($headers), 
+            var_export($output, true), 
+            $url
+        );
         file_put_contents('debug.log', $logEntry, FILE_APPEND);
     }
 }
+?>

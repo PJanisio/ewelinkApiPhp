@@ -1,12 +1,6 @@
 <?php
 
-/**
- * Class: ewelinkApiPhp
- * Author: Paweł 'Pavlus' Janisio
- * Website: https://github.com/AceExpert/ewelink-api-python
- * Dependencies: PHP 7.4+
- * Description: API connector for Sonoff / ewelink devices
- */
+require_once __DIR__ . '/WebSocketClient.php';
 
 class Devices {
     private $devicesData;
@@ -15,14 +9,13 @@ class Devices {
 
     /**
      * Constructor for the Devices class.
-     * 
-     * @param HttpClient $httpClient An instance of HttpClient to be used for API requests.
-     * @throws Exception If family data is not set.
+     *
+     * @param HttpClient $httpClient The HTTP client instance.
      */
     public function __construct(HttpClient $httpClient) {
         $this->httpClient = $httpClient;
-        $this->home = new Home($httpClient);  // Initialize Home class here
-        $this->home->fetchFamilyData();       // Fetch family data automatically
+        $this->home = new Home($httpClient);
+        $this->home->fetchFamilyData();
         $this->loadDevicesData();
         if ($this->devicesData === null) {
             $this->fetchDevicesData();
@@ -30,7 +23,7 @@ class Devices {
     }
 
     /**
-     * Load devices data from the devices.json file.
+     * Load devices data from a local JSON file.
      */
     private function loadDevicesData() {
         if (file_exists('devices.json')) {
@@ -41,11 +34,11 @@ class Devices {
     }
 
     /**
-     * Fetch devices data from the API and save to devices.json.
-     * 
-     * @param string $lang The language parameter (default: 'en').
+     * Fetch devices data from the remote server and save it locally.
+     *
+     * @param string $lang The language parameter for the request (default is 'en').
      * @return array The devices data.
-     * @throws Exception If the request fails.
+     * @throws Exception If the current family ID is not set.
      */
     public function fetchDevicesData($lang = 'en') {
         $familyId = $this->home->getCurrentFamilyId();
@@ -62,18 +55,18 @@ class Devices {
     }
 
     /**
-     * Get the stored devices data.
-     * 
-     * @return array|null The devices data or null if not set.
+     * Get the loaded devices data.
+     *
+     * @return array|null The devices data.
      */
     public function getDevicesData() {
         return $this->devicesData;
     }
 
     /**
-     * Get a specific device by its ID.
-     * 
-     * @param string $deviceId The ID of the device to retrieve.
+     * Get device data by device ID.
+     *
+     * @param string $deviceId The device ID.
      * @return array|null The device data or null if not found.
      */
     public function getDeviceById($deviceId) {
@@ -88,10 +81,9 @@ class Devices {
     }
 
     /**
-     * Create a list of devices containing name, deviceid, productModel, online status, channel support, and switch status.
-     * The list is an associative array with device names as keys.
-     * 
-     * @return array The list of devices.
+     * Get a list of all devices with their status.
+     *
+     * @return array The list of devices with their status.
      */
     public function getDevicesList() {
         $devicesList = [];
@@ -105,7 +97,6 @@ class Devices {
                     'isSupportChannelSplit' => $this->isMultiChannel($itemData['deviceid'])
                 ];
                 
-                // Get current switch status
                 $statusParam = $this->isMultiChannel($itemData['deviceid']) ? 'switches' : 'switch';
                 $switchStatus = $this->getDeviceParamLive($itemData['deviceid'], $statusParam);
                 $deviceStatus[$statusParam] = $switchStatus;
@@ -118,8 +109,8 @@ class Devices {
 
     /**
      * Check if a device supports multiple channels.
-     * 
-     * @param string $deviceId The ID of the device to check.
+     *
+     * @param string $deviceId The device ID.
      * @return bool True if the device supports multiple channels, false otherwise.
      */
     public function isMultiChannel($deviceId) {
@@ -134,11 +125,11 @@ class Devices {
     }
 
     /**
-     * Search for a specific parameter within a device's data.
-     * 
-     * @param string $searchKey The key to search for.
-     * @param string $deviceId The ID of the device to search within.
-     * @return mixed The value of the found parameter or null if not found.
+     * Search for a specific parameter in the device data.
+     *
+     * @param string $searchKey The parameter key to search for.
+     * @param string $deviceId The device ID.
+     * @return mixed|null The parameter value if found, null otherwise.
      */
     public function searchDeviceParam($searchKey, $deviceId) {
         if ($this->devicesData && isset($this->devicesData['thingList'])) {
@@ -160,65 +151,60 @@ class Devices {
     }
 
     /**
-     * Get live device parameter using the API.
-     * 
-     * @param string $deviceId The ID of the device.
-     * @param mixed $param The parameter(s) to get, either a string or an array of strings.
-     * @param int $type The type (default is 1).
-     * @return mixed The specific parameter value(s) from the API response or null if not found.
-     * @throws Exception If there is an error in the request.
+     * Get live parameters of a device.
+     *
+     * @param string $deviceId The device ID.
+     * @param string|array $param The parameter(s) to get.
+     * @param int $type The type of the request (default is 1).
+     * @return mixed The live parameter(s) value(s).
+     * @throws Exception If there is an error in the response.
      */
     public function getDeviceParamLive($deviceId, $param, $type = 1) {
-    $endpoint = '/v2/device/thing/status';
-    if (is_array($param)) {
-        $paramString = implode('|', $param);
-    } else {
-        $paramString = $param;
-    }
-    // Do not URL encode here
-    $queryParams = [
-        'id' => $deviceId,
-        'type' => $type,
-        'params' => $paramString
-    ];
+        $endpoint = '/v2/device/thing/status';
+        if (is_array($param)) {
+            $paramString = implode('|', $param);
+        } else {
+            $paramString = $param;
+        }
+        $queryParams = [
+            'id' => $deviceId,
+            'type' => $type,
+            'params' => $paramString
+        ];
 
-    $response = $this->httpClient->getRequest($endpoint, $queryParams);
+        $response = $this->httpClient->getRequest($endpoint, $queryParams);
 
-    // Debugging step: Print the params being sent
-    //echo "<pre>Params being sent: " . htmlspecialchars(json_encode($queryParams)) . "</pre>";
+        if (isset($response['error']) && $response['error'] != 0) {
+            throw new Exception('Error: ' . $response['msg']);
+        }
 
-    if (isset($response['error']) && $response['error'] != 0) {
-        throw new Exception('Error: ' . $response['msg']);
-    }
+        $responseParams = $response['params'] ?? [];
 
-    $responseParams = $response['params'] ?? [];
-
-    if (is_array($param)) {
-        $result = [];
-        foreach ($param as $p) {
-            if (isset($responseParams[$p])) {
-                $result[$p] = $responseParams[$p];
-            } else {
-                $result[$p] = null;
+        if (is_array($param)) {
+            $result = [];
+            foreach ($param as $p) {
+                if (isset($responseParams[$p])) {
+                    $result[$p] = $responseParams[$p];
+                } else {
+                    $result[$p] = null;
+                }
             }
+            return $result;
+        } else {
+            if (isset($responseParams[$param])) {
+                return $responseParams[$param];
+            }
+            return null;
         }
-        return $result;
-    } else {
-        if (isset($responseParams[$param])) {
-            return $responseParams[$param];
-        }
-        return null;
     }
-}
-
 
     /**
-     * Get all device parameters live using the API.
-     * 
-     * @param string $deviceId The ID of the device.
-     * @param int $type The type (default is 1).
-     * @return mixed The updated device status from the API response or null if not found.
-     * @throws Exception If there is an error in the request.
+     * Get all live parameters of a device.
+     *
+     * @param string $deviceId The device ID.
+     * @param int $type The type of the request (default is 1).
+     * @return array|null The live parameters or null if not found.
+     * @throws Exception If there is an error in the response.
      */
     public function getAllDeviceParamLive($deviceId, $type = 1) {
         $endpoint = '/v2/device/thing/status';
@@ -241,16 +227,16 @@ class Devices {
     }
 
     /**
-     * Set the device status by updating parameters.
-     * 
-     * @param string $deviceId The ID of the device.
-     * @param array $params The parameters to update.
-     * @return string The result message.
-     * @throws Exception If the parameter update fails.
+     * Set the status of a device.
+     *
+     * @param string $deviceId The device ID.
+     * @param array $params The parameters to set.
+     * @return string The result of the status update.
+     * @throws Exception If there is an error in the response or if a parameter does not exist.
      */
     public function setDeviceStatus($deviceId, $params) {
         $device = $this->getDeviceById($deviceId);
-        $currentParams = $this->getAllDeviceParamLive($deviceId) ?? null; // Use getAllDeviceParamLive to get current state
+        $currentParams = $this->getAllDeviceParamLive($deviceId) ?? null;
 
         if ($currentParams === null) {
             return "Device $deviceId does not have any parameters to update.";
@@ -341,8 +327,8 @@ class Devices {
 
     /**
      * Check if a device is online.
-     * 
-     * @param string $identifier The device ID or name.
+     *
+     * @param string $identifier The device name or ID.
      * @return bool True if the device is online, false otherwise.
      */
     public function isOnline($identifier) {
@@ -359,11 +345,11 @@ class Devices {
     }
 
     /**
-     * Get device history using the API.
-     * 
-     * @param string $deviceId The ID of the device.
+     * Get the history of a device.
+     *
+     * @param string $deviceId The device ID.
      * @return array The device history.
-     * @throws Exception If there is an error in the request.
+     * @throws Exception If there is an error in the response.
      */
     public function getDeviceHistory($deviceId) {
         $endpoint = '/v2/device/history';
@@ -377,4 +363,92 @@ class Devices {
 
         return $response;
     }
+
+    /**
+     * Force update the status of a device using WebSocket.
+     *
+     * @param string $deviceId The device ID.
+     * @param array|string $params The parameters to query (default is ['voltage', 'current']).
+     * @return array The response data.
+     * @throws Exception If there is an error during the process.
+     */
+    public function forceUpdate($deviceId, $params = ['voltage', 'current']) {
+        $device = $this->getDeviceById($deviceId);
+        if (!$device) {
+            throw new Exception('Device not found.');
+        }
+
+        $region = Constants::REGION;
+        switch ($region) {
+            case 'cn':
+                $url = 'https://cn-dispa.coolkit.cn/dispatch/app';
+                break;
+            case 'us':
+                $url = 'https://us-dispa.coolkit.cc/dispatch/app';
+                break;
+            case 'eu':
+                $url = 'https://eu-dispa.coolkit.cc/dispatch/app';
+                break;
+            case 'as':
+                $url = 'https://as-dispa.coolkit.cc/dispatch/app';
+                break;
+            default:
+                throw new Exception('Invalid region');
+        }
+
+        $emptyRequestResponse = $this->httpClient->getRequest($url, [], true);
+
+        if (!$emptyRequestResponse || empty($emptyRequestResponse['domain']) || empty($emptyRequestResponse['port'])) {
+            throw new Exception('Error: Empty request response is invalid.');
+        }
+
+        $ip = gethostbyname($emptyRequestResponse['domain']);
+        $websocketUrl = 'wss://' . $ip . ':' . $emptyRequestResponse['port'] . '/api/ws';
+
+        $utils = new Utils();
+        $tokenData = $this->httpClient->getTokenData();
+        $handshakeData = [
+            'action' => 'userOnline',
+            'version' => 8,
+            'ts' => time(),
+            'at' => $tokenData['accessToken'],
+            'userAgent' => 'app',
+            'apikey' => $device['apikey'],
+            'appid' => Constants::APPID,
+            'nonce' => $utils->generateNonce(),
+            'sequence' => strval(round(microtime(true) * 1000))
+        ];
+
+        $wsClient = new WebSocketClient($websocketUrl);
+        $handshakeResponse = $wsClient->sendRequest($handshakeData);
+
+        $utils->debugLog(__CLASS__, __FUNCTION__, [], [], ['handshakeResponse' => $handshakeResponse], debug_backtrace()[1]['class'], debug_backtrace()[1]['function'], $websocketUrl);
+
+        if (isset($handshakeResponse['error']) && $handshakeResponse['error'] != 0) {
+            throw new Exception('Handshake Error: ' . $handshakeResponse['msg']);
+        }
+
+        $data = [
+            'action' => 'query',
+            'deviceid' => $deviceId,
+            'apikey' => $device['apikey'],
+            'sequence' => strval(round(microtime(true) * 1000)),
+            'params' => is_array($params) ? $params : [$params],
+            'userAgent' => 'app'
+        ];
+
+        $wsClient->send(json_encode($data));
+        $response = json_decode($wsClient->receive(), true);
+
+        $utils->debugLog(__CLASS__, __FUNCTION__, $data, [], ['response' => $response], debug_backtrace()[1]['class'], debug_backtrace()[1]['function'], $websocketUrl);
+
+        $wsClient->close();
+
+        if (isset($response['error']) && $response['error'] != 0) {
+            throw new Exception('Error: ' . $response['msg']);
+        }
+
+        return $response;
+    }
 }
+?>
