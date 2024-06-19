@@ -1,4 +1,8 @@
-# ewelinkApiPhp
+# READ ME
+
+**This branch is inactive. If you accidentaly got here, go to main branch :)**
+
+## ewelinkApiPhp
 
 API connector for Sonoff devices.
 
