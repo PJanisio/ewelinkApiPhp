@@ -42,7 +42,7 @@ class Home {
 
         $this->currentFamilyId = $this->familyData['currentFamilyId'] ?? null;
 
-        file_put_contents('family.json', json_encode($this->familyData));
+        file_put_contents(Constants::JSON_LOG_DIR . '/family.json', json_encode($this->familyData));
         return $this->familyData;
     }
 
@@ -55,3 +55,4 @@ class Home {
         return $this->currentFamilyId;
     }
 }
+?>

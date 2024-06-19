@@ -83,12 +83,12 @@ class Utils {
     }
 
     /**
-     * Check if JSON files in the root directory are valid and retrieve their creation timestamps.
+     * Check if JSON files in the specified directory are valid and retrieve their creation timestamps.
      *
      * @return array The validation results and creation timestamps of the JSON files.
      */
     public function checkJsonFiles() {
-        $files = glob('*.json');
+        $files = glob(Constants::JSON_LOG_DIR . '/*.json');
         $results = [];
 
         foreach ($files as $file) {
@@ -185,7 +185,7 @@ class Utils {
             var_export($output, true), 
             $url
         );
-        file_put_contents('debug.log', $logEntry, FILE_APPEND);
+        file_put_contents(Constants::JSON_LOG_DIR . '/debug.log', $logEntry, FILE_APPEND);
     }
 }
 ?>

@@ -1,8 +1,11 @@
-# ewelinkApiPhp
+# eWeLink API PHP
 
-API connector for Sonoff/ewelink devices using simple webapi based on OAuth2 with Websockets features.
+eWeLink API PHP is a connector for Sonoff / eWeLink devices. This library allows you to interact with your eWeLink-enabled devices using PHP. It supports various functionalities such as device control, retrieving device status, debugging and more.
 
-PHP 7.4+, **no other dependiencies required**.
+## Requirements
+
+- PHP 7.4+
+- cURL extension enabled
 
 ## Current features
 
@@ -17,7 +20,7 @@ PHP 7.4+, **no other dependiencies required**.
 - debug all requests and responses to debug.log
 - use Websocket connection to get and update parameters
 
-## Public key and secret
+## Configuration
 
 Generate here: [dev.ewelink](https://dev.ewelink.cc/)
 
@@ -80,15 +83,14 @@ ewelinkApiPhp/
 
 All classes are located in src directory.
 
-Index.php works as a gateway to API and also as a debug for all availablemethods.
+Index.php works as a gateway to API and also as a debug for all available methods.
 
-.json files outputs will be saved in project_root (ensure writeability)
+.json files outputs will be saved by default in project_root. You can define directory in Constants.php
 
 ## More inside info about current development
 
 - main branch when commited used to be operative.
 - enable DEBUG = 1; in Constants to log every get and postRequest with output and parameters to **debug.log**
 - with next stable release methods and invoking functions structure can be changed (keep this in mind)
-- branch **websockets** will probably be not maintened anymore
-- there could be some incosistency in the code still, like f.e handling error messages or orphan methods
-- index.php is a quasi-test file which helps me to check new methods and it is also a great example
+- branch **websockets** will be not maintened anymore
+- index.php is a quasi-test file which helps me to check all methods and it is also a great example

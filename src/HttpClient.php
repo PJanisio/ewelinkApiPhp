@@ -81,8 +81,9 @@ class HttpClient {
      * Load token data from token.json file.
      */
     private function loadTokenData() {
-        if (file_exists('token.json')) {
-            $this->tokenData = json_decode(file_get_contents('token.json'), true);
+        $tokenFile = Constants::JSON_LOG_DIR . '/token.json';
+        if (file_exists($tokenFile)) {
+            $this->tokenData = json_decode(file_get_contents($tokenFile), true);
         }
     }
 
@@ -201,6 +202,7 @@ class HttpClient {
      *
      * @param string $endpoint The endpoint to make the request to.
      * @param array $params The query parameters to send in the request.
+     * @param bool $useFullUrl Whether to use the full URL for the request.
      * @return array The response data.
      * @throws Exception If the request fails.
      */

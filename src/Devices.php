@@ -36,8 +36,9 @@ class Devices {
      * Load devices data from a local JSON file.
      */
     private function loadDevicesData() {
-        if (file_exists('devices.json')) {
-            $this->devicesData = json_decode(file_get_contents('devices.json'), true);
+        $devicesFile = Constants::JSON_LOG_DIR . '/devices.json';
+        if (file_exists($devicesFile)) {
+            $this->devicesData = json_decode(file_get_contents($devicesFile), true);
         } else {
             $this->devicesData = null;
         }
@@ -60,7 +61,7 @@ class Devices {
             'familyId' => $familyId
         ];
         $this->devicesData = $this->httpClient->getRequest('/v2/device/thing', $params);
-        file_put_contents('devices.json', json_encode($this->devicesData));
+        file_put_contents(Constants::JSON_LOG_DIR . '/devices.json', json_encode($this->devicesData));
         return $this->devicesData;
     }
 
