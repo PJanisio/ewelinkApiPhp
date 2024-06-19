@@ -71,7 +71,7 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
 
             // Example usage of setDeviceStatus for single-channel device
             $singleChannelDeviceId = '10011015b6';
-            $singleChannelParams = ['switch' => 'on'];
+            $singleChannelParams = ['switch' => 'off'];
             $setStatusResultSingle = $devices->setDeviceStatus($singleChannelDeviceId, $singleChannelParams);
             echo '<h1>Set Single-Channel Device Status Result</h1>';
             echo '<pre>' . print_r($setStatusResultSingle, true) . '</pre>';

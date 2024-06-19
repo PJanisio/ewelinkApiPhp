@@ -1,8 +1,5 @@
 <?php
 
-require_once __DIR__ . '/Utils.php';
-require_once __DIR__ . '/Constants.php';
-
 /**
  * Class: WebSocketClient
  * Author: Paweł 'Pavlus' Janisio
@@ -10,6 +7,11 @@ require_once __DIR__ . '/Constants.php';
  * Dependencies: PHP 7.4+
  * Description: WebSocket client for Sonoff / ewelink devices
  */
+
+require_once __DIR__ . '/Utils.php';
+require_once __DIR__ . '/Constants.php';
+
+
 
 class WebSocketClient {
     private $socket;
@@ -21,19 +23,56 @@ class WebSocketClient {
     private $utils;
     private $hbInterval;
     private $pid;
+    private $httpClient;
 
     /**
      * Constructor for the WebSocketClient class.
      *
-     * @param string $url The WebSocket URL.
+     * @param HttpClient $httpClient The HTTP client instance.
      */
-    public function __construct($url) {
-        $this->url = $url;
-        $parts = parse_url($url);
+    public function __construct(HttpClient $httpClient) {
+        $this->httpClient = $httpClient;
+        $this->utils = new Utils();
+        $this->resolveWebSocketUrl();
+    }
+
+    /**
+     * Resolve WebSocket URL based on the region.
+     *
+     * @throws Exception If the region is invalid.
+     */
+    private function resolveWebSocketUrl() {
+        $region = Constants::REGION;
+        switch ($region) {
+            case 'cn':
+                $url = 'https://cn-dispa.coolkit.cn/dispatch/app';
+                break;
+            case 'us':
+                $url = 'https://us-dispa.coolkit.cc/dispatch/app';
+                break;
+            case 'eu':
+                $url = 'https://eu-dispa.coolkit.cc/dispatch/app';
+                break;
+            case 'as':
+                $url = 'https://as-dispa.coolkit.cc/dispatch/app';
+                break;
+            default:
+                throw new Exception('Invalid region');
+        }
+
+        $emptyRequestResponse = $this->httpClient->getRequest($url, [], true);
+
+        if (!$emptyRequestResponse || empty($emptyRequestResponse['domain']) || empty($emptyRequestResponse['port'])) {
+            throw new Exception('Error: Empty request response is invalid.');
+        }
+
+        $ip = gethostbyname($emptyRequestResponse['domain']);
+        $this->url = 'wss://' . $ip . ':' . $emptyRequestResponse['port'] . '/api/ws';
+        
+        $parts = parse_url($this->url);
         $this->host = gethostbyname($parts['host']); // Resolve the domain to IP
         $this->port = $parts['port'];
         $this->path = $parts['path'];
-        $this->utils = new Utils();
     }
 
     /**
@@ -87,12 +126,13 @@ class WebSocketClient {
     /**
      * Perform handshake over the WebSocket connection.
      *
-     * @param array $data The handshake data to send.
+     * @param array $device The device data.
      * @return array The response data.
      * @throws Exception If there is an error during the handshake process.
      */
-    public function handshake($data) {
+    public function handshake($device) {
         $this->connect();
+        $data = $this->createHandshakeData($device);
         $this->send(json_encode($data));
         $response = $this->receive();
         $responseData = json_decode($response, true);
@@ -288,6 +328,46 @@ class WebSocketClient {
                 }
             }
         }
+    }
+
+    /**
+     * Create handshake data for WebSocket connection.
+     *
+     * @param array $device The device data.
+     * @return array The handshake data.
+     */
+    public function createHandshakeData($device) {
+        $utils = new Utils();
+        $tokenData = $this->httpClient->getTokenData();
+        return [
+            'action' => 'userOnline',
+            'version' => 8,
+            'ts' => time(),
+            'at' => $tokenData['accessToken'],
+            'userAgent' => 'app',
+            'apikey' => $device['apikey'],
+            'appid' => Constants::APPID,
+            'nonce' => $utils->generateNonce(),
+            'sequence' => strval(round(microtime(true) * 1000))
+        ];
+    }
+
+    /**
+     * Create query data for WebSocket connection.
+     *
+     * @param array $device The device data.
+     * @param array|string $params The parameters to query.
+     * @return array The query data.
+     */
+    public function createQueryData($device, $params) {
+        return [
+            'action' => 'query',
+            'deviceid' => $device['deviceid'],
+            'apikey' => $device['apikey'],
+            'sequence' => strval(round(microtime(true) * 1000)),
+            'params' => is_array($params) ? $params : [$params],
+            'userAgent' => 'app'
+        ];
     }
 
     /**

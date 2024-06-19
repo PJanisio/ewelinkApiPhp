@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Class: ewelinkApiPhp
+ * Author: Paweł 'Pavlus' Janisio
+ * Website: https://github.com/AceExpert/ewelink-api-python
+ * Dependencies: PHP 7.4+
+ * Description: API connector for Sonoff / ewelink devices
+ */
+
+
 require_once __DIR__ . '/WebSocketClient.php';
 require_once __DIR__ . '/Utils.php';
 require_once __DIR__ . '/Constants.php';
@@ -380,41 +389,14 @@ class Devices {
             throw new Exception('Device not found.');
         }
 
-        $region = Constants::REGION;
-        switch ($region) {
-            case 'cn':
-                $url = 'https://cn-dispa.coolkit.cn/dispatch/app';
-                break;
-            case 'us':
-                $url = 'https://us-dispa.coolkit.cc/dispatch/app';
-                break;
-            case 'eu':
-                $url = 'https://eu-dispa.coolkit.cc/dispatch/app';
-                break;
-            case 'as':
-                $url = 'https://as-dispa.coolkit.cc/dispatch/app';
-                break;
-            default:
-                throw new Exception('Invalid region');
-        }
-
-        $emptyRequestResponse = $this->httpClient->getRequest($url, [], true);
-
-        if (!$emptyRequestResponse || empty($emptyRequestResponse['domain']) || empty($emptyRequestResponse['port'])) {
-            throw new Exception('Error: Empty request response is invalid.');
-        }
-
-        $ip = gethostbyname($emptyRequestResponse['domain']);
-        $websocketUrl = 'wss://' . $ip . ':' . $emptyRequestResponse['port'] . '/api/ws';
-
-        $wsClient = new WebSocketClient($websocketUrl);
-        $handshakeResponse = $wsClient->handshake($this->createHandshakeData($device));
+        $wsClient = new WebSocketClient($this->httpClient);
+        $handshakeResponse = $wsClient->handshake($device);
 
         if (isset($handshakeResponse['error']) && $handshakeResponse['error'] != 0) {
             throw new Exception('Handshake Error: ' . $handshakeResponse['msg']);
         }
 
-        $data = $this->createQueryData($device, $params);
+        $data = $wsClient->createQueryData($device, $params);
         $wsClient->send(json_encode($data));
         $response = json_decode($wsClient->receive(), true);
 
@@ -424,47 +406,7 @@ class Devices {
             throw new Exception('Error: ' . $response['msg']);
         }
 
-        return $response;
-    }
-
-    /**
-     * Create handshake data for WebSocket connection.
-     *
-     * @param array $device The device data.
-     * @return array The handshake data.
-     */
-    private function createHandshakeData($device) {
-        $utils = new Utils();
-        $tokenData = $this->httpClient->getTokenData();
-        return [
-            'action' => 'userOnline',
-            'version' => 8,
-            'ts' => time(),
-            'at' => $tokenData['accessToken'],
-            'userAgent' => 'app',
-            'apikey' => $device['apikey'],
-            'appid' => Constants::APPID,
-            'nonce' => $utils->generateNonce(),
-            'sequence' => strval(round(microtime(true) * 1000))
-        ];
-    }
-
-    /**
-     * Create query data for WebSocket connection.
-     *
-     * @param array $device The device data.
-     * @param array|string $params The parameters to query.
-     * @return array The query data.
-     */
-    private function createQueryData($device, $params) {
-        return [
-            'action' => 'query',
-            'deviceid' => $device['deviceid'],
-            'apikey' => $device['apikey'],
-            'sequence' => strval(round(microtime(true) * 1000)),
-            'params' => is_array($params) ? $params : [$params],
-            'userAgent' => 'app'
-        ];
+        return $response['params'];
     }
 }
 ?>
