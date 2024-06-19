@@ -1,6 +1,8 @@
 <?php
 
 require_once __DIR__ . '/WebSocketClient.php';
+require_once __DIR__ . '/Utils.php';
+require_once __DIR__ . '/Constants.php';
 
 class Devices {
     private $devicesData;
@@ -368,11 +370,11 @@ class Devices {
      * Force update the status of a device using WebSocket.
      *
      * @param string $deviceId The device ID.
-     * @param array|string $params The parameters to query (default is ['voltage', 'current']).
+     * @param array|string $params The parameters to query.
      * @return array The response data.
      * @throws Exception If there is an error during the process.
      */
-    public function forceUpdate($deviceId, $params = ['voltage', 'current']) {
+    public function forceUpdate($deviceId, $params) {
         $device = $this->getDeviceById($deviceId);
         if (!$device) {
             throw new Exception('Device not found.');
@@ -405,9 +407,36 @@ class Devices {
         $ip = gethostbyname($emptyRequestResponse['domain']);
         $websocketUrl = 'wss://' . $ip . ':' . $emptyRequestResponse['port'] . '/api/ws';
 
+        $wsClient = new WebSocketClient($websocketUrl);
+        $handshakeResponse = $wsClient->handshake($this->createHandshakeData($device));
+
+        if (isset($handshakeResponse['error']) && $handshakeResponse['error'] != 0) {
+            throw new Exception('Handshake Error: ' . $handshakeResponse['msg']);
+        }
+
+        $data = $this->createQueryData($device, $params);
+        $wsClient->send(json_encode($data));
+        $response = json_decode($wsClient->receive(), true);
+
+        $wsClient->close();
+
+        if (isset($response['error']) && $response['error'] != 0) {
+            throw new Exception('Error: ' . $response['msg']);
+        }
+
+        return $response;
+    }
+
+    /**
+     * Create handshake data for WebSocket connection.
+     *
+     * @param array $device The device data.
+     * @return array The handshake data.
+     */
+    private function createHandshakeData($device) {
         $utils = new Utils();
         $tokenData = $this->httpClient->getTokenData();
-        $handshakeData = [
+        return [
             'action' => 'userOnline',
             'version' => 8,
             'ts' => time(),
@@ -418,37 +447,24 @@ class Devices {
             'nonce' => $utils->generateNonce(),
             'sequence' => strval(round(microtime(true) * 1000))
         ];
+    }
 
-        $wsClient = new WebSocketClient($websocketUrl);
-        $handshakeResponse = $wsClient->sendRequest($handshakeData);
-
-        $utils->debugLog(__CLASS__, __FUNCTION__, [], [], ['handshakeResponse' => $handshakeResponse], debug_backtrace()[1]['class'], debug_backtrace()[1]['function'], $websocketUrl);
-
-        if (isset($handshakeResponse['error']) && $handshakeResponse['error'] != 0) {
-            throw new Exception('Handshake Error: ' . $handshakeResponse['msg']);
-        }
-
-        $data = [
+    /**
+     * Create query data for WebSocket connection.
+     *
+     * @param array $device The device data.
+     * @param array|string $params The parameters to query.
+     * @return array The query data.
+     */
+    private function createQueryData($device, $params) {
+        return [
             'action' => 'query',
-            'deviceid' => $deviceId,
+            'deviceid' => $device['deviceid'],
             'apikey' => $device['apikey'],
             'sequence' => strval(round(microtime(true) * 1000)),
             'params' => is_array($params) ? $params : [$params],
             'userAgent' => 'app'
         ];
-
-        $wsClient->send(json_encode($data));
-        $response = json_decode($wsClient->receive(), true);
-
-        $utils->debugLog(__CLASS__, __FUNCTION__, $data, [], ['response' => $response], debug_backtrace()[1]['class'], debug_backtrace()[1]['function'], $websocketUrl);
-
-        $wsClient->close();
-
-        if (isset($response['error']) && $response['error'] != 0) {
-            throw new Exception('Error: ' . $response['msg']);
-        }
-
-        return $response;
     }
 }
 ?>

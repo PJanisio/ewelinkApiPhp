@@ -1,11 +1,14 @@
 <?php
 
+require_once __DIR__ . '/Utils.php';
+require_once __DIR__ . '/Constants.php';
+
 /**
- * Class: ewelinkApiPhp
+ * Class: WebSocketClient
  * Author: Paweł 'Pavlus' Janisio
  * Website: https://github.com/AceExpert/ewelink-api-python
  * Dependencies: PHP 7.4+
- * Description: API connector for Sonoff / ewelink devices
+ * Description: WebSocket client for Sonoff / ewelink devices
  */
 
 class WebSocketClient {
@@ -19,6 +22,11 @@ class WebSocketClient {
     private $hbInterval;
     private $pid;
 
+    /**
+     * Constructor for the WebSocketClient class.
+     *
+     * @param string $url The WebSocket URL.
+     */
     public function __construct($url) {
         $this->url = $url;
         $parts = parse_url($url);
@@ -28,6 +36,12 @@ class WebSocketClient {
         $this->utils = new Utils();
     }
 
+    /**
+     * Connect to the WebSocket server.
+     *
+     * @return bool True if the connection is successful.
+     * @throws Exception If the connection or handshake fails.
+     */
     public function connect() {
         $context = stream_context_create(['ssl' => ['verify_peer' => false, 'verify_peer_name' => false]]);
         $this->socket = stream_socket_client("tls://{$this->host}:{$this->port}", $errno, $errstr, 30, STREAM_CLIENT_CONNECT, $context);
@@ -70,6 +84,30 @@ class WebSocketClient {
         return true;
     }
 
+    /**
+     * Perform handshake over the WebSocket connection.
+     *
+     * @param array $data The handshake data to send.
+     * @return array The response data.
+     * @throws Exception If there is an error during the handshake process.
+     */
+    public function handshake($data) {
+        $this->connect();
+        $this->send(json_encode($data));
+        $response = $this->receive();
+        $responseData = json_decode($response, true);
+        if (isset($responseData['config']['hbInterval'])) {
+            $this->startHeartbeat($responseData['config']['hbInterval']);
+        }
+        return $responseData;
+    }
+
+    /**
+     * Send data over the WebSocket connection.
+     *
+     * @param string $data The data to send.
+     * @throws Exception If there is no valid WebSocket connection or if sending the data fails.
+     */
     public function send($data) {
         if (!$this->socket) {
             throw new Exception("No valid WebSocket connection.");
@@ -82,6 +120,12 @@ class WebSocketClient {
         }
     }
 
+    /**
+     * Receive data from the WebSocket connection.
+     *
+     * @return string The received data.
+     * @throws Exception If there is no valid WebSocket connection.
+     */
     public function receive() {
         if (!$this->socket) {
             throw new Exception("No valid WebSocket connection.");
@@ -92,6 +136,9 @@ class WebSocketClient {
         return $decodedResponse;
     }
 
+    /**
+     * Close the WebSocket connection and stop the heartbeat process.
+     */
     public function close() {
         if ($this->socket) {
             fclose($this->socket);
@@ -104,6 +151,14 @@ class WebSocketClient {
         }
     }
 
+    /**
+     * Encode data for sending over a WebSocket connection (hybi10 protocol).
+     *
+     * @param string $payload The data to encode.
+     * @param string $type The type of data (default is 'text').
+     * @param bool $masked Whether to mask the data (default is true).
+     * @return string The encoded data.
+     */
     private function hybi10Encode($payload, $type = 'text', $masked = true) {
         $frameHead = [];
         $payloadLength = strlen($payload);
@@ -156,13 +211,19 @@ class WebSocketClient {
         }
         $frame = implode('', $frameHead);
 
-        for ($i = 0; $i < $payloadLength; $i++) {
+        for ($i = 0; $payloadLength > $i; $i++) {
             $frame .= ($masked === true) ? $payload[$i] ^ $mask[$i % 4] : $payload[$i];
         }
 
         return $frame;
     }
 
+    /**
+     * Decode data received from a WebSocket connection (hybi10 protocol).
+     *
+     * @param string $data The data to decode.
+     * @return string The decoded data.
+     */
     private function hybi10Decode($data) {
         $bytes = $data;
         $dataLength = '';
@@ -184,7 +245,7 @@ class WebSocketClient {
                 $mask = substr($bytes, 2, 4);
                 $codedData = substr($bytes, 6);
             }
-            for ($i = 0; $i < strlen($codedData); $i++) {
+            for ($i = 0; strlen($codedData) > $i; $i++) {
                 $decodedData .= $codedData[$i] ^ $mask[$i % 4];
             }
         } else {
@@ -200,25 +261,19 @@ class WebSocketClient {
         return $decodedData;
     }
 
-    public function sendRequest($data) {
-        try {
-            $this->connect();
-        } catch (Exception $e) {
-            throw new Exception('Error during connection: ' . $e->getMessage());
-        }
-        $this->send(json_encode($data));
-        $response = $this->receive();
-        $this->startHeartbeat(json_decode($response, true)['config']['hbInterval']);
-        return json_decode($response, true);
-    }
-
+    /**
+     * Start the heartbeat process to keep the WebSocket connection alive.
+     *
+     * @param int $interval The heartbeat interval in seconds.
+     * @throws Exception If forking the process fails.
+     */
     private function startHeartbeat($interval) {
         $this->hbInterval = $interval + 7; // Add 7 seconds as mentioned in the documentation
         $this->pid = pcntl_fork();
 
         if ($this->pid == -1) {
             throw new Exception("Could not fork process for heartbeat");
-        } else if ($this->pid) {
+        } elseif ($this->pid) {
             // Parent process
             return;
         } else {
@@ -233,6 +288,15 @@ class WebSocketClient {
                 }
             }
         }
+    }
+
+    /**
+     * Get the WebSocket URL.
+     *
+     * @return string The WebSocket URL.
+     */
+    public function getWebSocketUrl() {
+        return $this->url;
     }
 }
 ?>
