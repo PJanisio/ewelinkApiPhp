@@ -21,9 +21,9 @@ class WebSocketClient {
     private $path;
     private $key;
     private $utils;
+    private $httpClient;
     private $hbInterval;
     private $pid;
-    private $httpClient;
 
     /**
      * Constructor for the WebSocketClient class.
@@ -68,7 +68,7 @@ class WebSocketClient {
 
         $ip = gethostbyname($emptyRequestResponse['domain']);
         $this->url = 'wss://' . $ip . ':' . $emptyRequestResponse['port'] . '/api/ws';
-        
+
         $parts = parse_url($this->url);
         $this->host = gethostbyname($parts['host']); // Resolve the domain to IP
         $this->port = $parts['port'];
@@ -132,14 +132,74 @@ class WebSocketClient {
      */
     public function handshake($device) {
         $this->connect();
-        $data = $this->createHandshakeData($device);
-        $this->send(json_encode($data));
+        $handshakeData = $this->createHandshakeData($device);
+        $this->send(json_encode($handshakeData));
         $response = $this->receive();
         $responseData = json_decode($response, true);
         if (isset($responseData['config']['hbInterval'])) {
             $this->startHeartbeat($responseData['config']['hbInterval']);
         }
         return $responseData;
+    }
+
+    /**
+     * Create handshake data for WebSocket connection.
+     *
+     * @param array $device The device data.
+     * @return array The handshake data.
+     */
+    public function createHandshakeData($device) {
+        $utils = new Utils();
+        $tokenData = $this->httpClient->getTokenData();
+        return [
+            'action' => 'userOnline',
+            'version' => 8,
+            'ts' => time(),
+            'at' => $tokenData['accessToken'],
+            'userAgent' => 'app',
+            'apikey' => $device['apikey'],
+            'appid' => Constants::APPID,
+            'nonce' => $utils->generateNonce(),
+            'sequence' => strval(round(microtime(true) * 1000))
+        ];
+    }
+
+    /**
+     * Create query data for WebSocket connection.
+     *
+     * @param array $device The device data.
+     * @param array|string $params The parameters to query.
+     * @return array The query data.
+     */
+    public function createQueryData($device, $params) {
+        return [
+            'action' => 'query',
+            'deviceid' => $device['deviceid'],
+            'apikey' => $device['apikey'],
+            'sequence' => strval(round(microtime(true) * 1000)),
+            'params' => is_array($params) ? $params : [$params],
+            'userAgent' => 'app'
+        ];
+    }
+
+    /**
+     * Create update data for WebSocket connection.
+     *
+     * @param array $device The device data.
+     * @param array $params The parameters to update.
+     * @param string $selfApikey The receiver's apikey.
+     * @return array The update data.
+     */
+    public function createUpdateData($device, $params, $selfApikey) {
+        return [
+            'action' => 'update',
+            'apikey' => $device['apikey'],
+            'selfApikey' => $selfApikey,
+            'deviceid' => $device['deviceid'],
+            'params' => $params,
+            'userAgent' => 'app',
+            'sequence' => strval(round(microtime(true) * 1000))
+        ];
     }
 
     /**
@@ -251,7 +311,7 @@ class WebSocketClient {
         }
         $frame = implode('', $frameHead);
 
-        for ($i = 0; $payloadLength > $i; $i++) {
+        for ($i = 0; $i < $payloadLength; $i++) {
             $frame .= ($masked === true) ? $payload[$i] ^ $mask[$i % 4] : $payload[$i];
         }
 
@@ -285,7 +345,7 @@ class WebSocketClient {
                 $mask = substr($bytes, 2, 4);
                 $codedData = substr($bytes, 6);
             }
-            for ($i = 0; strlen($codedData) > $i; $i++) {
+            for ($i = 0; $i < strlen($codedData); $i++) {
                 $decodedData .= $codedData[$i] ^ $mask[$i % 4];
             }
         } else {
@@ -328,46 +388,6 @@ class WebSocketClient {
                 }
             }
         }
-    }
-
-    /**
-     * Create handshake data for WebSocket connection.
-     *
-     * @param array $device The device data.
-     * @return array The handshake data.
-     */
-    public function createHandshakeData($device) {
-        $utils = new Utils();
-        $tokenData = $this->httpClient->getTokenData();
-        return [
-            'action' => 'userOnline',
-            'version' => 8,
-            'ts' => time(),
-            'at' => $tokenData['accessToken'],
-            'userAgent' => 'app',
-            'apikey' => $device['apikey'],
-            'appid' => Constants::APPID,
-            'nonce' => $utils->generateNonce(),
-            'sequence' => strval(round(microtime(true) * 1000))
-        ];
-    }
-
-    /**
-     * Create query data for WebSocket connection.
-     *
-     * @param array $device The device data.
-     * @param array|string $params The parameters to query.
-     * @return array The query data.
-     */
-    public function createQueryData($device, $params) {
-        return [
-            'action' => 'query',
-            'deviceid' => $device['deviceid'],
-            'apikey' => $device['apikey'],
-            'sequence' => strval(round(microtime(true) * 1000)),
-            'params' => is_array($params) ? $params : [$params],
-            'userAgent' => 'app'
-        ];
     }
 
     /**

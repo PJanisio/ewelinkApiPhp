@@ -10,8 +10,8 @@
 
 require_once __DIR__ . '/autoloader.php';
 
-$httpClient = new HttpClient();
-$token = new Token($httpClient);
+$http = new HttpClient();
+$token = new Token($http);
 
 if (isset($_GET['code']) && isset($_GET['region'])) {
     try {
@@ -29,87 +29,82 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
         echo '<p>Token expiry time: ' . date('Y-m-d H:i:s', $tokenData['atExpiredTime'] / 1000) . '</p>';
 
         try {
-            // Initialize Devices class which will also initialize Home class and fetch family data
-            $devices = new Devices($httpClient);
-            $devicesData = $devices->fetchDevicesData();
+            $devs = new Devices($http);
+            $devsData = $devs->fetchDevicesData();
             echo '<h1>Devices Data</h1>';
-            echo '<pre>' . print_r($devicesData, true) . '</pre>';
+            echo '<pre>' . print_r($devsData, true) . '</pre>';
 
-            $devicesList = $devices->getDevicesList();
+            $devsList = $devs->getDevicesList();
             echo '<h1>Devices List</h1>';
-            echo '<pre>' . print_r($devicesList, true) . '</pre>';
+            echo '<pre>' . print_r($devsList, true) . '</pre>';
 
-            // Example usage of searchDeviceParam
-            $searchKey = 'productModel'; // example key to search for
-            $deviceId = '100142b205'; // example device ID
-            $searchResult = $devices->searchDeviceParam($searchKey, $deviceId);
+            $searchKey = 'productModel';
+            $devId = '100142b205';
+            $searchRes = $devs->searchDeviceParam($searchKey, $devId);
             echo '<h1>Search Result</h1>';
-            echo '<pre>' . print_r($searchResult, true) . '</pre>';
+            echo '<pre>' . print_r($searchRes, true) . '</pre>';
 
-            // Example usage of getDeviceParamLive
-            $liveParam = ['voltage', 'current', 'power']; // example parameter to get
-            $liveResult = $devices->getDeviceParamLive($deviceId, $liveParam);
+            $liveParam = ['voltage', 'current', 'power'];
+            $liveRes = $devs->getDeviceParamLive($devId, $liveParam);
             echo '<h1>Live Device Parameter</h1>';
-            echo '<pre>' . print_r($liveResult, true) . '</pre>';
+            echo '<pre>' . print_r($liveRes, true) . '</pre>';
             
-            // Example usage of getAllDeviceParamLive
-            $refreshResult = $devices->getAllDeviceParamLive($deviceId);
+            $allLiveParams = $devs->getAllDeviceParamLive($devId);
             echo '<h1>Get All Device Parameters Live</h1>';
-            echo '<pre>' . print_r($refreshResult, true) . '</pre>';
+            echo '<pre>' . print_r($allLiveParams, true) . '</pre>';
 
-            // Example usage of setDeviceStatus for multi-channel device
-            $multiChannelDeviceId = '1000663128';
-            $multiChannelParams = [
+            $multiDevId = '1000663128';
+            $multiParams = [
                ['switch' => 'off', 'outlet' => 0],
                ['switch' => 'off', 'outlet' => 1],
                ['switch' => 'off', 'outlet' => 2],
                ['switch' => 'off', 'outlet' => 3]
             ];
-            $setStatusResult = $devices->setDeviceStatus($multiChannelDeviceId, $multiChannelParams);
+            $setMultiRes = $devs->setDeviceStatus($multiDevId, $multiParams);
             echo '<h1>Set Multi-Channel Device Status Result</h1>';
-            echo '<pre>' . print_r($setStatusResult, true) . '</pre>';
+            echo '<pre>' . print_r($setMultiRes, true) . '</pre>';
 
-            // Example usage of setDeviceStatus for single-channel device
-            $singleChannelDeviceId = '10011015b6';
-            $singleChannelParams = ['switch' => 'off'];
-            $setStatusResultSingle = $devices->setDeviceStatus($singleChannelDeviceId, $singleChannelParams);
+            $singleDevId = '10011015b6';
+            $singleParams = ['switch' => 'off'];
+            $setSingleRes = $devs->setDeviceStatus($singleDevId, $singleParams);
             echo '<h1>Set Single-Channel Device Status Result</h1>';
-            echo '<pre>' . print_r($setStatusResultSingle, true) . '</pre>';
+            echo '<pre>' . print_r($setSingleRes, true) . '</pre>';
 
-            // Example usage of setDeviceStatus for single-channel device with multiple parameters
-            $singleChannelParamsMultiple = [
+            $singleParamsMulti = [
                 ['colorR' => 0],
                 ['colorG' => 153],
                 ['colorB' => 0]
             ];
-            $setStatusResultSingleMultiple = $devices->setDeviceStatus($singleChannelDeviceId, $singleChannelParamsMultiple);
+            $setSingleMultiRes = $devs->setDeviceStatus($singleDevId, $singleParamsMulti);
             echo '<h1>Set Single-Channel Device Status Result (Multiple Parameters)</h1>';
-            echo '<pre>' . print_r($setStatusResultSingleMultiple, true) . '</pre>';
+            echo '<pre>' . print_r($setSingleMultiRes, true) . '</pre>';
 
-            // Example usage of isOnline
-            $deviceIdentifier = 'Ledy salon'; // example device name or ID
-            $isOnlineResult = $devices->isOnline($deviceIdentifier);
+            $devIdent = 'Ledy salon';
+            $onlineRes = $devs->isOnline($devIdent);
             echo '<h1>Is Device Online?</h1>';
-            echo $deviceIdentifier . ' is ' . ($isOnlineResult ? 'online' : 'offline') . '.';
+            echo $devIdent . ' is ' . ($onlineRes ? 'online' : 'offline') . '.';
 
-            // Example usage of getFamilyData
-            $home = $httpClient->getHome();
+            $home = $http->getHome();
             $familyData = $home->fetchFamilyData();
             echo '<h1>Family Data</h1>';
             echo '<pre>' . print_r($familyData, true) . '</pre>';
             echo '<p>Current Family ID: ' . htmlspecialchars($home->getCurrentFamilyId()) . '</p>';
 
-            // Example usage of forceUpdate with three parameters
-            $forceUpdateParams = ['current', 'power', 'voltage'];
-            $forceUpdateResult = $devices->forceUpdate($deviceId, $forceUpdateParams);
-            echo '<h1>Force Update Result</h1>';
-            echo '<pre>' . print_r($forceUpdateResult, true) . '</pre>';
+            $forceParams = ['current', 'power', 'voltage'];
+            $forceRes = $devs->forceGetData($devId, $forceParams);
+            echo '<h1>Force Get Data Result</h1>';
+            echo '<pre>' . print_r($forceRes, true) . '</pre>';
+
+            $updateParams = ['switch' => 'on'];
+            $updateRes = $devs->forceUpdateDevice($devId, $updateParams, 3);
+            echo '<h1>Force Update Device Result</h1>';
+            echo '<pre>' . print_r($updateRes, true) . '</pre>';
 
         } catch (Exception $e) {
             echo 'Error: ' . $e->getMessage();
         }
     } else {
-        $loginUrl = $httpClient->getLoginUrl();
+        $loginUrl = $http->getLoginUrl();
         echo '<a href="' . htmlspecialchars($loginUrl) . '">Authorize ewelinkApiPhp</a>';
     }
 }

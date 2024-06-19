@@ -1,6 +1,6 @@
 # ewelinkApiPhp
 
-API connector for Sonoff/ewelink devices using simple webapi based on OAuth2.
+API connector for Sonoff/ewelink devices using simple webapi based on OAuth2 with Websockets features.
 
 PHP 7.4+, **no other dependiencies required**.
 
@@ -15,6 +15,7 @@ PHP 7.4+, **no other dependiencies required**.
 - set parameter for Multichannel devices
 - check if device is Online
 - debug all requests and responses to debug.log
+- use Websocket connection to get and update parameters
 
 ## Public key and secret
 
@@ -71,6 +72,7 @@ ewelinkApiPhp/
 │   ├── HttpClient.php
 │   ├── Token.php
 │   └── Utils.php
+│   └── WebSocketsClient.php
 │
 ├── autoloader.php
 └── index.php

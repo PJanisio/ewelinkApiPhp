@@ -8,7 +8,6 @@
  * Description: API connector for Sonoff / ewelink devices
  */
 
-
 require_once __DIR__ . '/WebSocketClient.php';
 require_once __DIR__ . '/Utils.php';
 require_once __DIR__ . '/Constants.php';
@@ -376,14 +375,14 @@ class Devices {
     }
 
     /**
-     * Force update the status of a device using WebSocket.
+     * Force get data of a device using WebSocket.
      *
      * @param string $deviceId The device ID.
      * @param array|string $params The parameters to query.
      * @return array The response data.
      * @throws Exception If there is an error during the process.
      */
-    public function forceUpdate($deviceId, $params) {
+    public function forceGetData($deviceId, $params) {
         $device = $this->getDeviceById($deviceId);
         if (!$device) {
             throw new Exception('Device not found.');
@@ -407,6 +406,48 @@ class Devices {
         }
 
         return $response['params'];
+    }
+
+    /**
+     * Force update the status of a device using WebSocket.
+     *
+     * @param string $deviceId The device ID.
+     * @param array $params The parameters to update.
+     * @param int $sleepSec The number of seconds to wait before verifying the update (default is 3 seconds).
+     * @return array The response data.
+     * @throws Exception If there is an error during the process.
+     */
+    public function forceUpdateDevice($deviceId, $params, $sleepSec = 3) {
+        $device = $this->getDeviceById($deviceId);
+        if (!$device) {
+            throw new Exception('Device not found.');
+        }
+
+        $wsClient = new WebSocketClient($this->httpClient);
+        $handshakeResponse = $wsClient->handshake($device);
+
+        if (isset($handshakeResponse['error']) && $handshakeResponse['error'] != 0) {
+            throw new Exception('Handshake Error: ' . $handshakeResponse['msg']);
+        }
+
+        $data = $wsClient->createUpdateData($device, $params, $device['apikey']);
+        $wsClient->send(json_encode($data));
+
+        // Keep heartbeat running and verify changes
+        $response = json_decode($wsClient->receive(), true);
+
+        if (isset($response['error']) && $response['error'] != 0) {
+            throw new Exception('Error: ' . $response['msg']);
+        }
+
+        sleep($sleepSec); // Wait for a while to let the changes take effect
+
+        // Check if the parameters have been updated
+        $updatedParams = $this->forceGetData($deviceId, array_keys($params));
+
+        $wsClient->close();
+
+        return $updatedParams;
     }
 }
 ?>
