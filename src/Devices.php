@@ -54,7 +54,9 @@ class Devices {
     public function fetchDevicesData($lang = 'en') {
         $familyId = $this->home->getCurrentFamilyId();
         if (!$familyId) {
-            throw new Exception('Current family ID is not set. Please call getFamilyData first.');
+            $errorCode = 'NO_FAMILY_ID'; // Example error code
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception($errorMsg);
         }
         $params = [
             'lang' => $lang,
@@ -186,7 +188,9 @@ class Devices {
         $response = $this->httpClient->getRequest($endpoint, $queryParams);
 
         if (isset($response['error']) && $response['error'] != 0) {
-            throw new Exception('Error: ' . $response['msg']);
+            $errorCode = $response['error'];
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception("Error: $errorMsg");
         }
 
         $responseParams = $response['params'] ?? [];
@@ -227,7 +231,9 @@ class Devices {
         $response = $this->httpClient->getRequest($endpoint, $queryParams);
 
         if (isset($response['error']) && $response['error'] != 0) {
-            throw new Exception('Error: ' . $response['msg']);
+            $errorCode = $response['error'];
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception("Error: $errorMsg");
         }
 
         if (isset($response['params'])) {
@@ -347,7 +353,7 @@ class Devices {
         $deviceList = $this->getDevicesList();
 
         foreach ($deviceList as $name => $device) {
-            if ($device['deviceid'] === $identifier || $name === $identifier) {
+            if ($device['deviceid'] === $identifier or $name === $identifier) {
                 return $device['online'];
             }
         }
@@ -369,7 +375,9 @@ class Devices {
         $response = $this->httpClient->getRequest($endpoint, $queryParams);
 
         if (isset($response['error']) && $response['error'] != 0) {
-            throw new Exception('Error: ' . $response['msg']);
+            $errorCode = $response['error'];
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception("Error: $errorMsg");
         }
 
         return $response;
@@ -386,14 +394,18 @@ class Devices {
     public function forceGetData($deviceId, $params) {
         $device = $this->getDeviceById($deviceId);
         if (!$device) {
-            throw new Exception('Device not found.');
+            $errorCode = 'DEVICE_NOT_FOUND'; // Example error code
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception($errorMsg);
         }
 
         $wsClient = new WebSocketClient($this->httpClient);
         $handshakeResponse = $wsClient->handshake($device);
 
         if (isset($handshakeResponse['error']) && $handshakeResponse['error'] != 0) {
-            throw new Exception('Handshake Error: ' . $handshakeResponse['msg']);
+            $errorCode = $handshakeResponse['error'];
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception("Handshake Error: $errorMsg");
         }
 
         $data = $wsClient->createQueryData($device, $params);
@@ -403,7 +415,9 @@ class Devices {
         $wsClient->close();
 
         if (isset($response['error']) && $response['error'] != 0) {
-            throw new Exception('Error: ' . $response['msg']);
+            $errorCode = $response['error'];
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception("Error: $errorMsg");
         }
 
         return $response['params'];
@@ -421,14 +435,18 @@ class Devices {
     public function forceUpdateDevice($deviceId, $params, $sleepSec = 3) {
         $device = $this->getDeviceById($deviceId);
         if (!$device) {
-            throw new Exception('Device not found.');
+            $errorCode = 'DEVICE_NOT_FOUND'; // Example error code
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception($errorMsg);
         }
 
         $wsClient = new WebSocketClient($this->httpClient);
         $handshakeResponse = $wsClient->handshake($device);
 
         if (isset($handshakeResponse['error']) && $handshakeResponse['error'] != 0) {
-            throw new Exception('Handshake Error: ' . $handshakeResponse['msg']);
+            $errorCode = $handshakeResponse['error'];
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception("Handshake Error: $errorMsg");
         }
 
         $data = $wsClient->createUpdateData($device, $params, $device['apikey']);
@@ -438,7 +456,9 @@ class Devices {
         $response = json_decode($wsClient->receive(), true);
 
         if (isset($response['error']) && $response['error'] != 0) {
-            throw new Exception('Error: ' . $response['msg']);
+            $errorCode = $response['error'];
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception("Error: $errorMsg");
         }
 
         sleep($sleepSec); // Wait for a while to let the changes take effect

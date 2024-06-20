@@ -11,8 +11,6 @@
 require_once __DIR__ . '/Utils.php';
 require_once __DIR__ . '/Constants.php';
 
-
-
 class WebSocketClient {
     private $socket;
     private $url;
@@ -57,13 +55,17 @@ class WebSocketClient {
                 $url = 'https://as-dispa.coolkit.cc/dispatch/app';
                 break;
             default:
-                throw new Exception('Invalid region');
+                $errorCode = 'INVALID_REGION'; // Example error code
+                $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+                throw new Exception($errorMsg);
         }
 
         $emptyRequestResponse = $this->httpClient->getRequest($url, [], true);
 
         if (!$emptyRequestResponse || empty($emptyRequestResponse['domain']) || empty($emptyRequestResponse['port'])) {
-            throw new Exception('Error: Empty request response is invalid.');
+            $errorCode = 'EMPTY_REQUEST_RESPONSE'; // Example error code
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception($errorMsg);
         }
 
         $ip = gethostbyname($emptyRequestResponse['domain']);
@@ -86,6 +88,8 @@ class WebSocketClient {
         $this->socket = stream_socket_client("tls://{$this->host}:{$this->port}", $errno, $errstr, 30, STREAM_CLIENT_CONNECT, $context);
 
         if (!$this->socket) {
+            $errorCode = 'UNABLE_TO_CONNECT'; // Example error code
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
             throw new Exception("Unable to connect to websocket: $errstr ($errno)");
         }
 
@@ -111,13 +115,17 @@ class WebSocketClient {
         $acceptKey = trim($matches[1] ?? '');
 
         if (!$acceptKey) {
-            throw new Exception("WebSocket handshake failed. Sec-WebSocket-Accept missing.");
+            $errorCode = 'WS_HANDSHAKE_FAILED'; // Example error code
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception($errorMsg);
         }
 
         $expectedAcceptKey = base64_encode(pack('H*', sha1($this->key . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11')));
 
         if ($acceptKey !== $expectedAcceptKey) {
-            throw new Exception("WebSocket handshake failed. Invalid Sec-WebSocket-Accept: $acceptKey. Expected: $expectedAcceptKey.");
+            $errorCode = 'INVALID_WS_ACCEPT'; // Example error code
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception($errorMsg);
         }
 
         return true;
@@ -210,13 +218,17 @@ class WebSocketClient {
      */
     public function send($data) {
         if (!$this->socket) {
-            throw new Exception("No valid WebSocket connection.");
+            $errorCode = 'NO_VALID_WS_CONNECTION'; // Example error code
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception($errorMsg);
         }
         $encodedData = $this->hybi10Encode($data);
         $result = @fwrite($this->socket, $encodedData);
         $this->utils->debugLog(__CLASS__, __FUNCTION__, ['data' => $data], [], ['fwriteResult' => $result], debug_backtrace()[1]['class'], debug_backtrace()[1]['function'], $this->url);
         if ($result === false) {
-            throw new Exception("Failed to send data over WebSocket.");
+            $errorCode = 'FAILED_TO_SEND_WS_DATA'; // Example error code
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception($errorMsg);
         }
     }
 
@@ -228,7 +240,9 @@ class WebSocketClient {
      */
     public function receive() {
         if (!$this->socket) {
-            throw new Exception("No valid WebSocket connection.");
+            $errorCode = 'NO_VALID_WS_CONNECTION'; // Example error code
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception($errorMsg);
         }
         $response = @fread($this->socket, 1500);
         $decodedResponse = $this->hybi10Decode($response);
@@ -372,7 +386,9 @@ class WebSocketClient {
         $this->pid = pcntl_fork();
 
         if ($this->pid == -1) {
-            throw new Exception("Could not fork process for heartbeat");
+            $errorCode = 'FORK_FAILED'; // Example error code
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception($errorMsg);
         } elseif ($this->pid) {
             // Parent process
             return;
@@ -397,6 +413,15 @@ class WebSocketClient {
      */
     public function getWebSocketUrl() {
         return $this->url;
+    }
+
+    /**
+     * Get the current Websocket connection
+     *
+     * @return stream resource
+     */
+    public function getSocket() {
+        return $this->socket;
     }
 }
 ?>
