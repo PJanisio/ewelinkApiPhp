@@ -20,15 +20,13 @@ eWeLink API PHP is a connector for Sonoff / eWeLink devices. This library allows
 - debug all requests and responses to debug.log
 - use Websocket connection to get and update parameters
 
-## Configuration
+## Configuration and methods examples
 
-Generate here: [dev.ewelink](https://dev.ewelink.cc/)
-
-And put your keys and redirect Url in **Constants.php**
+Go to [Wiki Pages](https://github.com/PJanisio/ewelinkApiPhp/wiki) to install and use methods.
 
 ## Example
 
-This is a single case example to turn on device, look at **index.php** in your root directory to get all possible methods.
+This is a single case example to turn on device. Look at [Wiki Pages](https://github.com/PJanisio/ewelinkApiPhp/wiki) to get knowledge of other methods.
 
 ```php
 <?php
