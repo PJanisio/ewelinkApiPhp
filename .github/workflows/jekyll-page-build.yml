@@ -29,20 +29,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Upload includes
-        uses: actions/upload-artifact@v4
-        with:
-          name: includes
-          path: .github/workflows/_includes
-
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      - name: Download includes
-        uses: actions/download-artifact@v4
-        with:
-          name: includes
-          path: ./_includes
+      - name: Install Ruby and Bundler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby-full
+          gem install bundler jekyll
+
+      - name: Install Dependencies
+        run: |
+          bundle install
 
       - name: Inject meta tag into README
         run: |
@@ -51,8 +49,10 @@ jobs:
 
       - name: Build with Jekyll
         run: |
-          # Ensure the meta tag is included in the Jekyll build
           JEKYLL_ENV=production bundle exec jekyll build
+
+      - name: Ensure the meta tag is included in the Jekyll build
+        run: |
           find ./_site -name '*.html' -exec perl -pi -e 's|</head>|<meta name="google-site-verification" content="wtx3stBYjy_DdE-2TLqJdud3R6UNj8Yih07jE5kUzHE" /></head>|' {} +
 
       - name: Upload artifact
