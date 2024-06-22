@@ -44,6 +44,12 @@ jobs:
           name: includes
           path: ./_includes
 
+      - name: Install Ruby and Bundler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby-full
+          gem install bundler jekyll
+
       - name: Inject meta tag into README
         run: |
           cat _includes/google_verification.html README.md > README_temp.md
