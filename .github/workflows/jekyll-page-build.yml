@@ -50,10 +50,10 @@ jobs:
           mv README_temp.md README.md
 
       - name: Build with Jekyll
-        uses: actions/jekyll-build-pages@v1
-        with:
-          source: ./
-          destination: ./_site
+        run: |
+          # Ensure the meta tag is included in the Jekyll build
+          JEKYLL_ENV=production bundle exec jekyll build
+          find ./_site -name '*.html' -exec perl -pi -e 's|</head>|<meta name="google-site-verification" content="wtx3stBYjy_DdE-2TLqJdud3R6UNj8Yih07jE5kUzHE" /></head>|' {} +
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
