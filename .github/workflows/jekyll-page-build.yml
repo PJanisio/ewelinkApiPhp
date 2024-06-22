@@ -37,7 +37,10 @@ jobs:
           destination: ./_site
       - name: Inject Meta Tag
         run: |
+          echo "Injecting meta tag into HTML files..."
           find ./_site -name '*.html' -exec perl -pi -e 's|</head>|<meta name="google-site-verification" content="wtx3stBYjy_DdE-2TLqJdud3R6UNj8Yih07jE5kUzHE" /></head>|' {} +
+          echo "Verification of meta tag injection:"
+          grep -rl '<meta name="google-site-verification" content="wtx3stBYjy_DdE-2TLqJdud3R6UNj8Yih07jE5kUzHE" />' ./_site
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
 
