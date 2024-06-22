@@ -28,23 +28,33 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Upload includes
+        uses: actions/upload-artifact@v3
+        with:
+          name: includes
+          path: .github/workflows/_includes
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
+      - name: Download includes
+        uses: actions/download-artifact@v3
+        with:
+          name: includes
+          path: ./_includes
+
+      - name: Inject meta tag into README
+        run: |
+          cat _includes/google_verification.html README.md > README_temp.md
+          mv README_temp.md README.md
+
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:
           source: ./
           destination: ./_site
-      - name: Change permissions
-        run: |
-          echo "Changing permissions of HTML files..."
-          find ./_site -name '*.html' -exec chmod u+w {} +
-      - name: Inject Meta Tag
-        run: |
-          echo "Injecting meta tag into HTML files..."
-          find ./_site -name '*.html' -exec perl -pi -e 's|</head>|<meta name="google-site-verification" content="wtx3stBYjy_DdE-2TLqJdud3R6UNj8Yih07jE5kUzHE" /></head>|' {} +
-          echo "Verification of meta tag injection:"
-          grep -rl '<meta name="google-site-verification" content="wtx3stBYjy_DdE-2TLqJdud3R6UNj8Yih07jE5kUzHE" />' ./_site
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
 
