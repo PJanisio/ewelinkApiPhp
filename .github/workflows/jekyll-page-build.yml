@@ -35,6 +35,10 @@ jobs:
         with:
           source: ./
           destination: ./_site
+      - name: Change permissions
+        run: |
+          echo "Changing permissions of HTML files..."
+          find ./_site -name '*.html' -exec chmod u+w {} +
       - name: Inject Meta Tag
         run: |
           echo "Injecting meta tag into HTML files..."
