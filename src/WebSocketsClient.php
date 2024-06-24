@@ -424,4 +424,3 @@ class WebSocketClient {
         return $this->socket;
     }
 }
-?>
