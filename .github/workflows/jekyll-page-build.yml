@@ -16,42 +16,34 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Build job
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Install Ruby and Bundler
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ruby-full build-essential zlib1g-dev
-          echo '# Install Ruby Gems to ~/gems' >> ~/.bashrc
-          echo 'export GEM_HOME="$HOME/gems"' >> ~/.bashrc
-          echo 'export PATH="$HOME/gems/bin:$PATH"' >> ~/.bashrc
-          source ~/.bashrc
-          gem install bundler jekyll
+      - name: Set up Ruby
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: '3.0'
 
       - name: Install Dependencies
         run: |
-          cd .github/workflows
+          gem install bundler
+          bundle config set path 'vendor/bundle'
           bundle install
+        working-directory: .github/workflows
 
-      - name: Build with Jekyll
+      - name: Build Jekyll site
         run: |
-          cd .github/workflows
-          JEKYLL_ENV=production bundle exec jekyll build --source ../../ --destination ../../_site --config ../../_config.yml
+          bundle exec jekyll build --source . --destination ./_site --config _config.yml
+        working-directory: .
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
 
-  # Deployment job
   deploy:
     environment:
       name: github-pages
