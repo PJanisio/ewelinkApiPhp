@@ -21,6 +21,4 @@ layouts_dir: ".github/workflows/_layouts"
 # Enable the GitHub Pages plugin
 plugins:
   - jekyll-github-metadata
-
-# Add your Google site verification meta tag
-google_site_verification: wtx3stBYjy_DdE-2TLqJdud3R6UNj8Yih07jE5kUzHE
+  - jekyll-seo-tag
