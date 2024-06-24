@@ -91,6 +91,5 @@ Index.php works as a gateway to API and also as a debug for all available method
 
 - main branch when commited used to be operative.
 - enable DEBUG = 1; in Constants to log every get and postRequest with output and parameters to **debug.log**
-- with next stable release methods and invoking functions structure can be changed (keep this in mind)
 - branch **websockets** will be not maintened anymore
 - index.php is a quasi-test file which helps me to check all methods and it is also a great example
