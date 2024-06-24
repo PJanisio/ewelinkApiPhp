@@ -30,7 +30,7 @@ jobs:
       - name: Install Dependencies
         run: |
           cd .github/workflows
-          bundle install --gemfile=Gemfile
+          bundle install --gemfile=.github/workflows/Gemfile
 
       - name: Build with Jekyll
         run: |
