@@ -29,23 +29,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Install Ruby and Bundler
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ruby-full
-          gem install bundler jekyll
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.0 # Change to the version you need
 
       - name: Install Dependencies
         run: |
           bundle install
 
-      - name: Copy layout file
-        run: |
-          mkdir -p _layouts
-          cp .github/workflows/_layouts/default.html _layouts/default.html
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
 
       - name: Build with Jekyll
         run: |
