@@ -380,15 +380,17 @@ class Devices {
      * @return bool True if the device is online, false otherwise.
      */
     public function isOnline($identifier) {
-        $this->fetchDevicesData();
-        $deviceList = $this->getDevicesList();
-
-        foreach ($deviceList as $name => $device) {
-            if ($device['deviceid'] === $identifier or $name === $identifier) {
-                return $device['online'];
+        $deviceId = $this->getDeviceIdByIdentifier($identifier);
+        if (!$deviceId) {
+            return false;
+        }
+        if ($this->devicesData && isset($this->devicesData['thingList'])) {
+            foreach ($this->devicesData['thingList'] as $device) {
+                if ($device['itemData']['deviceid'] === $deviceId) {
+                    return $device['itemData']['online'] == 1;
+                }
             }
         }
-
         return false;
     }
 
@@ -514,4 +516,3 @@ class Devices {
         return $updatedParams;
     }
 }
-?>

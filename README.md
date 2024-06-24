@@ -11,20 +11,16 @@ eWeLink API PHP is a connector for Sonoff / eWeLink devices. This library allows
 
 ## Current features
 
-- log-in and authorization to ewelink APP via web or websockets
-- get devices list with all or chosen parameters
-- saving devices and other outputs from API to .json
-- search for any value of parameter for each device (f.e switch status, productName, MAC etc.)
-- set any parameter/state of device
-- check if device has MultiChannel support
-- set parameter for Multichannel devices
-- check if device is Online
+- get all devices list with their parameters using **deviceId** or **deviceName** from ewelink app
+- saving devices data and other outputs from API to **.json**
+- search for **any value** of each device (f.e switch status, productName, MAC etc.)
+- set any parameter/state of device using **HTTP gateway** or **websockets**
+- set parameter for **multi-channel** devices (like 4CH Pro)
 - debug all requests and responses to debug.log
-- use Websocket connection to get and update parameters
 
 ## Documentation
 
-Go to [Wiki Pages](https://github.com/PJanisio/ewelinkApiPhp/wiki) to install and use methods.
+Go to [Wiki Pages](https://github.com/PJanisio/ewelinkApiPhp/wiki) to get started read about possible methods.
 
 ## Example
 
@@ -63,33 +59,6 @@ $token = new Token($httpClient);
 
 ```
 
-## Structure
+## Tech info
 
-``` rust
-ewelinkApiPhp/
-│
-├── src/
-│   ├── Constants.php
-│   ├── Devices.php
-│   ├── Home.php
-│   ├── HttpClient.php
-│   ├── Token.php
-│   └── Utils.php
-│   └── WebSocketsClient.php
-│
-├── autoloader.php
-└── index.php
-```
-
-All classes are located in src directory.
-
-Index.php works as a gateway to API and also as a debug for all available methods.
-
-.json files outputs will be saved by default in project_root. You can define directory in Constants.php
-
-## More inside info about current development
-
-- main branch when commited used to be operative.
-- enable DEBUG = 1; in Constants to log every get and postRequest with output and parameters to **debug.log**
-- branch **websockets** will be not maintened anymore
-- index.php is a quasi-test file which helps me to check all methods and it is also a great example
+Visit wiki page for devs: [devs-wiki](https://github.com/PJanisio/ewelinkApiPhp/wiki/Developers)
