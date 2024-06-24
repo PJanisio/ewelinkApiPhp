@@ -418,7 +418,7 @@ class WebSocketClient {
     /**
      * Get the current Websocket connection
      *
-     * @return stream resource
+     * @return bool|resource
      */
     public function getSocket() {
         return $this->socket;

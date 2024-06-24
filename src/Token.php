@@ -134,4 +134,3 @@ class Token {
         echo '<meta http-equiv="refresh" content="' . $delay . ';url=' . htmlspecialchars($url) . '">';
     }
 }
-?>

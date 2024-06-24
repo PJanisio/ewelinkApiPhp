@@ -471,4 +471,3 @@ class Devices {
         return $updatedParams;
     }
 }
-?>

@@ -278,4 +278,3 @@ class HttpClient {
         return $this->home->getCurrentFamilyId();
     }
 }
-?>

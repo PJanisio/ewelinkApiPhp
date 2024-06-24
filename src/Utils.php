@@ -188,4 +188,3 @@ class Utils {
         file_put_contents(Constants::JSON_LOG_DIR . '/debug.log', $logEntry, FILE_APPEND);
     }
 }
-?>

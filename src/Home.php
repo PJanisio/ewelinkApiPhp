@@ -55,4 +55,3 @@ class Home {
         return $this->currentFamilyId;
     }
 }
-?>

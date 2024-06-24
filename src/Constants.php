@@ -67,4 +67,3 @@ class Constants {
         30022 => 'The device is offline and the operation fails. It will appear in batch updating the device status.'
     ];
 }
-?>
