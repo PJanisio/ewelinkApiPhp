@@ -24,11 +24,18 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.3.3
+          ruby-version: '3.0'
           bundler-cache: true
 
+      - name: Install Dependencies
+        run: |
+          cd .github/workflows
+          bundle install --gemfile=Gemfile
+
       - name: Build with Jekyll
-        run: bundle exec jekyll build --source . --destination ./_site
+        run: |
+          cd .github/workflows
+          bundle exec jekyll build --source ../../ --destination ../../_site --config ../../_config.yml
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
