@@ -34,10 +34,12 @@ jobs:
         with:
           ruby-version: 3.0 # Ensure you use the correct Ruby version
 
+      - name: Install Bundler
+        run: gem install bundler
+
       - name: Install Dependencies
         run: |
           cd .github/workflows
-          gem install bundler
           bundle install
           cd ../../
 
@@ -46,9 +48,7 @@ jobs:
 
       - name: Build with Jekyll
         run: |
-          cd .github/workflows
-          JEKYLL_ENV=production bundle exec jekyll build --source ../../ --destination ../../_site --config ../../_config.yml
-          cd ../../
+          JEKYLL_ENV=production bundle exec jekyll build --source . --destination ./_site --config _config.yml
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
