@@ -45,7 +45,8 @@ jobs:
 
       - name: Build with Jekyll
         run: |
-          JEKYLL_ENV=production bundle exec jekyll build --source . --destination ./_site --config _config.yml
+          cd .github/workflows
+          JEKYLL_ENV=production bundle exec jekyll build --source ../../ --destination ../../_site --config ../../_config.yml
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
