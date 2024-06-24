@@ -36,14 +36,16 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          bundle install --gemfile=.github/workflows/Gemfile
+          cd .github/workflows
+          bundle install --gemfile=Gemfile
+          cd ../../
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Build with Jekyll
         run: |
-          JEKYLL_ENV=production bundle exec jekyll build --source . --destination ./_site --config _config.yml
+          JEKYLL_ENV=production bundle exec jekyll build --source . --destination ./_site --config _config.yml --gemfile .github/workflows/Gemfile
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
