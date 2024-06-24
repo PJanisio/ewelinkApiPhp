@@ -1,3 +1,4 @@
+# Sample workflow for building and deploying a Jekyll site to GitHub Pages
 name: Deploy Jekyll with GitHub Pages dependencies preinstalled
 
 on:
@@ -21,24 +22,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.0'
-          bundler-cache: true
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
 
-      - name: Install Dependencies
+      - name: Move Layouts
         run: |
-          BUNDLE_GEMFILE=.github/workflows/Gemfile bundle install --gemfile .github/workflows/Gemfile
+          mkdir -p _layouts
+          cp .github/workflows/_layout/default.html _layouts/default.html
 
       - name: Build with Jekyll
-        run: |
-          BUNDLE_GEMFILE=.github/workflows/Gemfile bundle exec jekyll build --source . --destination ./_site --config _config.yml --trace
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./_site
 
   deploy:
     environment:
