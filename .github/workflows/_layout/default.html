@@ -1,23 +1,36 @@
-<!-- .github/workflows/default.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="google-site-verification" content="wtx3stBYjy_DdE-2TLqJdud3R6UNj8Yih07jE5kUzHE" />
-  <title>{{ page.title }}</title>
-  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+  <title>{{ site.env.SITE_TITLE }}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    header, footer {
+      background-color: #f8f9fa;
+      padding: 1em;
+      text-align: center;
+    }
+    main {
+      padding: 2em;
+    }
+  </style>
 </head>
 <body>
   <header>
-    <h1>{{ site.title }}</h1>
-    <p>{{ site.description }}</p>
+    <h1>{{ site.env.SITE_TITLE }}</h1>
+    <p>{{ site.env.SITE_DESCRIPTION }}</p>
   </header>
   <main>
     {{ content }}
   </main>
   <footer>
-    <p>&copy; {{ site.time | date: '%Y' }} {{ site.author }}</p>
+    <p>&copy; {{ site.time | date: '%Y' }} {{ site.env.SITE_AUTHOR }}</p>
   </footer>
 </body>
 </html>

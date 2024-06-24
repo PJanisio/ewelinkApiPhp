@@ -18,6 +18,10 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      SITE_TITLE: "ewelinkApiPhp"
+      SITE_DESCRIPTION: "API connector for Sonoff / ewelink devices"
+      SITE_AUTHOR: "Paweł 'Pavlus' Janisio"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
