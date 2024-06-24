@@ -35,7 +35,7 @@ jobs:
       - name: Build with Jekyll
         run: |
           cd .github/workflows
-          bundle exec jekyll build --source ../../ --destination ../../_site --config ../../_config.yml
+          bundle exec jekyll build --source ../../ --destination ../../_site --config ../../_config.yml --trace
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
