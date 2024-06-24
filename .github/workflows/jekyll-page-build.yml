@@ -29,18 +29,16 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          cd .github/workflows
-          bundle install --gemfile=.github/workflows/Gemfile
+          BUNDLE_GEMFILE=.github/workflows/Gemfile bundle install
 
       - name: Build with Jekyll
         run: |
-          cd .github/workflows
-          bundle exec jekyll build --source ../../ --destination ../../_site --config ../../_config.yml --trace
+          BUNDLE_GEMFILE=.github/workflows/Gemfile bundle exec jekyll build --source . --destination ./_site --config _config.yml --trace
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: ./_site
 
   deploy:
     environment:
