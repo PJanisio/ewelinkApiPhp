@@ -16,6 +16,7 @@ class Devices {
     private $devicesData;
     private $httpClient;
     private $home;
+    private $wsClient;
 
     /**
      * Constructor for the Devices class.
@@ -419,6 +420,75 @@ class Devices {
 
         return $response;
     }
+    
+    
+    /**
+     * Initialize WebSocket connection and perform handshake.
+     *
+     * @param string $identifier The device name or ID.
+     * @return WebSocketClient The initialized WebSocket client.
+     * @throws Exception If the device is not found or handshake fails.
+     */
+    public function initializeWebSocketConnection($identifier) {
+        $deviceId = $this->getDeviceIdByIdentifier($identifier);
+        if (!$deviceId) {
+            throw new Exception("Device not found.");
+        }
+
+        $device = $this->getDeviceById($deviceId);
+        if (!$device) {
+            throw new Exception("Device data not available.");
+        }
+
+        $wsClient = new WebSocketClient($this->httpClient);
+        $handshakeResponse = $wsClient->handshake($device);
+
+        if (isset($handshakeResponse['error']) && $handshakeResponse['error'] != 0) {
+            $errorCode = $handshakeResponse['error'];
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception("Handshake Error: $errorMsg");
+        }
+
+        return $wsClient;
+    }
+    
+    /**
+     * Get data of a device using WebSocket.
+     *
+     * @param string $identifier The device name or ID.
+     * @param array|string $params The parameters to query.
+     * @return array The response data.
+     * @throws Exception If there is an error during the process.
+     */
+    public function getDataWebSocket($identifier, $params) {
+    $deviceId = $this->getDeviceIdByIdentifier($identifier);
+    if (!$deviceId) {
+        throw new Exception("Device not found.");
+    }
+    $device = $this->getDeviceById($deviceId);
+    if (!$device) {
+        $errorCode = 'DEVICE_NOT_FOUND'; // Example error code
+        $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+        throw new Exception($errorMsg);
+    }
+
+    // Ensure WebSocket connection is initialized
+    if (!isset($this->wsClient)) {
+        $this->wsClient = $this->initializeWebSocketConnection($identifier);
+    }
+
+    $data = $this->wsClient->createQueryData($device, $params);
+    $this->wsClient->send(json_encode($data));
+    $response = json_decode($this->wsClient->receive(), true);
+
+    if (isset($response['error']) && $response['error'] != 0) {
+        $errorCode = $response['error'];
+        $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+        throw new Exception("Error: $errorMsg");
+    }
+
+    return $response['params'];
+}
 
     /**
      * Force get data of a device using WebSocket.

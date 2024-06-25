@@ -67,7 +67,6 @@ Please see example app written based on this class that checks chosen parameters
 
 ![ewe_websocket](https://github.com/PJanisio/ewelinkApiPhp/assets/9625885/daa54a81-b0b3-4a43-b376-4ec412108675)
 
-
 ## Tech info
 
 Visit wiki page for devs: [devs-wiki](https://github.com/PJanisio/ewelinkApiPhp/wiki/Developers)
