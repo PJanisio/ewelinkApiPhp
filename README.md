@@ -59,6 +59,15 @@ $token = new Token($httpClient);
 
 ```
 
+## Example of class usage - device  monitoring
+
+Please see examplary repositopry with an HTML + PHP script that checks chosen parameters in real time:
+
+[Device Monitoring APP](https://github.com/PJanisio/ewelinkapiphp-device-monitoring)
+
+![ewe_websocket](https://github.com/PJanisio/ewelinkApiPhp/assets/9625885/3bcbc04b-ad66-4c00-bc4a-d281027f229d)
+
+
 ## Tech info
 
 Visit wiki page for devs: [devs-wiki](https://github.com/PJanisio/ewelinkApiPhp/wiki/Developers)
