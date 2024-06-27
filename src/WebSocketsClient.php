@@ -5,9 +5,9 @@
  * Author: Paweł 'Pavlus' Janisio
  * Website: https://github.com/AceExpert/ewelink-api-python
  * Dependencies: PHP 7.4+
- * Description: WebSocket client for Sonoff / ewelink devices
+ * Description: API connector for Sonoff / ewelink devices
  */
-
+ 
 require_once __DIR__ . '/Utils.php';
 require_once __DIR__ . '/Constants.php';
 
@@ -22,6 +22,7 @@ class WebSocketClient {
     private $httpClient;
     private $hbInterval;
     private $pid;
+    private $os;
 
     /**
      * Constructor for the WebSocketClient class.
@@ -31,48 +32,40 @@ class WebSocketClient {
     public function __construct(HttpClient $httpClient) {
         $this->httpClient = $httpClient;
         $this->utils = new Utils();
+        $this->os = strtoupper(substr(PHP_OS, 0, 3));
         $this->resolveWebSocketUrl();
     }
 
     /**
      * Resolve WebSocket URL based on the region.
      *
-     * @throws Exception If the region is invalid.
+     * @throws Exception If the region is invalid or the response is empty.
      */
     private function resolveWebSocketUrl() {
         $region = Constants::REGION;
-        switch ($region) {
-            case 'cn':
-                $url = 'https://cn-dispa.coolkit.cn/dispatch/app';
-                break;
-            case 'us':
-                $url = 'https://us-dispa.coolkit.cc/dispatch/app';
-                break;
-            case 'eu':
-                $url = 'https://eu-dispa.coolkit.cc/dispatch/app';
-                break;
-            case 'as':
-                $url = 'https://as-dispa.coolkit.cc/dispatch/app';
-                break;
-            default:
-                $errorCode = 'INVALID_REGION'; // Example error code
-                $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
-                throw new Exception($errorMsg);
+        $urls = [
+            'cn' => 'https://cn-dispa.coolkit.cn/dispatch/app',
+            'us' => 'https://us-dispa.coolkit.cc/dispatch/app',
+            'eu' => 'https://eu-dispa.coolkit.cc/dispatch/app',
+            'as' => 'https://as-dispa.coolkit.cc/dispatch/app'
+        ];
+
+        if (!isset($urls[$region])) {
+            throw new Exception(Constants::ERROR_CODES['INVALID_REGION'] ?? 'Unknown error');
         }
 
+        $url = $urls[$region];
         $emptyRequestResponse = $this->httpClient->getRequest($url, [], true);
 
         if (!$emptyRequestResponse || empty($emptyRequestResponse['domain']) || empty($emptyRequestResponse['port'])) {
-            $errorCode = 'EMPTY_REQUEST_RESPONSE'; // Example error code
-            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
-            throw new Exception($errorMsg);
+            throw new Exception(Constants::ERROR_CODES['EMPTY_REQUEST_RESPONSE'] ?? 'Unknown error');
         }
 
         $ip = gethostbyname($emptyRequestResponse['domain']);
         $this->url = 'wss://' . $ip . ':' . $emptyRequestResponse['port'] . '/api/ws';
 
         $parts = parse_url($this->url);
-        $this->host = gethostbyname($parts['host']); // Resolve the domain to IP
+        $this->host = gethostbyname($parts['host']);
         $this->port = $parts['port'];
         $this->path = $parts['path'];
     }
@@ -88,8 +81,6 @@ class WebSocketClient {
         $this->socket = stream_socket_client("tls://{$this->host}:{$this->port}", $errno, $errstr, 30, STREAM_CLIENT_CONNECT, $context);
 
         if (!$this->socket) {
-            $errorCode = 'UNABLE_TO_CONNECT'; // Example error code
-            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
             throw new Exception("Unable to connect to websocket: $errstr ($errno)");
         }
 
@@ -102,30 +93,23 @@ class WebSocketClient {
             "Sec-WebSocket-Key: $this->key",
             "Sec-WebSocket-Version: 13",
             "Sec-WebSocket-Protocol: chat",
-            "Origin: null"  // Set Origin to null
+            "Origin: null"
         ];
 
         $request = implode("\r\n", $headers) . "\r\n\r\n";
         fwrite($this->socket, $request);
 
         $response = fread($this->socket, 1500);
-        $this->utils->debugLog(__CLASS__, __FUNCTION__, [], $headers, ['response' => $response], debug_backtrace()[1]['class'], debug_backtrace()[1]['function'], $this->url);
-
         preg_match('#Sec-WebSocket-Accept:\s(.*)$#mUi', $response, $matches);
         $acceptKey = trim($matches[1] ?? '');
 
         if (!$acceptKey) {
-            $errorCode = 'WS_HANDSHAKE_FAILED'; // Example error code
-            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
-            throw new Exception($errorMsg);
+            throw new Exception(Constants::ERROR_CODES['WS_HANDSHAKE_FAILED'] ?? 'Unknown error');
         }
 
         $expectedAcceptKey = base64_encode(pack('H*', sha1($this->key . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11')));
-
         if ($acceptKey !== $expectedAcceptKey) {
-            $errorCode = 'INVALID_WS_ACCEPT'; // Example error code
-            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
-            throw new Exception($errorMsg);
+            throw new Exception(Constants::ERROR_CODES['INVALID_WS_ACCEPT'] ?? 'Unknown error');
         }
 
         return true;
@@ -157,7 +141,6 @@ class WebSocketClient {
      * @return array The handshake data.
      */
     public function createHandshakeData($device) {
-        $utils = new Utils();
         $tokenData = $this->httpClient->getTokenData();
         return [
             'action' => 'userOnline',
@@ -167,7 +150,7 @@ class WebSocketClient {
             'userAgent' => 'app',
             'apikey' => $device['apikey'],
             'appid' => Constants::APPID,
-            'nonce' => $utils->generateNonce(),
+            'nonce' => $this->utils->generateNonce(),
             'sequence' => strval(round(microtime(true) * 1000))
         ];
     }
@@ -218,17 +201,12 @@ class WebSocketClient {
      */
     public function send($data) {
         if (!$this->socket) {
-            $errorCode = 'NO_VALID_WS_CONNECTION'; // Example error code
-            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
-            throw new Exception($errorMsg);
+            throw new Exception(Constants::ERROR_CODES['NO_VALID_WS_CONNECTION'] ?? 'Unknown error');
         }
         $encodedData = $this->hybi10Encode($data);
         $result = @fwrite($this->socket, $encodedData);
-        $this->utils->debugLog(__CLASS__, __FUNCTION__, ['data' => $data], [], ['fwriteResult' => $result], debug_backtrace()[1]['class'], debug_backtrace()[1]['function'], $this->url);
         if ($result === false) {
-            $errorCode = 'FAILED_TO_SEND_WS_DATA'; // Example error code
-            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
-            throw new Exception($errorMsg);
+            throw new Exception(Constants::ERROR_CODES['FAILED_TO_SEND_WS_DATA'] ?? 'Unknown error');
         }
     }
 
@@ -240,14 +218,10 @@ class WebSocketClient {
      */
     public function receive() {
         if (!$this->socket) {
-            $errorCode = 'NO_VALID_WS_CONNECTION'; // Example error code
-            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
-            throw new Exception($errorMsg);
+            throw new Exception(Constants::ERROR_CODES['NO_VALID_WS_CONNECTION'] ?? 'Unknown error');
         }
-        $response = @fread($this->socket, 1500);
-        $decodedResponse = $this->hybi10Decode($response);
-        $this->utils->debugLog(__CLASS__, __FUNCTION__, [], [], ['response' => $this->utils->sanitizeString($response), 'decodedResponse' => $decodedResponse], debug_backtrace()[1]['class'], debug_backtrace()[1]['function'], $this->url);
-        return $decodedResponse;
+        $response = @fread($this->socket, 2048);
+        return $this->hybi10Decode($response);
     }
 
     /**
@@ -261,7 +235,6 @@ class WebSocketClient {
         if ($this->pid) {
             posix_kill($this->pid, SIGTERM);
             $this->pid = null;
-            $this->utils->debugLog(__CLASS__, __FUNCTION__, [], [], ['message' => 'Heartbeat process stopped'], debug_backtrace()[1]['class'], debug_backtrace()[1]['function'], $this->url);
         }
     }
 
@@ -379,28 +352,42 @@ class WebSocketClient {
      * Start the heartbeat process to keep the WebSocket connection alive.
      *
      * @param int $interval The heartbeat interval in seconds.
-     * @throws Exception If forking the process fails.
+     * @throws Exception If forking the process fails on Unix-based systems.
      */
     private function startHeartbeat($interval) {
         $this->hbInterval = $interval + 7; // Add 7 seconds as mentioned in the documentation
-        $this->pid = pcntl_fork();
 
-        if ($this->pid == -1) {
-            $errorCode = 'FORK_FAILED'; // Example error code
-            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
-            throw new Exception($errorMsg);
-        } elseif ($this->pid) {
-            // Parent process
-            return;
-        } else {
-            // Child process
+        if ($this->os === 'WIN') {
+            // For Windows, use a simple loop with sleep
+            $this->pid = true; // Placeholder to indicate the heartbeat is running
             while (true) {
                 sleep($this->hbInterval);
                 try {
                     $this->send('ping');
                 } catch (Exception $e) {
                     $this->utils->debugLog(__CLASS__, __FUNCTION__, [], [], ['message' => 'Failed to send ping', 'error' => $e->getMessage()], debug_backtrace()[1]['class'], debug_backtrace()[1]['function'], $this->url);
-                    exit; // Exit child process if send fails
+                    break; // Exit loop if send fails
+                }
+            }
+        } else {
+            // For Unix-based systems, use pcntl_fork
+            $this->pid = pcntl_fork();
+
+            if ($this->pid == -1) {
+                throw new Exception(Constants::ERROR_CODES['FORK_FAILED'] ?? 'Unknown error');
+            } elseif ($this->pid) {
+                // Parent process
+                return;
+            } else {
+                // Child process
+                while (true) {
+                    sleep($this->hbInterval);
+                    try {
+                        $this->send('ping');
+                    } catch (Exception $e) {
+                        $this->utils->debugLog(__CLASS__, __FUNCTION__, [], [], ['message' => 'Failed to send ping', 'error' => $e->getMessage()], debug_backtrace()[1]['class'], debug_backtrace()[1]['function'], $this->url);
+                        exit; // Exit child process if send fails
+                    }
                 }
             }
         }
@@ -416,7 +403,7 @@ class WebSocketClient {
     }
 
     /**
-     * Get the current Websocket connection
+     * Get the current Websocket connection.
      *
      * @return bool|resource
      */
