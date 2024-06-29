@@ -193,49 +193,43 @@ class Devices {
      * @throws Exception If there is an error in the response.
      */
     public function getDeviceParamLive($identifier, $param, $type = 1) {
-        $deviceId = $this->getDeviceIdByIdentifier($identifier);
-        if (!$deviceId) {
-            throw new Exception("Device not found.");
-        }
-        $endpoint = '/v2/device/thing/status';
-        if (is_array($param)) {
-            $paramString = implode('|', $param);
-        } else {
-            $paramString = $param;
-        }
-        $queryParams = [
-            'id' => $deviceId,
-            'type' => $type,
-            'params' => $paramString
-        ];
-
-        $response = $this->httpClient->getRequest($endpoint, $queryParams);
-
-        if (isset($response['error']) && $response['error'] != 0) {
-            $errorCode = $response['error'];
-            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
-            throw new Exception("Error: $errorMsg");
-        }
-
-        $responseParams = $response['params'] ?? [];
-
-        if (is_array($param)) {
-            $result = [];
-            foreach ($param as $p) {
-                if (isset($responseParams[$p])) {
-                    $result[$p] = $responseParams[$p];
-                } else {
-                    $result[$p] = null;
-                }
-            }
-            return $result;
-        } else {
-            if (isset($responseParams[$param])) {
-                return $responseParams[$param];
-            }
-            return null;
-        }
+    $deviceId = $this->getDeviceIdByIdentifier($identifier);
+    if (!$deviceId) {
+        throw new Exception("Device not found.");
     }
+    $endpoint = '/v2/device/thing/status';
+    if (is_array($param)) {
+        $paramString = implode('|', $param);
+    } else {
+        $paramString = $param;
+    }
+    $queryParams = [
+        'id' => $deviceId,
+        'type' => $type,
+        'params' => $paramString
+    ];
+
+    $response = $this->httpClient->getRequest($endpoint, $queryParams);
+
+    if (isset($response['error']) && $response['error'] != 0) {
+        $errorCode = $response['error'];
+        $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+        throw new Exception("Error: $errorMsg");
+    }
+
+    $responseParams = $response['params'] ?? [];
+
+    if (is_array($param)) {
+        $result = [];
+        foreach ($param as $p) {
+            $result[$p] = $responseParams[$p] ?? 0; // Default to 0 if the parameter is missing
+        }
+        return $result;
+    } else {
+        return $responseParams[$param] ?? 0; // Default to 0 if the parameter is missing
+    }
+}
+
 
     /**
      * Get all live parameters of a device.
