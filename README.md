@@ -61,11 +61,12 @@ $token = new Token($httpClient);
 
 ## Example of class usage - device  monitoring
 
-Please see example app written based on this class that checks chosen parameters in real time (using asynchronous calls)
+Please see example app written based on this class that checks and update chosen parameters in real time (using asynchronous calls)
 
 [Device Monitoring APP](https://github.com/PJanisio/ewelinkapiphp-device-monitoring)
 
-![ewe_websocket](https://github.com/PJanisio/ewelinkApiPhp/assets/9625885/daa54a81-b0b3-4a43-b376-4ec412108675)
+![screencapture-nastran-org-modules-dev-ewelink-index-html-2024-07-01-18_22_15](https://github.com/PJanisio/ewelinkApiPhp/assets/9625885/7780ac67-3433-4eb0-84e1-9938e9cbe480)
+
 
 ## Tech info
 
