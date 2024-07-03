@@ -16,6 +16,7 @@ eWeLink API PHP is a connector for Sonoff / eWeLink devices. This library allows
 - search for **any value** of each device (f.e switch status, productName, MAC etc.)
 - set any parameter/state of device using **HTTP gateway** or **websockets**
 - set parameter for **multi-channel** devices (like 4CH Pro)
+- update power parameters like **current, voltage, power** for electricity monitoring devices
 - debug all requests and responses to debug.log
 
 ## Documentation
@@ -65,7 +66,8 @@ Please see example app written based on this class that checks and update chosen
 
 [Device Monitoring APP](https://github.com/PJanisio/ewelinkapiphp-device-monitoring)
 
-![screencapture-nastran-org-modules-dev-ewelink-index-html-2024-07-01-18_22_15](https://github.com/PJanisio/ewelinkApiPhp/assets/9625885/7780ac67-3433-4eb0-84e1-9938e9cbe480)
+![screencapture-nastran-org-modules-dev-ewelink-index-html-2024-07-02-20_59_48](https://github.com/PJanisio/ewelinkApiPhp/assets/9625885/a515edf8-edd0-440c-90b3-77d8d5b398d0)
+
 
 
 ## Tech info
