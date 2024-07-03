@@ -8,6 +8,7 @@
  * Description: API connector for Sonoff / ewelink devices
  */
 
+ini_set('max_execution_time', '300'); //300 seconds = 5 minutes
 require_once __DIR__ . '/autoloader.php';
 
 // User Inputs

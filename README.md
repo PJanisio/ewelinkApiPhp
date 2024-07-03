@@ -25,7 +25,9 @@ Go to [Wiki Pages](https://github.com/PJanisio/ewelinkApiPhp/wiki) to get starte
 
 ## Example
 
-This is a single case example to turn on device. Look at [Wiki Pages](https://github.com/PJanisio/ewelinkApiPhp/wiki) to get knowledge of other methods.
+This is a single case example to turn on device.
+
+Look at [Wiki Pages](https://github.com/PJanisio/ewelinkApiPhp/wiki) to get knowledge of how to start and other methods.
 
 ```php
 <?php
@@ -34,29 +36,12 @@ This is a single case example to turn on device. Look at [Wiki Pages](https://gi
 Example Turn device ON
 */
 
-require_once __DIR__ . '/autoloader.php';
+$deviceId = 'your_device_id';
 
-//initialize core classes
-$httpClient = new HttpClient();
-$token = new Token($httpClient);
+$params = ['switch' => 'on']; 
+$statusUpdateResult = $devices->setDeviceStatus($deviceId, $params);
 
-    if ($token->checkAndRefreshToken()) {
-        // Initialize Devices class which will also initialize Home class and fetch family data
-        $devices = new Devices($httpClient);
-
-        // Device ID to be turned on
-        $deviceId = '100xxxxxx'; // Replace with your actual device ID
-
-        // Turn on the device
-        $param = ['switch' => 'on'];
-        $setStatusResult = $devices->setDeviceStatus($deviceId, $param);
-
-    } else {
-
-        //if we have no token, or we are not authorized paste link to authorization
-        $loginUrl = $httpClient->getLoginUrl();
-        echo '<a href="' . htmlspecialchars($loginUrl) . '">Authorize ewelinkApiPhp</a>';
-    }
+echo $statusUpdateResult;
 
 ```
 
@@ -67,8 +52,6 @@ Please see example app written based on this class that checks and update chosen
 [Device Monitoring APP](https://github.com/PJanisio/ewelinkapiphp-device-monitoring)
 
 ![screencapture-nastran-org-modules-dev-ewelink-index-html-2024-07-02-20_59_48](https://github.com/PJanisio/ewelinkApiPhp/assets/9625885/a515edf8-edd0-440c-90b3-77d8d5b398d0)
-
-
 
 ## Tech info
 

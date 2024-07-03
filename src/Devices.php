@@ -7,6 +7,7 @@
  * Dependencies: PHP 7.4+
  * Description: API connector for Sonoff / ewelink devices
  */
+ 
 
 require_once __DIR__ . '/WebSocketClient.php';
 require_once __DIR__ . '/Utils.php';
@@ -193,42 +194,42 @@ class Devices {
      * @throws Exception If there is an error in the response.
      */
     public function getDeviceParamLive($identifier, $param, $type = 1) {
-    $deviceId = $this->getDeviceIdByIdentifier($identifier);
-    if (!$deviceId) {
-        throw new Exception("Device not found.");
-    }
-    $endpoint = '/v2/device/thing/status';
-    if (is_array($param)) {
-        $paramString = implode('|', $param);
-    } else {
-        $paramString = $param;
-    }
-    $queryParams = [
-        'id' => $deviceId,
-        'type' => $type,
-        'params' => $paramString
-    ];
-
-    $response = $this->httpClient->getRequest($endpoint, $queryParams);
-
-    if (isset($response['error']) && $response['error'] != 0) {
-        $errorCode = $response['error'];
-        $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
-        throw new Exception("Error: $errorMsg");
-    }
-
-    $responseParams = $response['params'] ?? [];
-
-    if (is_array($param)) {
-        $result = [];
-        foreach ($param as $p) {
-            $result[$p] = $responseParams[$p] ?? 0; // Default to 0 if the parameter is missing
+        $deviceId = $this->getDeviceIdByIdentifier($identifier);
+        if (!$deviceId) {
+            throw new Exception("Device not found.");
         }
-        return $result;
-    } else {
-        return $responseParams[$param] ?? 0; // Default to 0 if the parameter is missing
+        $endpoint = '/v2/device/thing/status';
+        if (is_array($param)) {
+            $paramString = implode('|', $param);
+        } else {
+            $paramString = $param;
+        }
+        $queryParams = [
+            'id' => $deviceId,
+            'type' => $type,
+            'params' => $paramString
+        ];
+
+        $response = $this->httpClient->getRequest($endpoint, $queryParams);
+
+        if (isset($response['error']) && $response['error'] != 0) {
+            $errorCode = $response['error'];
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception("Error: $errorMsg");
+        }
+
+        $responseParams = $response['params'] ?? [];
+
+        if (is_array($param)) {
+            $result = [];
+            foreach ($param as $p) {
+                $result[$p] = $responseParams[$p] ?? 0; // Default to 0 if the parameter is missing
+            }
+            return $result;
+        } else {
+            return $responseParams[$param] ?? 0; // Default to 0 if the parameter is missing
+        }
     }
-}
 
 
     /**
@@ -266,113 +267,112 @@ class Devices {
     }
 
     /**
- * Set the status of a device.
- *
- * @param string $identifier The device name or ID.
- * @param array $params The parameters to set.
- * @param int $returnText The flag to determine the return type (1 for detailed report, 0 for boolean).
- * @return mixed The result of the status update, either a string or a boolean.
- * @throws Exception If there is an error in the response or if a parameter does not exist.
- */
-public function setDeviceStatus($identifier, $params, $returnText = 1) {
-    $deviceId = $this->getDeviceIdByIdentifier($identifier);
-    if (!$deviceId) {
-        throw new Exception("Device not found.");
-    }
-    $device = $this->getDeviceById($deviceId);
-    $currentParams = $this->getAllDeviceParamLive($deviceId) ?? null;
+     * Set the status of a device.
+     *
+     * @param string $identifier The device name or ID.
+     * @param array $params The parameters to set.
+     * @param int $returnText The flag to determine the return type (1 for detailed report, 0 for boolean).
+     * @return mixed The result of the status update, either a string or a boolean.
+     * @throws Exception If there is an error in the response or if a parameter does not exist.
+     */
+    public function setDeviceStatus($identifier, $params, $returnText = 1) {
+        $deviceId = $this->getDeviceIdByIdentifier($identifier);
+        if (!$deviceId) {
+            throw new Exception("Device not found.");
+        }
+        $device = $this->getDeviceById($deviceId);
+        $currentParams = $this->getAllDeviceParamLive($deviceId) ?? null;
 
-    if ($currentParams === null) {
-        return $returnText ? "Device $deviceId does not have any parameters to update." : false;
-    }
+        if ($currentParams === null) {
+            return $returnText ? "Device $deviceId does not have any parameters to update." : false;
+        }
 
-    $isMultiChannel = $this->isMultiChannel($deviceId);
-    $allSet = true;
-    $messages = [];
-    $updatedParams = [];
-    $changes = [];
+        $isMultiChannel = $this->isMultiChannel($deviceId);
+        $allSet = true;
+        $messages = [];
+        $updatedParams = [];
+        $changes = [];
 
-    if (!is_array(reset($params))) {
-        $params = [$params];
-    }
+        if (!is_array(reset($params))) {
+            $params = [$params];
+        }
 
-    foreach ($params as $param) {
-        if ($isMultiChannel) {
-            $outlet = $param['outlet'];
-            foreach ($param as $key => $value) {
-                if ($key == 'outlet') continue;
-                if (isset($currentParams['switches']) && is_array($currentParams['switches'])) {
-                    $found = false;
-                    foreach ($currentParams['switches'] as &$switch) {
-                        if ($switch['outlet'] == $outlet) {
-                            $found = true;
-                            if (is_numeric($value) && is_string($value)) {
-                                $messages[] = "Warning: Parameter $key value is numeric but given as a string. You may want to use an integer for device $deviceId.";
+        foreach ($params as $param) {
+            if ($isMultiChannel) {
+                $outlet = $param['outlet'];
+                foreach ($param as $key => $value) {
+                    if ($key == 'outlet') continue;
+                    if (isset($currentParams['switches']) && is_array($currentParams['switches'])) {
+                        $found = false;
+                        foreach ($currentParams['switches'] as &$switch) {
+                            if ($switch['outlet'] == $outlet) {
+                                $found = true;
+                                if (is_numeric($value) && is_string($value)) {
+                                    $messages[] = "Warning: Parameter $key value is numeric but given as a string. You may want to use an integer for device $deviceId.";
+                                }
+                                if ($switch[$key] != $value) {
+                                    $changes[] = "For device $deviceId, parameter $key for outlet $outlet has changed from {$switch[$key]} to $value.";
+                                    $switch[$key] = $value;
+                                    $allSet = false;
+                                    $updatedParams['switches'] = $currentParams['switches'];
+                                } else {
+                                    $messages[] = "Parameter $key for outlet $outlet is already set to $value for device $deviceId.";
+                                }
+                                break;
                             }
-                            if ($switch[$key] != $value) {
-                                $changes[] = "For device $deviceId, parameter $key for outlet $outlet has changed from {$switch[$key]} to $value.";
-                                $switch[$key] = $value;
-                                $allSet = false;
-                                $updatedParams['switches'] = $currentParams['switches'];
-                            } else {
-                                $messages[] = "Parameter $key for outlet $outlet is already set to $value for device $deviceId.";
-                            }
-                            break;
+                        }
+                        if (!$found) {
+                            return $returnText ? "Outlet $outlet does not exist for device $deviceId." : false;
                         }
                     }
-                    if (!$found) {
-                        return $returnText ? "Outlet $outlet does not exist for device $deviceId." : false;
+                }
+            } else {
+                foreach ($param as $key => $value) {
+                    if (!array_key_exists($key, $currentParams)) {
+                        return $returnText ? "Parameter $key does not exist for device $deviceId." : false;
+                    }
+
+                    if (is_numeric($value) && is_string($value)) {
+                        $messages[] = "Warning: Parameter $key value is numeric but given as a string. You may want to use an integer for device $deviceId.";
+                    }
+
+                    if ($currentParams[$key] != $value) {
+                        $changes[] = "For device $deviceId, parameter $key has changed from {$currentParams[$key]} to $value.";
+                        $currentParams[$key] = $value;
+                        $allSet = false;
+                        $updatedParams[$key] = $value;
+                    } else {
+                        $messages[] = "Parameter $key is already set to $value for device $deviceId.";
                     }
                 }
             }
-        } else {
-            foreach ($param as $key => $value) {
-                if (!array_key_exists($key, $currentParams)) {
-                    return $returnText ? "Parameter $key does not exist for device $deviceId." : false;
-                }
+        }
 
-                if (is_numeric($value) && is_string($value)) {
-                    $messages[] = "Warning: Parameter $key value is numeric but given as a string. You may want to use an integer for device $deviceId.";
-                }
+        if ($allSet) {
+            return $returnText ? implode("\n", $messages) : true;
+        }
 
-                if ($currentParams[$key] != $value) {
-                    $changes[] = "For device $deviceId, parameter $key has changed from {$currentParams[$key]} to $value.";
-                    $currentParams[$key] = $value;
-                    $allSet = false;
-                    $updatedParams[$key] = $value;
-                } else {
-                    $messages[] = "Parameter $key is already set to $value for device $deviceId.";
-                }
+        $data = [
+            'type' => 1,
+            'id' => $deviceId,
+            'params' => $updatedParams
+        ];
+
+        $response = $this->httpClient->postRequest('/v2/device/thing/status', $data, true);
+
+        foreach ($updatedParams as $key => $value) {
+            $updatedValue = $this->getDeviceParamLive($deviceId, [$key]);
+            if ($updatedValue[$key] != $value) {
+                return $returnText ? "Failed to update parameter $key to $value for device $deviceId. Current value is $updatedValue[$key]." : false;
             }
         }
-    }
 
-    if ($allSet) {
-        return $returnText ? implode("\n", $messages) : true;
-    }
-
-    $data = [
-        'type' => 1,
-        'id' => $deviceId,
-        'params' => $updatedParams
-    ];
-
-    $response = $this->httpClient->postRequest('/v2/device/thing/status', $data, true);
-
-    foreach ($updatedParams as $key => $value) {
-        $updatedValue = $this->getDeviceParamLive($deviceId, [$key]);
-        if ($updatedValue[$key] != $value) {
-            return $returnText ? "Failed to update parameter $key to $value for device $deviceId. Current value is $updatedValue[$key]." : false;
+        if ($returnText) {
+            return "Parameters successfully updated for device $deviceId.\n" . implode("\n", $changes) . "\n" . implode("\n", $messages);
+        } else {
+            return true;
         }
     }
-
-    if ($returnText) {
-        return "Parameters successfully updated for device $deviceId.\n" . implode("\n", $changes) . "\n" . implode("\n", $messages);
-    } else {
-        return true;
-    }
-}
-
 
     /**
      * Check if a device is online.
@@ -421,7 +421,6 @@ public function setDeviceStatus($identifier, $params, $returnText = 1) {
         return $response;
     }
     
-    
     /**
      * Initialize WebSocket connection and perform handshake.
      *
@@ -461,34 +460,72 @@ public function setDeviceStatus($identifier, $params, $returnText = 1) {
      * @throws Exception If there is an error during the process.
      */
     public function getDataWebSocket($identifier, $params) {
-    $deviceId = $this->getDeviceIdByIdentifier($identifier);
-    if (!$deviceId) {
-        throw new Exception("Device not found.");
-    }
-    $device = $this->getDeviceById($deviceId);
-    if (!$device) {
-        $errorCode = 'DEVICE_NOT_FOUND'; // Example error code
-        $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
-        throw new Exception($errorMsg);
-    }
+        $deviceId = $this->getDeviceIdByIdentifier($identifier);
+        if (!$deviceId) {
+            throw new Exception("Device not found.");
+        }
+        $device = $this->getDeviceById($deviceId);
+        if (!$device) {
+            $errorCode = 'DEVICE_NOT_FOUND'; // Example error code
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception($errorMsg);
+        }
 
-    // Ensure WebSocket connection is initialized
-    if (!isset($this->wsClient)) {
-        $this->wsClient = $this->initializeWebSocketConnection($identifier);
+        // Ensure WebSocket connection is initialized
+        if (!isset($this->wsClient)) {
+            $this->wsClient = $this->initializeWebSocketConnection($identifier);
+        }
+
+        $data = $this->wsClient->createQueryData($device, $params);
+        $this->wsClient->send(json_encode($data));
+        $response = json_decode($this->wsClient->receive(), true);
+
+        if (isset($response['error']) && $response['error'] != 0) {
+            $errorCode = $response['error'];
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception("Error: $errorMsg");
+        }
+
+        return $response['params'];
     }
+    
+    /**
+     * Set data of a device using WebSocket.
+     *
+     * @param string $identifier The device name or ID.
+     * @param array $params The parameters to set.
+     * @return array The response data.
+     * @throws Exception If there is an error during the process.
+     */
+    public function setDataWebSocket($identifier, $params) {
+        $deviceId = $this->getDeviceIdByIdentifier($identifier);
+        if (!$deviceId) {
+            throw new Exception("Device not found.");
+        }
+        $device = $this->getDeviceById($deviceId);
+        if (!$device) {
+            $errorCode = 'DEVICE_NOT_FOUND'; // Example error code
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception($errorMsg);
+        }
 
-    $data = $this->wsClient->createQueryData($device, $params);
-    $this->wsClient->send(json_encode($data));
-    $response = json_decode($this->wsClient->receive(), true);
+        // Ensure WebSocket connection is initialized
+        if (!isset($this->wsClient)) {
+            $this->wsClient = $this->initializeWebSocketConnection($identifier);
+        }
 
-    if (isset($response['error']) && $response['error'] != 0) {
-        $errorCode = $response['error'];
-        $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
-        throw new Exception("Error: $errorMsg");
+        $data = $this->wsClient->createUpdateData($device, $params, $device['apikey']);
+        $this->wsClient->send(json_encode($data));
+        $response = json_decode($this->wsClient->receive(), true);
+
+        if (isset($response['error']) && $response['error'] != 0) {
+            $errorCode = $response['error'];
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception("Error: $errorMsg");
+        }
+
+        return $response['params'];
     }
-
-    return $response['params'];
-}
 
     /**
      * Force get data of a device using WebSocket.
@@ -508,6 +545,17 @@ public function setDeviceStatus($identifier, $params, $returnText = 1) {
             $errorCode = 'DEVICE_NOT_FOUND'; // Example error code
             $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
             throw new Exception($errorMsg);
+        }
+
+        // Check if the device has energy parameters
+        $energyParams = ['power', 'current', 'voltage'];
+        $deviceParams = array_keys($this->getAllDeviceParamLive($identifier) ?? []);
+        $hasEnergyParams = !empty(array_intersect($energyParams, $deviceParams));
+
+        // If the device has energy parameters, update 'current' to 0.50 before fetching data
+        if ($hasEnergyParams) {
+            $updateParams = ['current' => 0.50];
+            $this->forceUpdateDevice($identifier, $updateParams, 5);
         }
 
         $wsClient = new WebSocketClient($this->httpClient);
@@ -539,11 +587,11 @@ public function setDeviceStatus($identifier, $params, $returnText = 1) {
      *
      * @param string $identifier The device name or ID.
      * @param array $params The parameters to update.
-     * @param int $sleepSec The number of seconds to wait before verifying the update (default is 3 seconds).
+     * @param int $sleepSec The number of seconds to wait before verifying the update (default is 10 seconds).
      * @return array The response data.
      * @throws Exception If there is an error during the process.
      */
-    public function forceUpdateDevice($identifier, $params, $sleepSec = 3) {
+    public function forceUpdateDevice($identifier, $params, $sleepSec = 5) {
         $deviceId = $this->getDeviceIdByIdentifier($identifier);
         if (!$deviceId) {
             throw new Exception("Device not found.");
@@ -586,3 +634,4 @@ public function setDeviceStatus($identifier, $params, $returnText = 1) {
         return $updatedParams;
     }
 }
+?>
