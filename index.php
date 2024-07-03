@@ -10,6 +10,30 @@
 
 require_once __DIR__ . '/autoloader.php';
 
+// User Inputs
+// -----------------------------------------------
+$devId = '100xxxxxxx'; // Single Device ID
+$multiDevId = '100xxxxxxx'; // Multi-Channel Device ID
+$singleDevId = '100xxxxxxx'; // Another Single Device ID
+$devIdent = 'Name of device'; // Device Identifier for online check
+
+$singleParams = ['switch' => 'off']; // Parameters for single-channel device
+$multiParams = [
+    ['switch' => 'off', 'outlet' => 0],
+    ['switch' => 'off', 'outlet' => 1],
+    ['switch' => 'off', 'outlet' => 2],
+    ['switch' => 'off', 'outlet' => 3]
+]; // Parameters for multi-channel device
+$singleParamsMulti = [
+    ['colorR' => 0],
+    ['colorG' => 153],
+    ['colorB' => 0]
+]; // Multiple parameters for single-channel device
+$liveParam = ['voltage', 'current', 'power']; // Parameters to get live data
+$forceParams = ['current', 'power', 'voltage']; // Parameters for force get data
+$updateParams = ['switch' => 'on']; // Parameters for force update device
+// -----------------------------------------------
+
 $http = new HttpClient();
 $token = new Token($http);
 
@@ -39,12 +63,10 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
             echo '<pre>' . print_r($devsList, true) . '</pre>';
 
             $searchKey = 'productModel';
-            $devId = '100142b205';
             $searchRes = $devs->searchDeviceParam($searchKey, $devId);
             echo '<h1>Search Result</h1>';
             echo '<pre>' . print_r($searchRes, true) . '</pre>';
 
-            $liveParam = ['voltage', 'current', 'power'];
             $liveRes = $devs->getDeviceParamLive($devId, $liveParam);
             echo '<h1>Live Device Parameter</h1>';
             echo '<pre>' . print_r($liveRes, true) . '</pre>';
@@ -53,33 +75,18 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
             echo '<h1>Get All Device Parameters Live</h1>';
             echo '<pre>' . print_r($allLiveParams, true) . '</pre>';
 
-            $multiDevId = '1000663128';
-            $multiParams = [
-               ['switch' => 'off', 'outlet' => 0],
-               ['switch' => 'off', 'outlet' => 1],
-               ['switch' => 'off', 'outlet' => 2],
-               ['switch' => 'off', 'outlet' => 3]
-            ];
             $setMultiRes = $devs->setDeviceStatus($multiDevId, $multiParams);
             echo '<h1>Set Multi-Channel Device Status Result</h1>';
             echo '<pre>' . print_r($setMultiRes, true) . '</pre>';
 
-            $singleDevId = '10011015b6';
-            $singleParams = ['switch' => 'off'];
             $setSingleRes = $devs->setDeviceStatus($singleDevId, $singleParams);
             echo '<h1>Set Single-Channel Device Status Result</h1>';
             echo '<pre>' . print_r($setSingleRes, true) . '</pre>';
 
-            $singleParamsMulti = [
-                ['colorR' => 0],
-                ['colorG' => 153],
-                ['colorB' => 0]
-            ];
             $setSingleMultiRes = $devs->setDeviceStatus($singleDevId, $singleParamsMulti);
             echo '<h1>Set Single-Channel Device Status Result (Multiple Parameters)</h1>';
             echo '<pre>' . print_r($setSingleMultiRes, true) . '</pre>';
 
-            $devIdent = 'Ledy salon';
             $onlineRes = $devs->isOnline($devIdent);
             echo '<h1>Is Device Online?</h1>';
             echo $devIdent . ' is ' . ($onlineRes ? 'online' : 'offline') . '.';
@@ -90,15 +97,20 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
             echo '<pre>' . print_r($familyData, true) . '</pre>';
             echo '<p>Current Family ID: ' . htmlspecialchars($home->getCurrentFamilyId()) . '</p>';
 
-            $forceParams = ['current', 'power', 'voltage'];
-            $forceRes = $devs->forceGetData($devId, $forceParams);
+            $forceRes = $devs->forceGetData('Gniazdko biuro', $forceParams);
             echo '<h1>Force Get Data Result</h1>';
             echo '<pre>' . print_r($forceRes, true) . '</pre>';
 
-            $updateParams = ['switch' => 'on'];
-            $updateRes = $devs->forceUpdateDevice($devId, $updateParams, 3);
+            $updateRes = $devs->forceUpdateDevice($devIdent, $updateParams, 3);
             echo '<h1>Force Update Device Result</h1>';
             echo '<pre>' . print_r($updateRes, true) . '</pre>';
+
+            // Initialize WebSocket connection and get data
+            $wsClient = $devs->initializeWebSocketConnection($devId);
+            $wsParams = 'power';
+            $wsData = $devs->getDataWebSocket($devId, $wsParams);
+            echo '<h1>WebSocket Data for ' . $devId . '</h1>';
+            echo '<pre>' . print_r($wsData, true) . '</pre>';
 
         } catch (Exception $e) {
             echo 'Error: ' . $e->getMessage();
