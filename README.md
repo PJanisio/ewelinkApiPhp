@@ -1,8 +1,8 @@
 # eWeLink API PHP
 
-[Download latest release](https://github.com/PJanisio/ewelinkApiPhp/releases)
+:link: [Download latest release](https://github.com/PJanisio/ewelinkApiPhp/releases)
 
-eWeLink API PHP is a connector for Sonoff / eWeLink devices. This library allows you to interact with your eWeLink-enabled devices using PHP. It supports various functionalities such as device control, retrieving device status, debugging and more.
+eWeLink API PHP is a connector for Sonoff / eWeLink devices. This library allows you to interact with your eWeLink-enabled devices from your browser.
 
 ## Requirements
 
@@ -17,7 +17,7 @@ eWeLink API PHP is a connector for Sonoff / eWeLink devices. This library allows
 - set any parameter/state of device using **HTTP gateway** or **websockets**
 - set parameter for **multi-channel** devices (like 4CH Pro)
 - update power parameters like **current, voltage, power** for electricity monitoring devices
-- debug all requests and responses to debug.log
+- debug all requests and responses to **debug.log**
 
 ## Documentation
 
@@ -31,11 +31,6 @@ Look at [Wiki Pages](https://github.com/PJanisio/ewelinkApiPhp/wiki) to get know
 
 ```php
 <?php
-
-/*
-Example Turn device ON
-*/
-
 $deviceId = 'your_device_id';
 
 $params = ['switch' => 'on']; 
@@ -45,9 +40,9 @@ echo $statusUpdateResult;
 
 ```
 
-## Example of class usage - device  monitoring
+## Ready to deploy Device Monitoring application
 
-Please see example app written based on this class that checks and update chosen parameters in real time (using asynchronous calls)
+Please see example app written based on this class that checks and update chosen parameters in real time (using asynchronous calls) using both HTTP and websocket method alltogether.
 
 [Device Monitoring APP](https://github.com/PJanisio/ewelinkapiphp-device-monitoring)
 
