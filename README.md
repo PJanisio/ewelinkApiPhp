@@ -46,7 +46,8 @@ Please see example app written based on this class that checks and update chosen
 
 [Device Monitoring APP](https://github.com/PJanisio/ewelinkapiphp-device-monitoring)
 
-![screencapture-nastran-org-modules-dev-ewelink-index-html-2024-07-02-20_59_48](https://github.com/PJanisio/ewelinkApiPhp/assets/9625885/a515edf8-edd0-440c-90b3-77d8d5b398d0)
+![screencapture-nastran-org-modules-dev-ewelink-index-html-2024-07-05-07_01_19](https://github.com/PJanisio/ewelinkApiPhp/assets/9625885/7658cbe6-cdb9-48bc-9f0d-1a2db4e67147)
+
 
 ## Tech info
 
