@@ -8,7 +8,7 @@
  * Description: API connector for Sonoff / ewelink devices
  */
 
-ini_set('max_execution_time', '300'); //300 seconds = 5 minutes
+ini_set('max_execution_time', 0); 
 require_once __DIR__ . '/autoloader.php';
 
 // User Inputs
@@ -16,7 +16,7 @@ require_once __DIR__ . '/autoloader.php';
 $devId = '100xxxxxxx'; // Single Device ID
 $multiDevId = '100xxxxxxx'; // Multi-Channel Device ID
 $singleDevId = '100xxxxxxx'; // Another Single Device ID
-$devIdent = 'Name of device'; // Device Identifier for online check
+$devIdent = 'Switch'; // Device Identifier for online check
 
 $singleParams = ['switch' => 'off']; // Parameters for single-channel device
 $multiParams = [
@@ -31,7 +31,6 @@ $singleParamsMulti = [
     ['colorB' => 0]
 ]; // Multiple parameters for single-channel device
 $liveParam = ['voltage', 'current', 'power']; // Parameters to get live data
-$forceParams = ['current', 'power', 'voltage']; // Parameters for force get data
 $updateParams = ['switch' => 'on']; // Parameters for force update device
 // -----------------------------------------------
 
@@ -71,6 +70,7 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
             $liveRes = $devs->getDeviceParamLive($devId, $liveParam);
             echo '<h1>Live Device Parameter</h1>';
             echo '<pre>' . print_r($liveRes, true) . '</pre>';
+
             
             $allLiveParams = $devs->getAllDeviceParamLive($devId);
             echo '<h1>Get All Device Parameters Live</h1>';
@@ -84,9 +84,9 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
             echo '<h1>Set Single-Channel Device Status Result</h1>';
             echo '<pre>' . print_r($setSingleRes, true) . '</pre>';
 
-            $setSingleMultiRes = $devs->setDeviceStatus($singleDevId, $singleParamsMulti);
-            echo '<h1>Set Single-Channel Device Status Result (Multiple Parameters)</h1>';
-            echo '<pre>' . print_r($setSingleMultiRes, true) . '</pre>';
+            //$setSingleMultiRes = $devs->setDeviceStatus($singleDevId, $singleParamsMulti);
+            //echo '<h1>Set Single-Channel Device Status Result (Multiple Parameters)</h1>';
+            //echo '<pre>' . print_r($setSingleMultiRes, true) . '</pre>';
 
             $onlineRes = $devs->isOnline($devIdent);
             echo '<h1>Is Device Online?</h1>';
@@ -98,13 +98,15 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
             echo '<pre>' . print_r($familyData, true) . '</pre>';
             echo '<p>Current Family ID: ' . htmlspecialchars($home->getCurrentFamilyId()) . '</p>';
 
-            $forceRes = $devs->forceGetData('Gniazdko biuro', $forceParams);
-            echo '<h1>Force Get Data Result</h1>';
-            echo '<pre>' . print_r($forceRes, true) . '</pre>';
+            $forceWakeUpRes = $devs->forceWakeUp($devIdent);
+            echo '<h1>Force Wake Up Result</h1>';
+            echo '<pre>' . print_r($forceWakeUpRes, true) . '</pre>';
 
-            $updateRes = $devs->forceUpdateDevice($devIdent, $updateParams, 3);
-            echo '<h1>Force Update Device Result</h1>';
-            echo '<pre>' . print_r($updateRes, true) . '</pre>';
+            if ($forceWakeUpRes) {
+                $allLiveParams = $devs->getAllDeviceParamLive($devIdent);
+                echo '<h1>Get All Device Parameters Live After Force Wake Up</h1>';
+                echo '<pre>' . print_r($allLiveParams, true) . '</pre>';
+            }
 
             // Initialize WebSocket connection and get data
             $wsClient = $devs->initializeWebSocketConnection($devId);
@@ -121,4 +123,3 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
         echo '<a href="' . htmlspecialchars($loginUrl) . '">Authorize ewelinkApiPhp</a>';
     }
 }
-?>

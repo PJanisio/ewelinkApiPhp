@@ -527,15 +527,15 @@ class Devices {
         return $response['params'];
     }
 
+
     /**
-     * Force get data of a device using WebSocket.
+     * Force wake up the device by fetching all parameters and setting them back to their current values.
      *
      * @param string $identifier The device name or ID.
-     * @param array|string $params The parameters to query.
-     * @return array The response data.
+     * @return bool True if the operation was successful, false otherwise.
      * @throws Exception If there is an error during the process.
      */
-    public function forceGetData($identifier, $params) {
+    public function forceWakeUp($identifier) {
         $deviceId = $this->getDeviceIdByIdentifier($identifier);
         if (!$deviceId) {
             throw new Exception("Device not found.");
@@ -547,15 +547,9 @@ class Devices {
             throw new Exception($errorMsg);
         }
 
-        // Check if the device has energy parameters
-        $energyParams = ['power', 'current', 'voltage'];
-        $deviceParams = array_keys($this->getAllDeviceParamLive($identifier) ?? []);
-        $hasEnergyParams = !empty(array_intersect($energyParams, $deviceParams));
-
-        // If the device has energy parameters, update 'current' to 0.50 before fetching data
-        if ($hasEnergyParams) {
-            $updateParams = ['current' => 0.50];
-            $this->forceUpdateDevice($identifier, $updateParams, 5);
+        $currentParams = $this->getAllDeviceParamLive($deviceId);
+        if ($currentParams === null) {
+            return false;
         }
 
         $wsClient = new WebSocketClient($this->httpClient);
@@ -567,7 +561,7 @@ class Devices {
             throw new Exception("Handshake Error: $errorMsg");
         }
 
-        $data = $wsClient->createQueryData($device, $params);
+        $data = $wsClient->createUpdateData($device, $currentParams, $device['apikey']);
         $wsClient->send(json_encode($data));
         $response = json_decode($wsClient->receive(), true);
 
@@ -579,59 +573,6 @@ class Devices {
             throw new Exception("Error: $errorMsg");
         }
 
-        return $response['params'];
-    }
-
-    /**
-     * Force update the status of a device using WebSocket.
-     *
-     * @param string $identifier The device name or ID.
-     * @param array $params The parameters to update.
-     * @param int $sleepSec The number of seconds to wait before verifying the update (default is 10 seconds).
-     * @return array The response data.
-     * @throws Exception If there is an error during the process.
-     */
-    public function forceUpdateDevice($identifier, $params, $sleepSec = 5) {
-        $deviceId = $this->getDeviceIdByIdentifier($identifier);
-        if (!$deviceId) {
-            throw new Exception("Device not found.");
-        }
-        $device = $this->getDeviceById($deviceId);
-        if (!$device) {
-            $errorCode = 'DEVICE_NOT_FOUND'; // Example error code
-            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
-            throw new Exception($errorMsg);
-        }
-
-        $wsClient = new WebSocketClient($this->httpClient);
-        $handshakeResponse = $wsClient->handshake($device);
-
-        if (isset($handshakeResponse['error']) && $handshakeResponse['error'] != 0) {
-            $errorCode = $handshakeResponse['error'];
-            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
-            throw new Exception("Handshake Error: $errorMsg");
-        }
-
-        $data = $wsClient->createUpdateData($device, $params, $device['apikey']);
-        $wsClient->send(json_encode($data));
-
-        // Keep heartbeat running and verify changes
-        $response = json_decode($wsClient->receive(), true);
-
-        if (isset($response['error']) && $response['error'] != 0) {
-            $errorCode = $response['error'];
-            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
-            throw new Exception("Error: $errorMsg");
-        }
-
-        sleep($sleepSec); // Wait for a while to let the changes take effect
-
-        // Check if the parameters have been updated
-        $updatedParams = $this->forceGetData($deviceId, array_keys($params));
-
-        $wsClient->close();
-
-        return $updatedParams;
+        return true;
     }
 }
-?>
