@@ -8,35 +8,13 @@
  * Description: API connector for Sonoff / ewelink devices
  */
 
-ini_set('max_execution_time', 0); 
 require_once __DIR__ . '/autoloader.php';
 
-// User Inputs
-// -----------------------------------------------
-$devId = '100xxxxxxx'; // Single Device ID
-$multiDevId = '100xxxxxxx'; // Multi-Channel Device ID
-$singleDevId = '100xxxxxxx'; // Another Single Device ID
-$devIdent = 'Switch'; // Device Identifier for online check
-
-$singleParams = ['switch' => 'off']; // Parameters for single-channel device
-$multiParams = [
-    ['switch' => 'off', 'outlet' => 0],
-    ['switch' => 'off', 'outlet' => 1],
-    ['switch' => 'off', 'outlet' => 2],
-    ['switch' => 'off', 'outlet' => 3]
-]; // Parameters for multi-channel device
-$singleParamsMulti = [
-    ['colorR' => 0],
-    ['colorG' => 153],
-    ['colorB' => 0]
-]; // Multiple parameters for single-channel device
-$liveParam = ['voltage', 'current', 'power']; // Parameters to get live data
-$updateParams = ['switch' => 'on']; // Parameters for force update device
-// -----------------------------------------------
-
+//Class init
 $http = new HttpClient();
 $token = new Token($http);
 
+//Check if ouath gave code for authorization
 if (isset($_GET['code']) && isset($_GET['region'])) {
     try {
         $tokenData = $token->getToken();
@@ -53,14 +31,45 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
         echo '<p>Token expiry time: ' . date('Y-m-d H:i:s', $tokenData['atExpiredTime'] / 1000) . '</p>';
 
         try {
-            $devs = new Devices($http);
-            $devsData = $devs->fetchDevicesData();
-            echo '<h1>Devices Data</h1>';
-            echo '<pre>' . print_r($devsData, true) . '</pre>';
 
+            //initialize Devices class and List Devices
+            $devs = new Devices($http);
             $devsList = $devs->getDevicesList();
             echo '<h1>Devices List</h1>';
             echo '<pre>' . print_r($devsList, true) . '</pre>';
+
+            /*
+
+            // Example of retrieving data from API with user devices
+            // -----------------------------------------------
+           $devId = '100xxxxxxx'; // Single Device ID
+           $multiDevId = '100xxxxxxx'; // Multi-Channel Device ID
+           $singleDevId = '100xxxxxxx'; // Another Single Device ID
+           $devIdent = 'Switch'; // Device Identifier for online check
+
+           $singleParams = ['switch' => 'off']; // Parameters for single-channel device
+           $multiParams = [
+               ['switch' => 'off', 'outlet' => 0],
+               ['switch' => 'off', 'outlet' => 1],
+               ['switch' => 'off', 'outlet' => 2],
+               ['switch' => 'off', 'outlet' => 3]
+           ]; // Parameters for multi-channel device
+           $singleParamsMulti = [
+               ['colorR' => 0],
+               ['colorG' => 153],
+               ['colorB' => 0]
+           ]; // Multiple parameters for single-channel device
+           $liveParam = ['voltage', 'current', 'power']; // Parameters to get live data
+           $updateParams = ['switch' => 'on']; // Parameters for force update device
+           // -----------------------------------------------
+
+
+           // More examples below
+
+                       
+            $devsData = $devs->fetchDevicesData();
+            echo '<h1>Devices Data</h1>';
+            echo '<pre>' . print_r($devsData, true) . '</pre>';
 
             $searchKey = 'productModel';
             $searchRes = $devs->searchDeviceParam($searchKey, $devId);
@@ -83,10 +92,6 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
             $setSingleRes = $devs->setDeviceStatus($singleDevId, $singleParams);
             echo '<h1>Set Single-Channel Device Status Result</h1>';
             echo '<pre>' . print_r($setSingleRes, true) . '</pre>';
-
-            //$setSingleMultiRes = $devs->setDeviceStatus($singleDevId, $singleParamsMulti);
-            //echo '<h1>Set Single-Channel Device Status Result (Multiple Parameters)</h1>';
-            //echo '<pre>' . print_r($setSingleMultiRes, true) . '</pre>';
 
             $onlineRes = $devs->isOnline($devIdent);
             echo '<h1>Is Device Online?</h1>';
@@ -114,6 +119,8 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
             $wsData = $devs->getDataWebSocket($devId, $wsParams);
             echo '<h1>WebSocket Data for ' . $devId . '</h1>';
             echo '<pre>' . print_r($wsData, true) . '</pre>';
+
+            */
 
         } catch (Exception $e) {
             echo 'Error: ' . $e->getMessage();
