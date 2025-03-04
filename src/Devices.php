@@ -122,6 +122,27 @@ class Devices {
         return $devicesList;
     }
 
+    public function fetchDevicesDataNoFamily($lang = 'en')
+{
+    // Make a request but do NOT include a familyId parameter.
+    // This call may or may not return *all* devices, depending on the eWeLink API’s behavior,
+    // but at least it removes the “current family” filter.
+    $params = [
+        'lang' => $lang
+    ];
+    
+    // Fetch raw data from the same endpoint
+    $rawData = $this->httpClient->getRequest('/v2/device/thing', $params);
+
+    // Save the raw data to a debug file so you can see exactly what was returned
+    $debugFile = Constants::JSON_LOG_DIR . '/devices_debug.json';
+    file_put_contents($debugFile, json_encode($rawData, JSON_PRETTY_PRINT));
+    
+    // Return this raw data to the caller if desired
+    return $rawData;
+}
+
+
     /**
      * Helper method to get device ID by name or return the ID if already provided.
      *

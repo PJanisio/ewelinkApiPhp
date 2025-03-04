@@ -34,7 +34,7 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
 
             //initialize Devices class and List Devices
             $devs = new Devices($http);
-            $devsList = $devs->getDevicesList();
+            $devsList = $devs->fetchDevicesDataNoFamily();
             echo '<h1>Devices List</h1>';
             echo '<pre>' . print_r($devsList, true) . '</pre>';
 
