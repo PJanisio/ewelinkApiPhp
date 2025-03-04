@@ -151,8 +151,11 @@ class Utils {
      * @param string $string The string to be sanitized.
      * @return string The sanitized string.
      */
-    public function sanitizeString($string) {
-        return preg_replace('/[[:^print:]]/', '', $string);
+    public function sanitizeString($input) {
+        if (!is_string($input)) {
+            return $input;
+        }
+        return preg_replace('/[[:^print:]]/', '', $input);
     }
 
     /**
