@@ -3,7 +3,7 @@
 /**
  * Class: ewelinkApiPhp
  * Author: Paweł 'Pavlus' Janisio
- * Website: https://github.com/AceExpert/ewelink-api-python
+ * Website: https://github.com/PJanisio/ewelinkApiPhp
  * Dependencies: PHP 7.4+
  * Description: API connector for Sonoff / ewelink devices
  */
@@ -24,36 +24,43 @@ class Devices {
      *
      * @param HttpClient $httpClient The HTTP client instance.
      */
+
     public function __construct(HttpClient $httpClient) {
         $this->httpClient = $httpClient;
         $this->home = new Home($httpClient);
+        // We still call fetchFamilyData() in case other methods rely on it,
+        // but we will NOT use familyId for the device list:
         $this->home->fetchFamilyData();
-        $this->loadDevicesData();
-        if ($this->devicesData === null) {
-            $this->fetchDevicesData();
-        }
+        // Instead of loadDevicesData(), call the new "no-family" fetch right away:
+        $this->fetchDevicesData();
     }
 
     /**
-     * Load devices data from a local JSON file.
-     */
-    private function loadDevicesData() {
-        $devicesFile = Constants::JSON_LOG_DIR . '/devices.json';
-        if (file_exists($devicesFile)) {
-            $this->devicesData = json_decode(file_get_contents($devicesFile), true);
-        } else {
-            $this->devicesData = null;
-        }
-    }
-
-    /**
-     * Fetch devices data from the remote server and save it locally.
+     * Fetch devices data WITHOUT using familyId and store in $this->devicesData.
+     * This fully replaces loadDevicesData() for your use-case.
      *
      * @param string $lang The language parameter for the request (default is 'en').
      * @return array The devices data.
-     * @throws Exception If the current family ID is not set.
      */
+
     public function fetchDevicesData($lang = 'en') {
+        // Make a request but do NOT include 'familyId'
+        $params = [
+            'lang' => $lang
+        ];
+        
+        $rawData = $this->httpClient->getRequest('/v2/device/thing', $params);
+        $this->devicesData = $rawData;
+        file_put_contents(Constants::JSON_LOG_DIR . '/devices.json', json_encode($this->devicesData, JSON_PRETTY_PRINT));
+
+        return $this->devicesData;
+    }
+
+
+    /*
+     * fetchDevicesDataFamily() by using fdamilyId (old approach)
+     */
+    public function fetchDevicesDataFamily($lang = 'en') {
         $familyId = $this->home->getCurrentFamilyId();
         if (!$familyId) {
             $errorCode = 'NO_FAMILY_ID'; // Example error code
@@ -121,27 +128,6 @@ class Devices {
         }
         return $devicesList;
     }
-
-    public function fetchDevicesDataNoFamily($lang = 'en')
-{
-    // Make a request but do NOT include a familyId parameter.
-    // This call may or may not return *all* devices, depending on the eWeLink API’s behavior,
-    // but at least it removes the “current family” filter.
-    $params = [
-        'lang' => $lang
-    ];
-    
-    // Fetch raw data from the same endpoint
-    $rawData = $this->httpClient->getRequest('/v2/device/thing', $params);
-
-    // Save the raw data to a debug file so you can see exactly what was returned
-    $debugFile = Constants::JSON_LOG_DIR . '/devices_debug.json';
-    file_put_contents($debugFile, json_encode($rawData, JSON_PRETTY_PRINT));
-    
-    // Return this raw data to the caller if desired
-    return $rawData;
-}
-
 
     /**
      * Helper method to get device ID by name or return the ID if already provided.
@@ -595,5 +581,9 @@ class Devices {
         }
 
         return true;
+    }
+
+    public function getHome() {
+        return $this->home;
     }
 }

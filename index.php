@@ -3,130 +3,132 @@
 /**
  * Class: ewelinkApiPhp
  * Author: Paweł 'Pavlus' Janisio
- * Website: https://github.com/AceExpert/ewelink-api-python
+ * Website: https://github.com/PJanisio/ewelinkApiPhp
  * Dependencies: PHP 7.4+
- * Description: API connector for Sonoff / ewelink devices
+ * Description: API connector for Sonoff / eWeLink devices
  */
 
 require_once __DIR__ . '/autoloader.php';
 
-//Class init
-$http = new HttpClient();
-$token = new Token($http);
+//class init
+$ewelink = new EweLinkApiPhp();
 
-//Check if ouath gave code for authorization
-if (isset($_GET['code']) && isset($_GET['region'])) {
+//Let it handle authorization automatically
+if ($ewelink->handleAuthorization()) {
+    // We have a valid token at this point.
+    $tokenData = $ewelink->getTokenData();
+    echo '<h1>Token is valid</h1>';
+    echo '<p>Token expiry time: ' . date('Y-m-d H:i:s', $tokenData['atExpiredTime'] / 1000) . '</p>';
+
     try {
-        $tokenData = $token->getToken();
-        echo '<h1>Token Data</h1>';
-        echo '<pre>' . print_r($tokenData, true) . '</pre>';
-        $token->redirectToUrl(Constants::REDIRECT_URL);
-    } catch (Exception $e) {
-        echo 'Error: ' . $e->getMessage();
-    }
-} else {
-    if ($token->checkAndRefreshToken()) {
-        $tokenData = $token->getTokenData();
-        echo '<h1>Token is valid</h1>';
-        echo '<p>Token expiry time: ' . date('Y-m-d H:i:s', $tokenData['atExpiredTime'] / 1000) . '</p>';
+        $devs = $ewelink->getDevices();
 
-        try {
+        //Fetch devices ignoring family (new approach):
+        $devsData = $devs->fetchDevicesData();
+        echo '<h1>Devices Data</h1>';
+        echo '<pre>' . print_r($devsData, true) . '</pre>';
 
-            //initialize Devices class and List Devices
-            $devs = new Devices($http);
-            $devsList = $devs->fetchDevicesDataNoFamily();
-            echo '<h1>Devices List</h1>';
-            echo '<pre>' . print_r($devsList, true) . '</pre>';
+        //If you still want to fetch devices with current family:
+        /*
+        $devsData = $devs->fetchDevicesData();
+        echo '<h1>Devices Data (Family-based)</h1>';
+        echo '<pre>' . print_r($devsData, true) . '</pre>';
+        */
 
-            /*
+        /**
+         * ----------------------------------------------------------------
+         * Example usage of $devs class to interact with your devices:
+         * ----------------------------------------------------------------
+         */
+        /*
+           $devId       = '100xxxxxxx';  // Single Device ID
+           $multiDevId  = '100xxxxxxx';  // Multi-Channel Device ID
+           $singleDevId = '100xxxxxxx';  // Another Single Device ID
+           $devIdent    = 'Switch';      // Device name or ID for tests
 
-            // Example of retrieving data from API with user devices
-            // -----------------------------------------------
-           $devId = '100xxxxxxx'; // Single Device ID
-           $multiDevId = '100xxxxxxx'; // Multi-Channel Device ID
-           $singleDevId = '100xxxxxxx'; // Another Single Device ID
-           $devIdent = 'Switch'; // Device Identifier for online check
+           // Turn single-channel device OFF:
+           $singleParams = ['switch' => 'off'];
 
-           $singleParams = ['switch' => 'off']; // Parameters for single-channel device
+           // Turn multi-channel device OFF on all outlets:
            $multiParams = [
                ['switch' => 'off', 'outlet' => 0],
                ['switch' => 'off', 'outlet' => 1],
                ['switch' => 'off', 'outlet' => 2],
                ['switch' => 'off', 'outlet' => 3]
-           ]; // Parameters for multi-channel device
+           ];
+
+           // Multiple parameters for single-channel device (e.g., color settings):
            $singleParamsMulti = [
                ['colorR' => 0],
                ['colorG' => 153],
                ['colorB' => 0]
-           ]; // Multiple parameters for single-channel device
-           $liveParam = ['voltage', 'current', 'power']; // Parameters to get live data
-           $updateParams = ['switch' => 'on']; // Parameters for force update device
-           // -----------------------------------------------
+           ];
 
+           // Live data we want to read (voltage, current, etc.)
+           $liveParam = ['voltage', 'current', 'power'];
 
-           // More examples below
+           // Example: Searching a parameter in a device:
+           $searchKey = 'productModel';
+           $searchRes = $devs->searchDeviceParam($searchKey, $devId);
+           echo '<h1>Search Result</h1>';
+           echo '<pre>' . print_r($searchRes, true) . '</pre>';
 
-                       
-            $devsData = $devs->fetchDevicesData();
-            echo '<h1>Devices Data</h1>';
-            echo '<pre>' . print_r($devsData, true) . '</pre>';
+           // Get live device parameter:
+           $liveRes = $devs->getDeviceParamLive($devId, $liveParam);
+           echo '<h1>Live Device Parameter</h1>';
+           echo '<pre>' . print_r($liveRes, true) . '</pre>';
 
-            $searchKey = 'productModel';
-            $searchRes = $devs->searchDeviceParam($searchKey, $devId);
-            echo '<h1>Search Result</h1>';
-            echo '<pre>' . print_r($searchRes, true) . '</pre>';
+           // Get all device params live:
+           $allLiveParams = $devs->getAllDeviceParamLive($devId);
+           echo '<h1>All Live Parameters</h1>';
+           echo '<pre>' . print_r($allLiveParams, true) . '</pre>';
 
-            $liveRes = $devs->getDeviceParamLive($devId, $liveParam);
-            echo '<h1>Live Device Parameter</h1>';
-            echo '<pre>' . print_r($liveRes, true) . '</pre>';
+           // Set multi-channel device status:
+           $setMultiRes = $devs->setDeviceStatus($multiDevId, $multiParams);
+           echo '<h1>Set Multi-Channel Device Status</h1>';
+           echo '<pre>' . print_r($setMultiRes, true) . '</pre>';
 
-            
-            $allLiveParams = $devs->getAllDeviceParamLive($devId);
-            echo '<h1>Get All Device Parameters Live</h1>';
-            echo '<pre>' . print_r($allLiveParams, true) . '</pre>';
+           // Set single-channel device status:
+           $setSingleRes = $devs->setDeviceStatus($singleDevId, $singleParams);
+           echo '<h1>Set Single-Channel Device Status</h1>';
+           echo '<pre>' . print_r($setSingleRes, true) . '</pre>';
 
-            $setMultiRes = $devs->setDeviceStatus($multiDevId, $multiParams);
-            echo '<h1>Set Multi-Channel Device Status Result</h1>';
-            echo '<pre>' . print_r($setMultiRes, true) . '</pre>';
+           // Check if a device is online:
+           $onlineRes = $devs->isOnline($devIdent);
+           echo '<h1>Is Device Online?</h1>';
+           echo $devIdent . ' is ' . ($onlineRes ? 'online' : 'offline') . '.';
 
-            $setSingleRes = $devs->setDeviceStatus($singleDevId, $singleParams);
-            echo '<h1>Set Single-Channel Device Status Result</h1>';
-            echo '<pre>' . print_r($setSingleRes, true) . '</pre>';
+           // Access "Home" and see family data if still relevant:
+           $home = $devs->getDevicesData(); // or $ewelink->getDevices()->getDevicesData();
+           $familyData = $http->getHome()->fetchFamilyData();
+           echo '<h1>Family Data</h1>';
+           echo '<pre>' . print_r($familyData, true) . '</pre>';
 
-            $onlineRes = $devs->isOnline($devIdent);
-            echo '<h1>Is Device Online?</h1>';
-            echo $devIdent . ' is ' . ($onlineRes ? 'online' : 'offline') . '.';
+           // Force wake up device:
+           $forceWakeUpRes = $devs->forceWakeUp($devIdent);
+           echo '<h1>Force Wake Up Result</h1>';
+           echo '<pre>' . print_r($forceWakeUpRes, true) . '</pre>';
 
-            $home = $http->getHome();
-            $familyData = $home->fetchFamilyData();
-            echo '<h1>Family Data</h1>';
-            echo '<pre>' . print_r($familyData, true) . '</pre>';
-            echo '<p>Current Family ID: ' . htmlspecialchars($home->getCurrentFamilyId()) . '</p>';
+           if ($forceWakeUpRes) {
+               $allLiveParams = $devs->getAllDeviceParamLive($devIdent);
+               echo '<h1>All Device Params After Force Wake Up</h1>';
+               echo '<pre>' . print_r($allLiveParams, true) . '</pre>';
+           }
 
-            $forceWakeUpRes = $devs->forceWakeUp($devIdent);
-            echo '<h1>Force Wake Up Result</h1>';
-            echo '<pre>' . print_r($forceWakeUpRes, true) . '</pre>';
+           // WebSocket usage example:
+           $wsClient = $devs->initializeWebSocketConnection($devId);
+           $wsParams = 'power';
+           $wsData = $devs->getDataWebSocket($devId, $wsParams);
+           echo '<h1>WebSocket Data for ' . $devId . '</h1>';
+           echo '<pre>' . print_r($wsData, true) . '</pre>';
+        */
 
-            if ($forceWakeUpRes) {
-                $allLiveParams = $devs->getAllDeviceParamLive($devIdent);
-                echo '<h1>Get All Device Parameters Live After Force Wake Up</h1>';
-                echo '<pre>' . print_r($allLiveParams, true) . '</pre>';
-            }
-
-            // Initialize WebSocket connection and get data
-            $wsClient = $devs->initializeWebSocketConnection($devId);
-            $wsParams = 'power';
-            $wsData = $devs->getDataWebSocket($devId, $wsParams);
-            echo '<h1>WebSocket Data for ' . $devId . '</h1>';
-            echo '<pre>' . print_r($wsData, true) . '</pre>';
-
-            */
-
-        } catch (Exception $e) {
-            echo 'Error: ' . $e->getMessage();
-        }
-    } else {
-        $loginUrl = $http->getLoginUrl();
-        echo '<a href="' . htmlspecialchars($loginUrl) . '">Authorize ewelinkApiPhp</a>';
+    } catch (Exception $e) {
+        echo 'Error: ' . $e->getMessage();
     }
+
+} else {
+    // If we get here, we have no valid token -> show login link
+    $loginUrl = $ewelink->getLoginUrl();
+    echo '<a href="' . htmlspecialchars($loginUrl) . '">Authorize ewelinkApiPhp</a>';
 }
