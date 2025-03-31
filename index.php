@@ -3,7 +3,7 @@
 /**
  * Class: ewelinkApiPhp
  * Author: Paweł 'Pavlus' Janisio
- * Website: https://github.com/AceExpert/ewelink-api-python
+ * Website: https://github.com/PJanisio/ewelinkApiPhp
  * Dependencies: PHP 7.4+
  * Description: API connector for Sonoff / ewelink devices
  */
@@ -12,7 +12,9 @@ require_once __DIR__ . '/autoloader.php';
 
 //Class init
 $http = new HttpClient();
-$token = new Token($http);
+
+//Get token
+$token = $http->getToken();
 
 //Check if ouath gave code for authorization
 if (isset($_GET['code']) && isset($_GET['region'])) {
@@ -33,7 +35,7 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
         try {
 
             //initialize Devices class and List Devices
-            $devs = new Devices($http);
+            $devs = $http->getDevices();
             $devsList = $devs->getDevicesList();
             echo '<h1>Devices List</h1>';
             echo '<pre>' . print_r($devsList, true) . '</pre>';
