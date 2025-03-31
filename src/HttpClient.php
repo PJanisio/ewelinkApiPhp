@@ -51,9 +51,9 @@ class HttpClient {
             $this->region = $redirectRegion;
         }
         $this->loadTokenData();
-        $this->home = new Home($this); // Initialize the Home class
         $this->token = new Token($this); // Initialize the Token class
-        $this->devices = new Devices($this); // Initialize the Devices class
+        $this->home = null;
+        $this->devices = null;
     }
 
     /**
@@ -269,6 +269,14 @@ class HttpClient {
      * @return Devices The Devices instance.
      */
     public function getDevices() {
+        if ($this->devices === null) {
+            // Ensure we have a valid token first
+            if ($this->token->checkAndRefreshToken()) {
+                $this->devices = new Devices($this);
+            } else {
+                throw new Exception("Cannot initialize Devices without valid token");
+            }
+        }
         return $this->devices;
     }
 
@@ -288,6 +296,9 @@ class HttpClient {
      * @return Home The Home instance.
      */
     public function getHome() {
+        if ($this->home === null) {
+            $this->home = new Home($this);
+        }
         return $this->home;
     }
 
