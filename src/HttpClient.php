@@ -3,7 +3,7 @@
 /**
  * Class: ewelinkApiPhp
  * Author: Paweł 'Pavlus' Janisio
- * Website: https://github.com/AceExpert/ewelink-api-python
+ * Website: https://github.com/PJanisio/ewelinkApiPhp
  * Dependencies: PHP 7.4+
  * Description: API connector for Sonoff / ewelink devices
  */
@@ -12,6 +12,7 @@ require_once __DIR__ . '/Utils.php';
 require_once __DIR__ . '/Constants.php';
 require_once __DIR__ . '/Home.php';
 require_once __DIR__ . '/Token.php';
+require_once __DIR__ . '/Devices.php';
 
 class HttpClient {
     private $loginUrl;
@@ -21,6 +22,7 @@ class HttpClient {
     private $tokenData;
     private $home;
     private $token;
+    private $devices;
     private $utils;
 
     public function __construct() {
@@ -49,8 +51,9 @@ class HttpClient {
             $this->region = $redirectRegion;
         }
         $this->loadTokenData();
-        $this->home = new Home($this); // Initialize the Home class
         $this->token = new Token($this); // Initialize the Token class
+        $this->home = null;
+        $this->devices = null;
     }
 
     /**
@@ -251,6 +254,33 @@ class HttpClient {
         return $useFullUrl ? $response : $response['data'];
     }
 
+     /**
+     * Get the Token instance.
+     *
+     * @return Token The Token instance.
+     */
+    public function getToken() {
+        return $this->token;
+    }
+
+    /**
+     * Get the Devices instance.
+     *
+     * @return Devices The Devices instance.
+     */
+    public function getDevices() {
+        if ($this->devices === null) {
+            // Ensure we have a valid token first
+            if ($this->token->checkAndRefreshToken()) {
+                $this->devices = new Devices($this);
+            } else {
+                throw new Exception("Cannot initialize Devices without valid token");
+            }
+        }
+        return $this->devices;
+    }
+
+
     /**
      * Get the stored token data.
      *
@@ -266,6 +296,9 @@ class HttpClient {
      * @return Home The Home instance.
      */
     public function getHome() {
+        if ($this->home === null) {
+            $this->home = new Home($this);
+        }
         return $this->home;
     }
 

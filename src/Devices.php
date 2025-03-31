@@ -3,7 +3,7 @@
 /**
  * Class: ewelinkApiPhp
  * Author: Paweł 'Pavlus' Janisio
- * Website: https://github.com/AceExpert/ewelink-api-python
+ * Website: https://github.com/PJanisio/ewelinkApiPhp
  * Dependencies: PHP 7.4+
  * Description: API connector for Sonoff / ewelink devices
  */
@@ -28,7 +28,7 @@ class Devices {
         $this->httpClient = $httpClient;
         $this->home = new Home($httpClient);
         $this->home->fetchFamilyData();
-        $this->loadDevicesData();
+        //$this->loadDevicesData();
         if ($this->devicesData === null) {
             $this->fetchDevicesData();
         }
@@ -47,13 +47,37 @@ class Devices {
     }
 
     /**
-     * Fetch devices data from the remote server and save it locally.
+     * Fetch devices data WITHOUT using familyId and store in $this->devicesData.
+     * This fully replaces loadDevicesData() for your use-case.
+     *
+     * @param string $lang The language parameter for the request (default is 'en').
+     * @return array The devices data.
+     */
+
+     public function fetchDevicesData($lang = 'en') {
+        // Make a request but do NOT include 'familyId'
+        $params = [
+            'lang' => $lang
+        ];
+        
+        $rawData = $this->httpClient->getRequest('/v2/device/thing', $params);
+        $this->devicesData = $rawData;
+        file_put_contents(Constants::JSON_LOG_DIR . '/devices.json', json_encode($this->devicesData, JSON_PRETTY_PRINT));
+
+        return $this->devicesData;
+    }
+
+
+    /*
+     * (Old approach) Fetch devices data from the remote server and save it locally.
      *
      * @param string $lang The language parameter for the request (default is 'en').
      * @return array The devices data.
      * @throws Exception If the current family ID is not set.
      */
-    public function fetchDevicesData($lang = 'en') {
+
+     /*
+    public function fetchDevicesDataFamily($lang = 'en') {
         $familyId = $this->home->getCurrentFamilyId();
         if (!$familyId) {
             $errorCode = 'NO_FAMILY_ID'; // Example error code
@@ -68,6 +92,7 @@ class Devices {
         file_put_contents(Constants::JSON_LOG_DIR . '/devices.json', json_encode($this->devicesData));
         return $this->devicesData;
     }
+    */
 
     /**
      * Get the loaded devices data.
