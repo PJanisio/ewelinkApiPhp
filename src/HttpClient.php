@@ -25,22 +25,25 @@ class HttpClient {
     private $devices;
     private $utils;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->utils = new Utils();
-        
+
         // Validate constants
         $validationResults = $this->utils->validateConstants();
         $errors = [];
+
         foreach ($validationResults as $key => $result) {
             if (!$result['is_valid']) {
-                $errors[] = "Invalid {$key}: " . $result['value'];
+                $errors[] = "{$result['message']} — {$key}: {$result['value']}";
             }
         }
+
         if (!empty($errors)) {
             foreach ($errors as $error) {
-                echo "<p>$error</p>";
+                echo "<p>{$error}</p>";
             }
-            exit;
+            exit; //bail out
         }
 
         $this->region = Constants::REGION; // Assign region from Constants
