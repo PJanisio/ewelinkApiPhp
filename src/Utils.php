@@ -106,44 +106,55 @@ class Utils {
     }
 
     /**
-     * Validate the constants in the Constants class.
-     *
-     * @return array The validation results for REDIRECT_URL, EMAIL, and REGION.
-     */
-    public function validateConstants() {
-        $results = [];
+ * Validate the constants in the Constants class.
+ *
+ * @return array Validation results for REDIRECT_URL, EMAIL and REGION.
+ */
+public function validateConstants(): array
+{
+    $results = [];
 
-        // Validate REDIRECT_URL
-        $url = Constants::REDIRECT_URL;
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_NOBODY, true);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 5); // Set timeout to 5 seconds
-        curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        $results['REDIRECT_URL'] = [
-            'value' => $url,
-            'is_valid' => $httpCode >= 200 && $httpCode < 400 // Consider 2xx and 3xx responses as valid
-        ];
+    /* ---------- REDIRECT_URL ---------- */
+    $url    = Constants::REDIRECT_URL;
+    $scheme = parse_url($url, PHP_URL_SCHEME);
+    $urlIsValid = filter_var($url, FILTER_VALIDATE_URL) !== false
+               && in_array($scheme, ['http', 'https'], true);
 
-        // Validate EMAIL
-        $email = Constants::EMAIL;
-        $results['EMAIL'] = [
-            'value' => $email,
-            'is_valid' => filter_var($email, FILTER_VALIDATE_EMAIL) !== false
-        ];
+    $results['REDIRECT_URL'] = [
+        'value'   => $url,
+        'is_valid'=> $urlIsValid,
+        'message' => $urlIsValid
+            ? 'URL looks syntactically correct.'
+            : 'Invalid URL syntax or scheme (must start with http/https).',
+    ];
 
-        // Validate REGION
-        $region = Constants::REGION;
-        $validRegions = ['cn', 'us', 'eu', 'as'];
-        $results['REGION'] = [
-            'value' => $region,
-            'is_valid' => in_array($region, $validRegions)
-        ];
+    /* ---------- EMAIL ---------- */
+    $email       = Constants::EMAIL;
+    $emailIsValid = filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
 
-        return $results;
-    }
+    $results['EMAIL'] = [
+        'value'   => $email,
+        'is_valid'=> $emailIsValid,
+        'message' => $emailIsValid
+            ? 'E-mail address is syntactically valid.'
+            : 'Invalid e-mail address syntax.',
+    ];
+
+    /* ---------- REGION ---------- */
+    $region        = Constants::REGION;
+    $validRegions  = ['cn', 'us', 'eu', 'as'];
+    $regionIsValid = in_array($region, $validRegions, true);
+
+    $results['REGION'] = [
+        'value'   => $region,
+        'is_valid'=> $regionIsValid,
+        'message' => $regionIsValid
+            ? 'Region code is recognised.'
+            : 'Invalid region code (allowed: cn, us, eu, as).',
+    ];
+
+    return $results;
+}
 
     /**
      * Sanitize a string by removing non-printable characters.
