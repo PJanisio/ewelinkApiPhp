@@ -127,6 +127,16 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
         } catch (Exception $e) {
             echo 'Error: ' . $e->getMessage();
         }
+
+        // ── Links to raw JSON files ─────────────────────────────────────────────
+        echo '<h1>JSON Files</h1>';
+        echo '<ul>';
+        echo '<li><a href="devices.json"    target="_blank">devices.json</a></li>';
+        echo '<li><a href="family.json"     target="_blank">family.json</a></li>';
+        echo '<li><a href="token.json"      target="_blank">token.json</a></li>';
+        echo '</ul>';
+        // ────────────────────────────────────────────────────────────────────────
+
     } else {
         $loginUrl = $http->getLoginUrl();
         echo '<a href="' . htmlspecialchars($loginUrl) . '">Authorize ewelinkApiPhp</a>';
