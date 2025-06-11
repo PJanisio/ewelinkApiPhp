@@ -29,8 +29,27 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
 } else {
     if ($token->checkAndRefreshToken()) {
         $tokenData = $token->getTokenData();
-        echo '<h1>Token is valid</h1>';
+        echo '<h1>You are authenticated!</h1>';
         echo '<p>Token expiry time: ' . date('Y-m-d H:i:s', $tokenData['atExpiredTime'] / 1000) . '</p>';
+
+        // ── Debug log link (only when DEBUG=1) ─────────────────────────────────
+        if (Constants::DEBUG === 1) {
+            echo '<h1>Debug is ON</h1>';
+            echo '<ul>';
+            echo '<li><a href="debug.log" target="_blank">debug.log</a></li>';
+            echo '</ul>';
+        }
+        // ────────────────────────────────────────────────────────────────────────
+
+        // ── Links to raw JSON files ─────────────────────────────────────────────
+        echo '<h1>JSON Files</h1>';
+        echo '<ul>';
+        echo '<li><a href="devices.json"    target="_blank">devices.json</a></li>';
+        echo '<li><a href="family.json"     target="_blank">family.json</a></li>';
+        echo '<li><a href="token.json"      target="_blank">token.json</a></li>';
+        echo '</ul>';
+        echo '-----------------------------------------------------------';
+        // ────────────────────────────────────────────────────────────────────────
 
         try {
 
@@ -128,14 +147,6 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
             echo 'Error: ' . $e->getMessage();
         }
 
-        // ── Links to raw JSON files ─────────────────────────────────────────────
-        echo '<h1>JSON Files</h1>';
-        echo '<ul>';
-        echo '<li><a href="devices.json"    target="_blank">devices.json</a></li>';
-        echo '<li><a href="family.json"     target="_blank">family.json</a></li>';
-        echo '<li><a href="token.json"      target="_blank">token.json</a></li>';
-        echo '</ul>';
-        // ────────────────────────────────────────────────────────────────────────
 
     } else {
         $loginUrl = $http->getLoginUrl();
