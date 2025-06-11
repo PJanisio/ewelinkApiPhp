@@ -175,7 +175,7 @@ class Devices {
         if ($deviceId && isset($this->devicesData['thingList'])) {
             foreach ($this->devicesData['thingList'] as $device) {
                 if ($device['itemData']['deviceid'] === $deviceId && isset($device['itemData']['isSupportChannelSplit'])) {
-                    return $device['itemData']['isSupportChannelSplit'] == 1;
+                    return isset($device['itemData']['params']['switches']) ? true : false;
                 }
             }
         }
