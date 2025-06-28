@@ -21,7 +21,7 @@ class Token {
 
         if ($this->tokenData) {
             $this->httpClient->setTokenData($this->tokenData);
-            }
+        }
     }
 
     /**
@@ -69,9 +69,9 @@ class Token {
      * @return array The new token data.
      * @throws Exception If the request fails.
      */
-    public function refreshToken(): array
+    public function refreshToken()
     {
-        if (empty($this->tokenData['refreshToken'])) {
+        if (empty($this->tokenData['refreshToken'] ?? null)) {
             throw new Exception('Refresh token not available. Call getToken() first.');
         }
 
