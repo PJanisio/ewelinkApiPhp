@@ -24,7 +24,8 @@ class Utils {
 
         foreach ($requiredFunctions as $function) {
             if (in_array($function, $disabledFunctions)) {
-                echo "Warning: The function $function is disabled on this server. Some functionality may be limited.\n";
+                //dont need to echos this warning until websocket will be used by user, let the php warn about it
+                //echo "Warning: The function $function is disabled on this server. Some functionality may be limited.\n";
             }
         }
     }

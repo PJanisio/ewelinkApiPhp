@@ -60,6 +60,14 @@ class HttpClient {
     }
 
     /**
+     * Keep an up-to-date copy of the token payload for request signing.
+     * Called by Token whenever it obtains a new or refreshed token.
+     */
+    public function setTokenData(array $data) {
+        $this->tokenData = $data;
+    }
+
+    /**
      * Create a login URL for OAuth.
      *
      * @param string $state The state parameter for the OAuth flow.
