@@ -20,9 +20,9 @@ class WebSocketClient {
     private $key;
     private $utils;
     private $httpClient;
-    private $hbInterval;
-    private $pid;
-    private $os;
+    private $hbInterval = 0;
+    private $nextPing = 0.0;
+
 
     /**
      * Constructor for the WebSocketClient class.
@@ -32,7 +32,6 @@ class WebSocketClient {
     public function __construct(HttpClient $httpClient) {
         $this->httpClient = $httpClient;
         $this->utils = new Utils();
-        $this->os = strtoupper(substr(PHP_OS, 0, 3));
         $this->resolveWebSocketUrl();
     }
 
@@ -84,7 +83,7 @@ class WebSocketClient {
             throw new Exception("Unable to connect to websocket: $errstr ($errno)");
         }
 
-        $this->key = base64_encode(openssl_random_pseudo_bytes(16));
+        $this->key = base64_encode(random_bytes(16));
         $headers = [
             "GET $this->path HTTP/1.1",
             "Host: {$this->host}",
@@ -128,9 +127,11 @@ class WebSocketClient {
         $this->send(json_encode($handshakeData));
         $response = $this->receive();
         $responseData = json_decode($response, true);
+
         if (isset($responseData['config']['hbInterval'])) {
-            $this->startHeartbeat($responseData['config']['hbInterval']);
-        }
+             $this->hbInterval = $responseData['config']['hbInterval'] + 7;
+             $this->nextPing   = microtime(true) + $this->hbInterval;
+                }
         return $responseData;
     }
 
@@ -199,16 +200,16 @@ class WebSocketClient {
      * @param string $data The data to send.
      * @throws Exception If there is no valid WebSocket connection or if sending the data fails.
      */
-    public function send($data) {
+    public function send(string $data = '', string $type = 'text') {
+        $this->maybePing();  
         if (!$this->socket) {
             throw new Exception(Constants::ERROR_CODES['NO_VALID_WS_CONNECTION'] ?? 'Unknown error');
         }
-        $encodedData = $this->hybi10Encode($data);
-        $result = @fwrite($this->socket, $encodedData);
-        if ($result === false) {
-            throw new Exception(Constants::ERROR_CODES['FAILED_TO_SEND_WS_DATA'] ?? 'Unknown error');
-        }
+        $encoded = $this->hybi10Encode($data, $type, true);
+    if (@fwrite($this->socket, $encoded) === false) {
+        throw new Exception(Constants::ERROR_CODES['FAILED_TO_SEND_WS_DATA'] ?? 'Unknown error');
     }
+}
 
     /**
      * Receive data from the WebSocket connection.
@@ -217,6 +218,7 @@ class WebSocketClient {
      * @throws Exception If there is no valid WebSocket connection.
      */
     public function receive() {
+        $this->maybePing();
         if (!$this->socket) {
             throw new Exception(Constants::ERROR_CODES['NO_VALID_WS_CONNECTION'] ?? 'Unknown error');
         }
@@ -231,10 +233,6 @@ class WebSocketClient {
         if ($this->socket) {
             fclose($this->socket);
             $this->socket = null;
-        }
-        if ($this->pid) {
-            posix_kill($this->pid, SIGTERM);
-            $this->pid = null;
         }
     }
 
@@ -291,7 +289,7 @@ class WebSocketClient {
         if ($masked === true) {
             $mask = [];
             for ($i = 0; $i < 4; $i++) {
-                $mask[$i] = chr(rand(0, 255));
+                $mask[$i] = chr(random_int(0, 255));
             }
 
             $frameHead = array_merge($frameHead, $mask);
@@ -348,50 +346,43 @@ class WebSocketClient {
         return $decodedData;
     }
 
-    /**
-     * Start the heartbeat process to keep the WebSocket connection alive.
-     *
-     * @param int $interval The heartbeat interval in seconds.
-     * @throws Exception If forking the process fails on Unix-based systems.
-     */
-    private function startHeartbeat($interval) {
-        $this->hbInterval = $interval + 7; // Add 7 seconds as mentioned in the documentation
+/*
+ * It turns the socket into non-blocking mode and uses stream_select()
+ * to multiplex receive() and periodic ping frames inside one loop.
+ * The loop exits automatically when the socket closes or an Exception
+ * is thrown from send()/receive().
+ *
+ * @param int $interval   Heart-beat interval returned by the cloud (seconds)
+ * @throws Exception      Any error bubbles up to the caller
+ */
+private function startHeartbeat(int $interval)
+{
+    //cloud docs: real timeout + 7 s guard
+    $this->hbInterval = $interval + 7;
+    $lastPing         = microtime(true);
 
-        if ($this->os === 'WIN') {
-            // For Windows, use a simple loop with sleep
-            $this->pid = true; // Placeholder to indicate the heartbeat is running
-            while (true) {
-                sleep($this->hbInterval);
-                try {
-                    $this->send('ping');
-                } catch (Exception $e) {
-                    $this->utils->debugLog(__CLASS__, __FUNCTION__, [], [], ['message' => 'Failed to send ping', 'error' => $e->getMessage()], debug_backtrace()[1]['class'], debug_backtrace()[1]['function'], $this->url);
-                    break; // Exit loop if send fails
-                }
-            }
-        } else {
-            // For Unix-based systems, use pcntl_fork
-            $this->pid = pcntl_fork();
+    // Let PHP return immediately when no data is ready
+    stream_set_blocking($this->socket, false);
 
-            if ($this->pid == -1) {
-                throw new Exception(Constants::ERROR_CODES['FORK_FAILED'] ?? 'Unknown error');
-            } elseif ($this->pid) {
-                // Parent process
-                return;
-            } else {
-                // Child process
-                while (true) {
-                    sleep($this->hbInterval);
-                    try {
-                        $this->send('ping');
-                    } catch (Exception $e) {
-                        $this->utils->debugLog(__CLASS__, __FUNCTION__, [], [], ['message' => 'Failed to send ping', 'error' => $e->getMessage()], debug_backtrace()[1]['class'], debug_backtrace()[1]['function'], $this->url);
-                        exit; // Exit child process if send fails
-                    }
-                }
-            }
+    while (is_resource($this->socket) && !feof($this->socket)) {
+        $read   = [$this->socket];
+        $write  = $except = [];
+
+        //We wake up at most every 3s so that we can check
+        if (stream_select($read, $write, $except, 3) === false) {
+            break; // socket closed or fatal error
+        }
+
+        if ($read) {
+            $msg = $this->receive();
+        }
+
+        if (microtime(true) - $lastPing >= $this->hbInterval) {
+            $this->send('', 'ping'); //opcode 0x9, empty payload is OK
+            $lastPing = microtime(true);
         }
     }
+}
 
     /**
      * Get the WebSocket URL.
@@ -409,5 +400,22 @@ class WebSocketClient {
      */
     public function getSocket() {
         return $this->socket;
+    }
+
+
+    /** Send a real WebSocket ping frame when it’s time. */
+    private function maybePing(): void
+    {
+        if (
+            $this->hbInterval &&
+            microtime(true) >= $this->nextPing &&
+            \is_resource($this->socket) &&
+            !\feof($this->socket)
+        ) {
+
+            $frame = $this->hybi10Encode('', 'ping', true);
+            @fwrite($this->socket, $frame);
+            $this->nextPing = microtime(true) + $this->hbInterval;
+        }
     }
 }
