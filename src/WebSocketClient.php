@@ -131,7 +131,7 @@ class WebSocketClient {
         if (isset($responseData['config']['hbInterval'])) {
              $this->hbInterval = $responseData['config']['hbInterval'] + 7;
              $this->nextPing   = microtime(true) + $this->hbInterval;
-                }
+        }
         return $responseData;
     }
 
@@ -227,7 +227,7 @@ class WebSocketClient {
     }
 
     /**
-     * Close the WebSocket connection and stop the heartbeat process.
+     * Close the WebSocket connection and stop the ping process.
      */
     public function close() {
         if ($this->socket) {
@@ -346,44 +346,6 @@ class WebSocketClient {
         return $decodedData;
     }
 
-/*
- * It turns the socket into non-blocking mode and uses stream_select()
- * to multiplex receive() and periodic ping frames inside one loop.
- * The loop exits automatically when the socket closes or an Exception
- * is thrown from send()/receive().
- *
- * @param int $interval   Heart-beat interval returned by the cloud (seconds)
- * @throws Exception      Any error bubbles up to the caller
- */
-private function startHeartbeat(int $interval)
-{
-    //cloud docs: real timeout + 7 s guard
-    $this->hbInterval = $interval + 7;
-    $lastPing         = microtime(true);
-
-    // Let PHP return immediately when no data is ready
-    stream_set_blocking($this->socket, false);
-
-    while (is_resource($this->socket) && !feof($this->socket)) {
-        $read   = [$this->socket];
-        $write  = $except = [];
-
-        //We wake up at most every 3s so that we can check
-        if (stream_select($read, $write, $except, 3) === false) {
-            break; // socket closed or fatal error
-        }
-
-        if ($read) {
-            $msg = $this->receive();
-        }
-
-        if (microtime(true) - $lastPing >= $this->hbInterval) {
-            $this->send('', 'ping'); //opcode 0x9, empty payload is OK
-            $lastPing = microtime(true);
-        }
-    }
-}
-
     /**
      * Get the WebSocket URL.
      *
@@ -404,8 +366,7 @@ private function startHeartbeat(int $interval)
 
 
     /** Send a real WebSocket ping frame when it’s time. */
-    private function maybePing(): void
-    {
+    private function maybePing() {
         if (
             $this->hbInterval &&
             microtime(true) >= $this->nextPing &&

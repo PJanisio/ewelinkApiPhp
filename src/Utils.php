@@ -11,24 +11,9 @@
 class Utils {
 
     public function __construct() {
-        $this->checkDisabledFunctions();
+        //not needed for now
     }
 
-    /**
-     * Check for disabled functions and print a warning if any are disabled.
-     */
-    private function checkDisabledFunctions() {
-        $requiredFunctions = ['pcntl_fork', 'posix_kill'];
-        $disabledFunctions = explode(',', ini_get('disable_functions'));
-        $disabledFunctions = array_map('trim', $disabledFunctions);
-
-        foreach ($requiredFunctions as $function) {
-            if (in_array($function, $disabledFunctions)) {
-                //dont need to echos this warning until websocket will be used by user, let the php warn about it
-                //echo "Warning: The function $function is disabled on this server. Some functionality may be limited.\n";
-            }
-        }
-    }
 
     /**
      * Generate a nonce (an 7-digit alphanumeric random string).
