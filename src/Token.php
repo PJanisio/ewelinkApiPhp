@@ -8,8 +8,9 @@
  * Description: API connector for Sonoff / ewelink devices
  */
 
-require_once __DIR__ . '/Utils.php';
-require_once __DIR__ . '/Constants.php';
+namespace Pjanisio\EwelinkApiPhp;
+use Exception;
+
 
 class Token {
     private $httpClient;

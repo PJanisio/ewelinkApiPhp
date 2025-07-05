@@ -1,0 +1,22 @@
+{
+    "name": "pjanisio/ewelink-api-php",
+    "description": "API connector for Sonoff/eWeLink devices",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Paweł “Pavlus” Janisio",
+            "email": "p.janisio@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.4",
+        "ext-curl": "*",
+        "ext-json": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Ewelink\\": "src/"
+        }
+    }
+}

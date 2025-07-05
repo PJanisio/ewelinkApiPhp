@@ -9,9 +9,10 @@
  */
  
 
-require_once __DIR__ . '/WebSocketClient.php';
-require_once __DIR__ . '/Utils.php';
-require_once __DIR__ . '/Constants.php';
+ namespace Pjanisio\EwelinkApiPhp;
+ use Exception;
+ use RecursiveIteratorIterator;
+ use RecursiveArrayIterator;
 
 class Devices {
     private $devicesData;

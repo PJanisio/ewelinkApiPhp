@@ -8,6 +8,8 @@
  * Description: API connector for Sonoff / ewelink devices
  */
 
+namespace Pjanisio\EwelinkApiPhp;
+
 class Utils {
 
     public function __construct() {

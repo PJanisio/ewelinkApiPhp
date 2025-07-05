@@ -8,6 +8,8 @@
  * Description: API connector for Sonoff / ewelink devices
  */
 
+ namespace Pjanisio\EwelinkApiPhp;
+
 class Constants {
     // Your eWeLink application ID, obtained from the eWeLink developer platform
     const APPID = 'your_app_id';
