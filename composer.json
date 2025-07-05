@@ -16,7 +16,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Ewelink\\": "src/"
+            "Pjanisio\\Ewelink\\": "src/"
         }
     }
 }
