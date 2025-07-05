@@ -10,7 +10,6 @@ eWeLink API PHP is a connector for Sonoff / eWeLink devices. This library allows
 ## Requirements
 
 - PHP 7.4+
-- cURL extension enabled
 
 ## Current features
 
