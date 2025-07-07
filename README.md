@@ -1,56 +1,86 @@
-# eWeLink API PHP
+# eWeLink API PHP – Connect to Sonoff / eWeLink devices
 
-:link: [Download latest release](https://github.com/PJanisio/ewelinkApiPhp/releases)
+[![Packagist](https://img.shields.io/packagist/v/pjanisio/ewelink-api-php?logo=composer)](https://packagist.org/packages/pjanisio/ewelink-api-php)
+[![PHP >= 7.4](https://img.shields.io/badge/PHP-7.4%2B-777bb3?logo=php)](https://www.php.net/supported-versions.php)
+[![License](https://img.shields.io/github/license/PJanisio/ewelinkApiPhp)](LICENSE)
 
-## Install by composer
-`composer require pjanisio/ewelink-api-php`
+`ewelink-api-php` lets you talk to your eWeLink–enabled devices (Sonoff, KingArt, etc.) **directly from PHP**. It wraps the official HTTP & WebSocket endpoints, handles OAuth, and gives you a neat object‑oriented façade.
 
-eWeLink API PHP is a connector for Sonoff / eWeLink devices. This library allows you to interact with your eWeLink-enabled devices from your browser.
+---
 
-## Requirements
+## 📦 Installation
 
-- PHP 7.4+
+```bash
+composer require pjanisio/ewelink-api-php
+```
 
-## Current features
+Composer installs the library, creates `vendor/autoload.php`, and you’re ready to go.
 
-- get all devices list with their parameters using **deviceId** or **deviceName** from ewelink app
-- saving devices data and other outputs from API to **.json**
-- search for **any value** of each device (f.e switch status, productName, MAC etc.)
-- set any parameter/state of device using **HTTP gateway** or **websockets**
-- set parameter for **multi-channel** devices (like 4CH Pro)
-- update power parameters like **current, voltage, power** for electricity monitoring devices
-- debug all requests and responses to **debug.log**
+---
 
-## Documentation
-
-Go to [Wiki Pages](https://github.com/PJanisio/ewelinkApiPhp/wiki) to get started read about possible methods.
-
-## Example
-
-This is a single case example to turn on device.
-
-Look at [Wiki Pages](https://github.com/PJanisio/ewelinkApiPhp/wiki) to get knowledge of how to start and other methods.
+## 🚀 Quick‑start
 
 ```php
 <?php
-$deviceId = 'your_device_id';
+require __DIR__.'/vendor/autoload.php';
 
-$params = ['switch' => 'on']; 
-$statusUpdateResult = $devices->setDeviceStatus($deviceId, $params);
+use pjanisio\ewelinkapiphp\HttpClient;
 
-echo $statusUpdateResult;
+$http = new HttpClient();  // takes creds from constants / env
+$token = $http->getToken(); // OAuth flow (auto‑refreshes)
 
+$devices = $http->getDevices(); // Devices façade
+$list    = $devices->getDevicesList();
+
+print_r($list);  // see everything at once
+
+$lampId  = '100xxxxxx';
+$devices->setDeviceStatus($lampId, ['switch' => 'on']);  // turn it on
 ```
 
-## Ready to deploy Device Monitoring application
+Full examples live in the **[Wiki](https://github.com/PJanisio/ewelinkApiPhp/wiki)**.
 
-Please see example app written based on this class that checks and update chosen parameters in real time (using asynchronous calls) using both HTTP and websocket method alltogether.
+---
 
-[Device Monitoring APP](https://github.com/PJanisio/ewelinkapiphp-device-monitoring)
+## ✅ Features
 
-![screencapture-nastran-org-modules-dev-ewelink-index-html-2024-07-05-07_01_19](https://github.com/PJanisio/ewelinkApiPhp/assets/9625885/7658cbe6-cdb9-48bc-9f0d-1a2db4e67147)
+| Area            | What you can do                                                                                                                     |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Discovery**   | • Fetch *all* devices in one call<br>• Search by `deviceid` **or** human name<br>• Persist raw data as `devices.json`               |
+| **Status**      | • Read any single param live (`switch`, `voltage`, `power`, …)<br>• Grab *all* live params at once<br>• Check if a device is online |
+| **Control**     | • Set one or many params (HTTP)<br>• Multi‑channel helpers (`switches[n]`)<br>• WebSocket realtime control                          |
+| **Monitoring**  | • Live power metrics (voltage / current / power)<br>• Device history endpoint (`/v2/device/history`)                                |
+| **Maintenance** | • Force wake‑up (handshake + echo params)<br>• Family/home helper (`getCurrentFamilyId`)                                            |
+| **Dev tools**   | • PSR‑4 autoloading via Composer<br>• `DEBUG` mode – full request/response log to `debug.log`                                       |
 
+---
 
-## Tech info
+## 🖥️ Demo Monitoring App
 
-Visit wiki page for devs: [devs-wiki](https://github.com/PJanisio/ewelinkApiPhp/wiki/Developers)
+Need an out‑of‑the‑box dashboard? Check the companion project **[ewelinkapiphp‑device‑monitoring](https://github.com/PJanisio/ewelinkapiphp-device-monitoring)** – asynchronous UI, HTTP + WS under the hood.
+
+![Monitoring screenshot](https://github.com/PJanisio/ewelinkApiPhp/assets/9625885/7658cbe6-cdb9-48bc-9f0d-1a2db4e67147)
+
+---
+
+## 🗂 Documentation
+
+* **Getting started / API reference →** see the [Wiki Pages](https://github.com/PJanisio/ewelinkApiPhp/wiki)
+* **Developer notes** (architecture, contribution guide) → [Developers Wiki](https://github.com/PJanisio/ewelinkApiPhp/wiki/Developers)
+
+---
+
+## ⚙️ Requirements
+
+* PHP **7.4 or newer**
+* Extensions: `curl`, `json` (both enabled by default on typical PHP installs)
+
+---
+
+## 📝 License
+
+MIT – do what you want, just keep the copyright notice.
+
+---
+
+**Happy hacking & enjoy your smart devices!**
