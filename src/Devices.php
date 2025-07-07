@@ -9,7 +9,7 @@
  */
  
 
- namespace Pjanisio\EwelinkApiPhp;
+ namespace pjanisio\ewelinkapiphp;
  use Exception;
  use RecursiveIteratorIterator;
  use RecursiveArrayIterator;

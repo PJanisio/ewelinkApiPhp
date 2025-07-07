@@ -8,7 +8,7 @@
  * Description: API connector for Sonoff / ewelink devices
  */
 
- namespace Pjanisio\EwelinkApiPhp;
+ namespace pjanisio\ewelinkapiphp;
 
 class Constants {
     // Your eWeLink application ID, obtained from the eWeLink developer platform

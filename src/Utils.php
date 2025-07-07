@@ -8,7 +8,7 @@
  * Description: API connector for Sonoff / ewelink devices
  */
 
-namespace Pjanisio\EwelinkApiPhp;
+namespace pjanisio\ewelinkapiphp;
 
 class Utils {
 

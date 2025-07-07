@@ -11,12 +11,11 @@
     ],
     "require": {
         "php": ">=7.4",
-        "ext-hash": "*",
         "ext-json": "*"
     },
     "autoload": {
         "psr-4": {
-            "Pjanisio\\EwelinkApiPhp\\": "src/"
+            "pjanisio\\ewelinkapiphp\\": "src/"
         }
     }
 }

@@ -10,8 +10,8 @@
 
  require_once __DIR__ . '/vendor/autoload.php';
 
- use Pjanisio\EwelinkApiPhp\Constants;
- use Pjanisio\EwelinkApiPhp\HttpClient;
+ use pjanisio\ewelinkapiphp\Constants;
+ use pjanisio\ewelinkapiphp\HttpClient;
 
 
 
