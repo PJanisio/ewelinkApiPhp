@@ -14,7 +14,6 @@
  use pjanisio\ewelinkapiphp\HttpClient;
 
 
-
 //Class init
 $http = new HttpClient();
 

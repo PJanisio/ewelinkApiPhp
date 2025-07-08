@@ -5,10 +5,21 @@
     "license": "MIT",
     "authors": [
         {
-            "name": "Paweł “Pavlus” Janisio",
+            "name": "Paweł 'Pavlus' Janisio",
             "email": "p.janisio@gmail.com"
         }
     ],
+    "homepage": "https://github.com/PJanisio/ewelinkApiPhp",
+    "keywords": [
+        "ewelink",
+        "sonoff",
+        "iot",
+        "smarthome"
+    ],
+    "support": {
+        "issues": "https://github.com/PJanisio/ewelinkApiPhp/issues",
+        "source": "https://github.com/PJanisio/ewelinkApiPhp"
+    },
     "require": {
         "php": ">=7.4",
         "ext-json": "*"
@@ -17,5 +28,10 @@
         "psr-4": {
             "pjanisio\\ewelinkapiphp\\": "src/"
         }
-    }
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true
+    },
+    "prefer-stable": true
 }
