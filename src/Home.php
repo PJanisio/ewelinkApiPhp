@@ -8,6 +8,9 @@
  * Description: API connector for Sonoff / ewelink devices
  */
 
+namespace pjanisio\ewelinkapiphp;
+use Exception;
+
 class Home {
     private $httpClient;
     private $familyData;
