@@ -16,7 +16,6 @@ class HttpClient {
     private $code;
     private $region;
     private $authorization;
-    private $tokenData;
     private $home;
     private $token;
     private $devices;
@@ -50,18 +49,9 @@ class HttpClient {
         if ($redirectRegion) {
             $this->region = $redirectRegion;
         }
-        $this->loadTokenData();
         $this->token = new Token($this); // Initialize the Token class
         $this->home = null;
         $this->devices = null;
-    }
-
-    /**
-     * Keep an up-to-date copy of the token payload for request signing.
-     * Called by Token whenever it obtains a new or refreshed token.
-     */
-    public function setTokenData(array $data) {
-        $this->tokenData = $data;
     }
 
     /**
@@ -88,15 +78,6 @@ class HttpClient {
         return "https://c2ccdn.coolkit.cc/oauth/index.html?" . $queryString;
     }
 
-    /**
-     * Load token data from token.json file.
-     */
-    private function loadTokenData() {
-        $tokenFile = Constants::JSON_LOG_DIR . '/token.json';
-        if (file_exists($tokenFile)) {
-            $this->tokenData = json_decode(file_get_contents($tokenFile), true);
-        }
-    }
 
     /**
      * Get the login URL.
@@ -165,7 +146,7 @@ class HttpClient {
         ];
 
         if ($useTokenAuthorization) {
-            $token = $this->tokenData['accessToken'];
+            $token = $this->token->getAccessToken();
             $headers[] = "Authorization: Bearer $token";
         } else {
             $authorization = $utils->sign(json_encode($data), Constants::APP_SECRET);
@@ -225,7 +206,7 @@ class HttpClient {
         }
         
         $headers = [
-            "Authorization: Bearer " . $this->tokenData['accessToken']
+            "Authorization: Bearer " . $this->token->getAccessToken()
         ];
 
         $options = [
@@ -295,7 +276,7 @@ class HttpClient {
      * @return array|null The token data or null if not set.
      */
     public function getTokenData() {
-        return $this->tokenData;
+        return $this->token->getTokenData();
     }
 
     /**
