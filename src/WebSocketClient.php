@@ -143,7 +143,6 @@ class WebSocketClient {
      * @return array The handshake data.
      */
     public function createHandshakeData($device) {
-        //$tokenData = $this->httpClient->getTokenData();
         return [
             'action' => 'userOnline',
             'version' => 8,
