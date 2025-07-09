@@ -143,12 +143,11 @@ class WebSocketClient {
      * @return array The handshake data.
      */
     public function createHandshakeData($device) {
-        $tokenData = $this->httpClient->getTokenData();
         return [
             'action' => 'userOnline',
             'version' => 8,
             'ts' => time(),
-            'at' => $tokenData['accessToken'],
+            'at' => $this->httpClient->getToken()->getAccessToken(),
             'userAgent' => 'app',
             'apikey' => $device['apikey'],
             'appid' => Constants::APPID,

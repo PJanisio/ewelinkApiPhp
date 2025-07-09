@@ -32,22 +32,6 @@ class Utils {
     }
 
     /**
-     * Generate a UUID.
-     *
-     * @return string The generated UUID.
-     */
-    public function generateUUID() {
-        return sprintf(
-            '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-            mt_rand(0, 0xffff),
-            mt_rand(0, 0x0fff) | 0x4000,
-            mt_rand(0, 0x3fff) | 0x8000,
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-        );
-    }
-
-    /**
      * Sign the data using HMAC-SHA256 and return a base64 encoded string.
      *
      * @param string $data The data to be signed.
@@ -72,7 +56,7 @@ class Utils {
 
     /**
      * Check if JSON files in the specified directory are valid and retrieve their creation timestamps.
-     *
+     * Can be used for debugging - not used in any checks
      * @return array The validation results and creation timestamps of the JSON files.
      */
     public function checkJsonFiles() {

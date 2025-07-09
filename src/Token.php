@@ -19,10 +19,6 @@ class Token {
     public function __construct(HttpClient $httpClient) {
         $this->httpClient = $httpClient;
         $this->loadTokenData();
-
-        if ($this->tokenData) {
-            $this->httpClient->setTokenData($this->tokenData);
-        }
     }
 
     /**
@@ -128,6 +124,11 @@ class Token {
         return $this->tokenData;
     }
 
+
+    public function getAccessToken() {
+    return $this->tokenData['accessToken'] ?? null;
+}
+
     /**
      * Clear the content of token.json file.
      */
@@ -163,7 +164,6 @@ class Token {
         if ($newJson !== $oldJson) {
             file_put_contents($file, $newJson, LOCK_EX);
         }
-         // Always keep HttpClient’s in-memory copy current
-         $this->httpClient->setTokenData($this->tokenData);
+
     }
 }
