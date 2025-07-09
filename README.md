@@ -24,6 +24,7 @@ Composer installs the library, creates `vendor/autoload.php`, and you’re ready
 <?php
 require __DIR__.'/vendor/autoload.php';
 
+use pjanisio\ewelinkapiphp\Constants;
 use pjanisio\ewelinkapiphp\HttpClient;
 
 $http = new HttpClient();  // takes creds from constants / env
@@ -47,10 +48,10 @@ Full examples live in the **[Wiki](https://github.com/PJanisio/ewelinkApiPhp/wik
 | Area            | What you can do                                                                                                                     |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | **Discovery**   | • Fetch *all* devices in one call<br>• Search by `deviceid` **or** human name<br>• Persist raw data as `devices.json`               |
-| **Status**      | • Read any single param live (`switch`, `voltage`, `power`, …)<br>• Grab *all* live params at once<br>• Check if a device is online |
+| **Status**      | • Read any single or multi params live (`switch`, `voltage`, `power`, …)<br>• Grab *all* live params at once<br>• Check if a device is online |
 | **Control**     | • Set one or many params (HTTP)<br>• Multi‑channel helpers (`switches[n]`)<br>• WebSocket realtime control                          |
 | **Monitoring**  | • Live power metrics (voltage / current / power)<br>• Device history endpoint (`/v2/device/history`)                                |
-| **Maintenance** | • Force wake‑up (handshake + echo params)<br>• Family/home helper (`getCurrentFamilyId`)                                            |
+| **Maintenance** | • Force wake‑up (handshake + echo params)                                                                                           |
 | **Dev tools**   | • PSR‑4 autoloading via Composer<br>• `DEBUG` mode – full request/response log to `debug.log`                                       |
 
 ---
