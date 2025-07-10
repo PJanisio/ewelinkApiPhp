@@ -69,32 +69,6 @@ class Devices {
     }
 
 
-    /*
-     * (Old approach) Fetch devices data from the remote server and save it locally.
-     *
-     * @param string $lang The language parameter for the request (default is 'en').
-     * @return array The devices data.
-     * @throws Exception If the current family ID is not set.
-     */
-
-     /*
-    public function fetchDevicesDataFamily($lang = 'en') {
-        $familyId = $this->home->getCurrentFamilyId();
-        if (!$familyId) {
-            $errorCode = 'NO_FAMILY_ID'; // Example error code
-            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
-            throw new Exception($errorMsg);
-        }
-        $params = [
-            'lang' => $lang,
-            'familyId' => $familyId
-        ];
-        $this->devicesData = $this->httpClient->getRequest('/v2/device/thing', $params);
-        file_put_contents(Constants::JSON_LOG_DIR . '/devices.json', json_encode($this->devicesData));
-        return $this->devicesData;
-    }
-    */
-
     /**
      * Get the loaded devices data.
      *
