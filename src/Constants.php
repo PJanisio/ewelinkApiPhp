@@ -13,19 +13,19 @@ namespace pjanisio\ewelinkapiphp;
 class Constants
 {
     // Your eWeLink application ID, obtained from the eWeLink developer platform
-    const APPID = 'your_app_id';
+    public const APPID = 'your_app_id';
 
     // Your eWeLink application secret, obtained from the eWeLink developer platform
-    const APP_SECRET = 'your_app_secret';
+    public const APP_SECRET = 'your_app_secret';
 
     // The URL to which eWeLink will redirect after OAuth authentication
-    const REDIRECT_URL = 'your_redirect_url';
+    public const REDIRECT_URL = 'your_redirect_url';
 
     // Your eWeLink account email
-    const EMAIL = 'your_email';
+    public const EMAIL = 'your_email';
 
     // Your eWeLink account password
-    const PASSWORD = 'your_password';
+    public const PASSWORD = 'your_password';
 
     // The region in which your eWeLink account is registered
     // Supported regions:
@@ -33,16 +33,16 @@ class Constants
     // Americas: 'us'
     // Europe: 'eu'
     // Asia: 'as'
-    const REGION = 'your_region';
+    public const REGION = 'your_region';
 
     // Enable or disable debug logging
-    const DEBUG = 0; // Change to 1 to enable debug logging
+    public const DEBUG = 0; // Change to 1 to enable debug logging
 
     // Path for JSON logs directory
-    const JSON_LOG_DIR = __DIR__ . '/..';
+    public const JSON_LOG_DIR = __DIR__ . '/..';
 
     // Error codes
-    const ERROR_CODES = [
+    public const ERROR_CODES = [
         400 => 'Parameter error, usually the parameter required by the interface is missing, or the type or value of the parameter is wrong.',
         401 => 'Access token authentication error. Usually, the account is logged in by others, resulting in the invalidation of the current access token.',
         402 => 'Access token expired.',
