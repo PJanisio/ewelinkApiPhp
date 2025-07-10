@@ -32,8 +32,8 @@
         "squizlabs/php_codesniffer": "^3"
     },
     "scripts": {
-        "test": "phpunit --colors=always",
-        "stan": "phpstan analyse src --level max",
+        "test": "phpunit --colors=always -c tests/config/phpunit.xml.dist",
+        "stan": "phpstan analyse --configuration tests/config/phpstan.neon",
         "cs": "phpcs --standard=PSR12 src"
     },
     "autoload": {
