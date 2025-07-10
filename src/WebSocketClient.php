@@ -246,6 +246,7 @@ class WebSocketClient {
      */
     private function hybi10Encode($payload, $type = 'text', $masked = true) {
         $frameHead = [];
+        $mask = [];
         $payloadLength = strlen($payload);
 
         switch ($type) {
@@ -297,7 +298,7 @@ class WebSocketClient {
         $frame = implode('', $frameHead);
 
         for ($i = 0; $i < $payloadLength; $i++) {
-            $frame .= ($masked === true) ? $payload[$i] ^ $mask[$i % 4] : $payload[$i];
+            $frame .= $masked ? ($payload[$i] ^ $mask[$i % 4]) : $payload[$i];
         }
 
         return $frame;

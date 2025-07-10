@@ -131,10 +131,10 @@ public function validateConstants(): array
     /**
      * Sanitize a string by removing non-printable characters.
      *
-     * @param string $string The string to be sanitized.
+     * @param string $input The string to be sanitized.
      * @return string The sanitized string.
      */
-    public function sanitizeString($input) {
+    public function sanitizeString($input): string {
         if (!is_string($input)) {
             return $input;
         }
