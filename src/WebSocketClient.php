@@ -265,8 +265,8 @@ class WebSocketClient
      */
     private function hybi10Encode(
         string $payload,
-        string $type   = 'text',
-        bool   $masked = true
+        string $type = 'text',
+        bool $masked = true
     ) {
         $frameHead      = [];
         $mask           = [];

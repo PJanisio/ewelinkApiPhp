@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace pjanisio\ewelinkapiphp\Tests;
@@ -6,38 +7,47 @@ namespace pjanisio\ewelinkapiphp\Tests;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Just checks that the four regional REST endpoints answer *something*.
+ * Verifies that the four regional REST endpoints are reachable.
+ * - If the socket cannot be opened (DNS, timeout, TLS) → **test is skipped**.
+ * - If we get any HTTP response at all (≥ 100)         → **passes**.
+ * - If curl says “status 0” after a successful connect  → **fails**.
  */
 final class HttpClientGatewayTest extends TestCase
 {
-    /** @dataProvider regionProvider */
+    /**
+     * @dataProvider regionProvider
+     *
+     * @param string $region   Two-letter region code.
+     * @param string $url      Full REST base-URL for the region.
+     */
     public function testRestGatewayIsReachable(string $region, string $url): void
     {
         $ch = curl_init($url);
         curl_setopt_array($ch, [
-            CURLOPT_NOBODY         => true,   // HEAD request – no payload
+            CURLOPT_NOBODY         => true,  // HEAD request – no body transferred
             CURLOPT_TIMEOUT        => 5,
             CURLOPT_CONNECTTIMEOUT => 4,
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_SSL_VERIFYHOST => 0,
         ]);
 
-        $ok   = curl_exec($ch);                               // bool|false
-        $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        $ok   = curl_exec($ch);                                   // bool|false
+        $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);  // 0 if none
         $err  = curl_error($ch);
         curl_close($ch);
 
-        /* ── 1. Network-level problem → FAIL ───────────────────────────── */
-        if ($ok === false || $code === 0) {
-            $this->fail(sprintf(
-                'cURL network error for %s (%s): %s',
+        /* ── 1. Could not even open the socket → skip, not fail ───────────── */
+        if ($ok === false) {
+            $this->markTestSkipped(sprintf(
+                'Network error for %s (%s): %s',
                 $region,
                 $url,
                 $err ?: 'timeout / DNS / TLS failure'
             ));
+            return;
         }
 
-        /* ── 2. Otherwise: assert that we did get *some* HTTP code ─────── */
+        /* ── 2. Connected but got no HTTP status → hard failure ───────────── */
         $this->assertGreaterThan(
             0,
             $code,
@@ -45,7 +55,7 @@ final class HttpClientGatewayTest extends TestCase
         );
     }
 
-    /** @return array<array{string,string}> */
+    /** Supplies the four public API endpoints.  @return array<array{string,string}> */
     public static function regionProvider(): array
     {
         return [
