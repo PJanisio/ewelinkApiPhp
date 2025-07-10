@@ -9,9 +9,11 @@
  */
 
  namespace pjanisio\ewelinkapiphp;
+
  use Exception;
 
-class HttpClient {
+class HttpClient
+{
     private $loginUrl;
     private $code;
     private $region;
@@ -60,7 +62,8 @@ class HttpClient {
      * @param string $state The state parameter for the OAuth flow.
      * @return string The constructed login URL.
      */
-    public function createLoginUrl($state) {
+    public function createLoginUrl($state)
+    {
         $utils = new Utils();
         $seq = time() * 1000; // current timestamp in milliseconds
         $this->authorization = $utils->sign(Constants::APPID . '_' . $seq, Constants::APP_SECRET);
@@ -84,7 +87,8 @@ class HttpClient {
      *
      * @return string The login URL.
      */
-    public function getLoginUrl() {
+    public function getLoginUrl()
+    {
         return $this->loginUrl;
     }
 
@@ -93,7 +97,8 @@ class HttpClient {
      *
      * @return string|null The authorization code.
      */
-    public function getCode() {
+    public function getCode()
+    {
         return $this->code;
     }
 
@@ -102,7 +107,8 @@ class HttpClient {
      *
      * @return string|null The region.
      */
-    public function getRegion() {
+    public function getRegion()
+    {
         return $this->region;
     }
 
@@ -112,7 +118,8 @@ class HttpClient {
      * @return string The gateway URL.
      * @throws Exception If the region is invalid.
      */
-    public function getGatewayUrl() {
+    public function getGatewayUrl()
+    {
         switch ($this->region) {
             case 'cn':
                 return 'https://cn-apia.coolkit.cn';
@@ -136,7 +143,8 @@ class HttpClient {
      * @return array The response data.
      * @throws Exception If there is an error in the request.
      */
-    public function postRequest($endpoint, $data, $useTokenAuthorization = false) {
+    public function postRequest($endpoint, $data, $useTokenAuthorization = false)
+    {
         $utils = new Utils();
         $url = $this->getGatewayUrl() . $endpoint;
         $headers = [
@@ -164,7 +172,7 @@ class HttpClient {
         $context = stream_context_create($options);
         $response = file_get_contents($url, false, $context);
 
-        if ($response === FALSE) {
+        if ($response === false) {
             throw new Exception('Error making POST request');
         }
 
@@ -198,13 +206,14 @@ class HttpClient {
      * @return array The response data.
      * @throws Exception If the request fails.
      */
-    public function getRequest($endpoint, $params = [], $useFullUrl = false) {
+    public function getRequest($endpoint, $params = [], $useFullUrl = false)
+    {
         if ($useFullUrl) {
             $url = $endpoint . '?' . http_build_query($params);
         } else {
             $url = $this->getGatewayUrl() . $endpoint . '?' . http_build_query($params);
         }
-        
+
         $headers = [
             "Authorization: Bearer " . $this->token->getAccessToken()
         ];
@@ -218,7 +227,7 @@ class HttpClient {
 
         $context  = stream_context_create($options);
         $result = file_get_contents($url, false, $context);
-        if ($result === FALSE) {
+        if ($result === false) {
             throw new Exception('Error in request');
         }
 
@@ -239,7 +248,7 @@ class HttpClient {
             $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
             throw new Exception("Error $errorCode: $errorMsg");
         }
-        
+
         return $useFullUrl ? $response : $response['data'];
     }
 
@@ -248,7 +257,8 @@ class HttpClient {
      *
      * @return Token The Token instance.
      */
-    public function getToken() {
+    public function getToken()
+    {
         return $this->token;
     }
 
@@ -257,7 +267,8 @@ class HttpClient {
      *
      * @return Devices The Devices instance.
      */
-    public function getDevices() {
+    public function getDevices()
+    {
         if ($this->devices === null) {
             // Ensure we have a valid token first
             if ($this->token->checkAndRefreshToken()) {
@@ -275,7 +286,8 @@ class HttpClient {
      *
      * @return array|null The token data or null if not set.
      */
-    public function getTokenData() {
+    public function getTokenData()
+    {
         return $this->token->getTokenData();
     }
 
@@ -284,7 +296,8 @@ class HttpClient {
      *
      * @return Home The Home instance.
      */
-    public function getHome() {
+    public function getHome()
+    {
         if ($this->home === null) {
             $this->home = new Home($this);
         }
@@ -296,7 +309,8 @@ class HttpClient {
      *
      * @return string|null The current family ID.
      */
-    public function getCurrentFamilyId() {
+    public function getCurrentFamilyId()
+    {
         return $this->home->getCurrentFamilyId();
     }
 }

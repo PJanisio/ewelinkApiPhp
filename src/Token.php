@@ -9,14 +9,16 @@
  */
 
 namespace pjanisio\ewelinkapiphp;
+
 use Exception;
 
-
-class Token {
+class Token
+{
     private $httpClient;
     private $tokenData;
 
-    public function __construct(HttpClient $httpClient) {
+    public function __construct(HttpClient $httpClient)
+    {
         $this->httpClient = $httpClient;
         $this->loadTokenData();
     }
@@ -24,7 +26,8 @@ class Token {
     /**
      * Load token data from token.json file.
      */
-    private function loadTokenData() {
+    private function loadTokenData()
+    {
         $tokenFile = Constants::JSON_LOG_DIR . '/token.json';
         if (file_exists($tokenFile)) {
             $this->tokenData = json_decode(file_get_contents($tokenFile), true);
@@ -36,7 +39,8 @@ class Token {
      *
      * @return string The login URL.
      */
-    public function getLoginUrl() {
+    public function getLoginUrl()
+    {
         return $this->httpClient->getLoginUrl();
     }
 
@@ -120,19 +124,22 @@ class Token {
      *
      * @return array|null The token data or null if not set.
      */
-    public function getTokenData() {
+    public function getTokenData()
+    {
         return $this->tokenData;
     }
 
 
-    public function getAccessToken() {
-    return $this->tokenData['accessToken'] ?? null;
-}
+    public function getAccessToken()
+    {
+        return $this->tokenData['accessToken'] ?? null;
+    }
 
     /**
      * Clear the content of token.json file.
      */
-    public function clearToken() {
+    public function clearToken()
+    {
         $tokenFile = Constants::JSON_LOG_DIR . '/token.json';
         if (file_exists($tokenFile)) {
             file_put_contents($tokenFile, '', LOCK_EX);
@@ -146,7 +153,8 @@ class Token {
      * @param string $url The URL to redirect to.
      * @param int $delay The delay in seconds before redirecting.
      */
-    public function redirectToUrl($url, $delay = 1) {
+    public function redirectToUrl($url, $delay = 1)
+    {
         echo '<p>You will be redirected in 1 second...</p>';
         echo '<meta http-equiv="refresh" content="' . $delay . ';url=' . htmlspecialchars($url) . '">';
     }
@@ -155,7 +163,8 @@ class Token {
      * Write `token.json` only when the contents have genuinely changed.
      * Saves I/O and prolongs SD-card life on Pi deployments.
      */
-    private function writeTokenFileIfChanged() {
+    private function writeTokenFileIfChanged()
+    {
         $file = Constants::JSON_LOG_DIR . '/token.json';
         $newJson = json_encode($this->tokenData, JSON_UNESCAPED_SLASHES);
 
@@ -164,6 +173,5 @@ class Token {
         if ($newJson !== $oldJson) {
             file_put_contents($file, $newJson, LOCK_EX);
         }
-
     }
 }
