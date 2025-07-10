@@ -142,8 +142,8 @@ class WebSocketClient
         $responseData = json_decode($response, true);
 
         if (isset($responseData['config']['hbInterval'])) {
-             $this->hbInterval = $responseData['config']['hbInterval'] + 7;
-             $this->nextPing   = microtime(true) + $this->hbInterval;
+            $this->hbInterval = $responseData['config']['hbInterval'] + 7;
+            $this->nextPing   = microtime(true) + $this->hbInterval;
         }
         return $responseData;
     }
@@ -255,73 +255,85 @@ class WebSocketClient
     }
 
     /**
-     * Encode data for sending over a WebSocket connection (hybi10 protocol).
+     * Encode data for sending over a WebSocket connection (HyBi-10).
      *
-     * @param string $payload The data to encode.
-     * @param string $type The type of data (default is 'text').
-     * @param bool $masked Whether to mask the data (default is true).
-     * @return string The encoded data.
+     * @param string $payload  Raw payload to send.
+     * @param string $type     One of: text | close | ping | pong
+     * @param bool   $masked   Whether to mask the frame (clients → server = true)
+     *
+     * @return string|false    Encoded frame, or false if payload > 2-bytes header
      */
-    private function hybi10Encode($payload, $type = 'text', $masked = true)
-    {
-        $frameHead = [];
-        $mask = [];
-        $payloadLength = strlen($payload);
+    private function hybi10Encode(
+        string $payload,
+        string $type   = 'text',
+        bool   $masked = true
+    ) {
+        $frameHead      = [];
+        $mask           = [];
+        $payloadLength  = strlen($payload);
 
+        // 1️⃣  FIN-bit + opcode
         switch ($type) {
             case 'text':
-                $frameHead[0] = 129;
-                break;
+                $frameHead[0] = 0b10000001;
+                break; // 129
             case 'close':
-                $frameHead[0] = 136;
-                break;
+                $frameHead[0] = 0b10001000;
+                break; // 136
             case 'ping':
-                $frameHead[0] = 137;
-                break;
+                $frameHead[0] = 0b10001001;
+                break; // 137
             case 'pong':
-                $frameHead[0] = 138;
-                break;
+                $frameHead[0] = 0b10001010;
+                break; // 138
         }
 
-        if ($payloadLength > 65535) {
+        // 2️⃣  Payload length handling
+        if ($payloadLength > 65535) {                 // > 64 KiB needs 8-byte ext len
             $payloadLengthBin = str_split(sprintf('%064b', $payloadLength), 8);
-            $frameHead[1] = ($masked === true) ? 255 : 127;
+            $frameHead[1]     = $masked ? 255 : 127;  // 8-byte length marker
+
             for ($i = 0; $i < 8; $i++) {
                 $frameHead[$i + 2] = bindec($payloadLengthBin[$i]);
             }
 
+            // RFC-6455 §5.2: MSB of 64-bit length MUST be 0
             if ($frameHead[2] > 127) {
-                return false;
+                return false;                         // will satisfy PHPStan level-3
             }
-        } elseif ($payloadLength > 125) {
+        } elseif ($payloadLength > 125) {             // 126 … 65535 → 2-byte ext len
             $payloadLengthBin = str_split(sprintf('%016b', $payloadLength), 8);
-            $frameHead[1] = ($masked === true) ? 254 : 126;
-            $frameHead[2] = bindec($payloadLengthBin[0]);
-            $frameHead[3] = bindec($payloadLengthBin[1]);
-        } else {
-            $frameHead[1] = ($masked === true) ? $payloadLength + 128 : $payloadLength;
+            $frameHead[1]     = $masked ? 254 : 126;  // 2-byte length marker
+            $frameHead[2]     = bindec($payloadLengthBin[0]);
+            $frameHead[3]     = bindec($payloadLengthBin[1]);
+        } else {                                      // 0 … 125 → fits in 7 bits
+            $frameHead[1] = $masked ? $payloadLength + 128 : $payloadLength;
         }
 
+        // Convert all headers to raw bytes
         foreach (array_keys($frameHead) as $i) {
             $frameHead[$i] = chr($frameHead[$i]);
         }
 
-        if ($masked === true) {
-            $mask = [];
+        // 3️⃣  Apply masking if requested
+        if ($masked) {
             for ($i = 0; $i < 4; $i++) {
                 $mask[$i] = chr(random_int(0, 255));
             }
-
             $frameHead = array_merge($frameHead, $mask);
         }
-        $frame = implode('', $frameHead);
 
+        // 4️⃣  Assemble the frame
+        $frame = implode('', $frameHead);
         for ($i = 0; $i < $payloadLength; $i++) {
-            $frame .= $masked ? ($payload[$i] ^ $mask[$i % 4]) : $payload[$i];
+            $frame .= $masked
+                ? ($payload[$i] ^ $mask[$i % 4])
+                :  $payload[$i];
         }
 
         return $frame;
     }
+
 
     /**
      * Decode data received from a WebSocket connection (hybi10 protocol).
