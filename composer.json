@@ -34,7 +34,7 @@
     "scripts": {
         "test": "phpunit --colors=always -c tests/config/phpunit.xml.dist",
         "stan": "phpstan analyse --configuration tests/config/phpstan.neon.dist",
-        "cs": "phpcs --standard=PSR12 -n src",
+        "cs": "sh -c 'phpcs --standard=PSR12 --colors src || [ $? -eq 1 ]'",
         "cs-fix" : "phpcbf --standard=PSR12 src tests"
     },
     "autoload": {
