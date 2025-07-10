@@ -10,22 +10,23 @@
 
 namespace pjanisio\ewelinkapiphp;
 
-class Constants {
+class Constants
+{
     // Your eWeLink application ID, obtained from the eWeLink developer platform
     const APPID = 'your_app_id';
-    
+
     // Your eWeLink application secret, obtained from the eWeLink developer platform
     const APP_SECRET = 'your_app_secret';
-    
+
     // The URL to which eWeLink will redirect after OAuth authentication
     const REDIRECT_URL = 'your_redirect_url';
-    
+
     // Your eWeLink account email
     const EMAIL = 'your_email';
-    
+
     // Your eWeLink account password
     const PASSWORD = 'your_password';
-    
+
     // The region in which your eWeLink account is registered
     // Supported regions:
     // Mainland China: 'cn'

@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+namespace pjanisio\ewelinkapiphp\Tests;
+
 use PHPUnit\Framework\TestCase;
 use pjanisio\ewelinkapiphp\HttpClient;
 

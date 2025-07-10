@@ -7,12 +7,13 @@
  * Dependencies: PHP 7.4+
  * Description: API connector for Sonoff / ewelink devices
  */
- 
+
 namespace pjanisio\ewelinkapiphp;
+
 use Exception;
 
-
-class WebSocketClient {
+class WebSocketClient
+{
     private $socket;
     private $url;
     private $host;
@@ -30,7 +31,8 @@ class WebSocketClient {
      *
      * @param HttpClient $httpClient The HTTP client instance.
      */
-    public function __construct(HttpClient $httpClient) {
+    public function __construct(HttpClient $httpClient)
+    {
         $this->httpClient = $httpClient;
         $this->utils = new Utils();
         $this->resolveWebSocketUrl();
@@ -41,7 +43,8 @@ class WebSocketClient {
      *
      * @throws Exception If the region is invalid or the response is empty.
      */
-    private function resolveWebSocketUrl() {
+    private function resolveWebSocketUrl()
+    {
         $region = Constants::REGION;
         $urls = [
             'cn' => 'https://cn-dispa.coolkit.cn/dispatch/app',
@@ -76,9 +79,17 @@ class WebSocketClient {
      * @return bool True if the connection is successful.
      * @throws Exception If the connection or handshake fails.
      */
-    public function connect() {
+    public function connect()
+    {
         $context = stream_context_create(['ssl' => ['verify_peer' => false, 'verify_peer_name' => false]]);
-        $this->socket = stream_socket_client("tls://{$this->host}:{$this->port}", $errno, $errstr, 30, STREAM_CLIENT_CONNECT, $context);
+        $this->socket = stream_socket_client(
+            "tls://{$this->host}:{$this->port}",
+            $errno,
+            $errstr,
+            30,
+            STREAM_CLIENT_CONNECT,
+            $context
+        );
 
         if (!$this->socket) {
             throw new Exception("Unable to connect to websocket: $errstr ($errno)");
@@ -122,7 +133,8 @@ class WebSocketClient {
      * @return array The response data.
      * @throws Exception If there is an error during the handshake process.
      */
-    public function handshake($device) {
+    public function handshake($device)
+    {
         $this->connect();
         $handshakeData = $this->createHandshakeData($device);
         $this->send(json_encode($handshakeData));
@@ -142,7 +154,8 @@ class WebSocketClient {
      * @param array $device The device data.
      * @return array The handshake data.
      */
-    public function createHandshakeData($device) {
+    public function createHandshakeData($device)
+    {
         return [
             'action' => 'userOnline',
             'version' => 8,
@@ -163,7 +176,8 @@ class WebSocketClient {
      * @param array|string $params The parameters to query.
      * @return array The query data.
      */
-    public function createQueryData($device, $params) {
+    public function createQueryData($device, $params)
+    {
         return [
             'action' => 'query',
             'deviceid' => $device['deviceid'],
@@ -182,7 +196,8 @@ class WebSocketClient {
      * @param string $selfApikey The receiver's apikey.
      * @return array The update data.
      */
-    public function createUpdateData($device, $params, $selfApikey) {
+    public function createUpdateData($device, $params, $selfApikey)
+    {
         return [
             'action' => 'update',
             'apikey' => $device['apikey'],
@@ -200,16 +215,17 @@ class WebSocketClient {
      * @param string $data The data to send.
      * @throws Exception If there is no valid WebSocket connection or if sending the data fails.
      */
-    public function send(string $data = '', string $type = 'text') {
-        $this->maybePing();  
+    public function send(string $data = '', string $type = 'text')
+    {
+        $this->maybePing();
         if (!$this->socket) {
             throw new Exception(Constants::ERROR_CODES['NO_VALID_WS_CONNECTION'] ?? 'Unknown error');
         }
         $encoded = $this->hybi10Encode($data, $type, true);
-    if (@fwrite($this->socket, $encoded) === false) {
-        throw new Exception(Constants::ERROR_CODES['FAILED_TO_SEND_WS_DATA'] ?? 'Unknown error');
+        if (@fwrite($this->socket, $encoded) === false) {
+            throw new Exception(Constants::ERROR_CODES['FAILED_TO_SEND_WS_DATA'] ?? 'Unknown error');
+        }
     }
-}
 
     /**
      * Receive data from the WebSocket connection.
@@ -217,7 +233,8 @@ class WebSocketClient {
      * @return string The received data.
      * @throws Exception If there is no valid WebSocket connection.
      */
-    public function receive() {
+    public function receive()
+    {
         $this->maybePing();
         if (!$this->socket) {
             throw new Exception(Constants::ERROR_CODES['NO_VALID_WS_CONNECTION'] ?? 'Unknown error');
@@ -229,7 +246,8 @@ class WebSocketClient {
     /**
      * Close the WebSocket connection and stop the ping process.
      */
-    public function close() {
+    public function close()
+    {
         if ($this->socket) {
             fclose($this->socket);
             $this->socket = null;
@@ -244,7 +262,8 @@ class WebSocketClient {
      * @param bool $masked Whether to mask the data (default is true).
      * @return string The encoded data.
      */
-    private function hybi10Encode($payload, $type = 'text', $masked = true) {
+    private function hybi10Encode($payload, $type = 'text', $masked = true)
+    {
         $frameHead = [];
         $mask = [];
         $payloadLength = strlen($payload);
@@ -310,7 +329,8 @@ class WebSocketClient {
      * @param string $data The data to decode.
      * @return string The decoded data.
      */
-    private function hybi10Decode($data) {
+    private function hybi10Decode($data)
+    {
         $bytes = $data;
         $dataLength = '';
         $mask = '';
@@ -352,7 +372,8 @@ class WebSocketClient {
      *
      * @return string The WebSocket URL.
      */
-    public function getWebSocketUrl() {
+    public function getWebSocketUrl()
+    {
         return $this->url;
     }
 
@@ -361,20 +382,21 @@ class WebSocketClient {
      *
      * @return bool|resource
      */
-    public function getSocket() {
+    public function getSocket()
+    {
         return $this->socket;
     }
 
 
     /** Send a real WebSocket ping frame when it’s time. */
-    private function maybePing() {
+    private function maybePing()
+    {
         if (
             $this->hbInterval &&
             microtime(true) >= $this->nextPing &&
             \is_resource($this->socket) &&
             !\feof($this->socket)
         ) {
-
             $frame = $this->hybi10Encode('', 'ping', true);
             @fwrite($this->socket, $frame);
             $this->nextPing = microtime(true) + $this->hbInterval;
