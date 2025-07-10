@@ -21,12 +21,29 @@
         "source": "https://github.com/PJanisio/ewelinkApiPhp"
     },
     "require": {
-        "php": ">=7.4",
-        "ext-json": "*"
+        "php": "^7.4 || ^8.0",
+        "ext-json": "*",
+        "ext-curl": "*",
+        "ext-openssl": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.6",
+        "phpstan/phpstan": "^1",
+        "squizlabs/php_codesniffer": "^3"
+    },
+    "scripts": {
+        "test": "phpunit --colors=always",
+        "stan": "phpstan analyse src --level max",
+        "cs": "phpcs --standard=PSR12 src"
     },
     "autoload": {
         "psr-4": {
             "pjanisio\\ewelinkapiphp\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "pjanisio\\ewelinkapiphp\\Tests\\": "tests/"
         }
     },
     "config": {
