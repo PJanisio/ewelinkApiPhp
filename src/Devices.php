@@ -37,6 +37,7 @@ class Devices {
 
     /**
      * Load devices data from a local JSON file.
+     * Obosolete in future
      */
     private function loadDevicesData() {
         $devicesFile = Constants::JSON_LOG_DIR . '/devices.json';
@@ -55,7 +56,7 @@ class Devices {
      * @return array The devices data.
      */
 
-     public function fetchDevicesData($lang = 'en') {
+     public function fetchDevicesData($lang = 'en'): array {
         // Make a request but do NOT include 'familyId'
         $params = [
             'lang' => $lang
@@ -100,7 +101,8 @@ class Devices {
      *
      * @return array The list of devices with their status.
      */
-    public function getDevicesList() {
+    public function getDevicesList(): array
+    {
         $devicesList = [];
         if ($this->devicesData && isset($this->devicesData['thingList'])) {
             foreach ($this->devicesData['thingList'] as $device) {
@@ -111,7 +113,7 @@ class Devices {
                     'online' => $itemData['online'] == 1,
                     'isSupportChannelSplit' => $this->isMultiChannel($itemData['deviceid'])
                 ];
-                
+
                 $statusParam = $this->isMultiChannel($itemData['deviceid']) ? 'switches' : 'switch';
                 $switchStatus = $this->getDeviceParamLive($itemData['deviceid'], $statusParam);
                 $deviceStatus[$statusParam] = $switchStatus;
@@ -145,7 +147,7 @@ class Devices {
      * @param string $identifier The device name or ID.
      * @return bool True if the device supports multiple channels, false otherwise.
      */
-    public function isMultiChannel($identifier) {
+    public function isMultiChannel($identifier): bool {
         $deviceId = $this->getDeviceIdByIdentifier($identifier);
         if ($deviceId && isset($this->devicesData['thingList'])) {
             foreach ($this->devicesData['thingList'] as $device) {

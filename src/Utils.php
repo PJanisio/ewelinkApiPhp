@@ -10,9 +10,11 @@
 
 namespace pjanisio\ewelinkapiphp;
 
-class Utils {
+class Utils
+{
 
-    public function __construct() {
+    public function __construct()
+    {
         //not needed for now
     }
 
@@ -22,7 +24,8 @@ class Utils {
      *
      * @return string The generated nonce.
      */
-    public function generateNonce() {
+    public function generateNonce()
+    {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $nonce = '';
         for ($i = 0; $i < 8; $i++) {
@@ -38,7 +41,8 @@ class Utils {
      * @param string $secret The secret key used for signing.
      * @return string The base64 encoded signature.
      */
-    public function sign($data, $secret) {
+    public function sign($data, $secret)
+    {
         $hash = hash_hmac('sha256', $data, $secret, true);
         return base64_encode($hash);
     }
@@ -48,7 +52,8 @@ class Utils {
      *
      * @return array The captured code and region.
      */
-    public function handleRedirect() {
+    public function handleRedirect()
+    {
         $code = isset($_GET['code']) ? $_GET['code'] : null;
         $region = isset($_GET['region']) ? $_GET['region'] : null;
         return [$code, $region];
@@ -59,7 +64,8 @@ class Utils {
      * Can be used for debugging - not used in any checks
      * @return array The validation results and creation timestamps of the JSON files.
      */
-    public function checkJsonFiles() {
+    public function checkJsonFiles()
+    {
         $files = glob(Constants::JSON_LOG_DIR . '/*.json');
         $results = [];
 
@@ -78,55 +84,55 @@ class Utils {
     }
 
     /**
- * Validate the constants in the Constants class.
- *
- * @return array Validation results for REDIRECT_URL, EMAIL and REGION.
- */
-public function validateConstants(): array
-{
-    $results = [];
+     * Validate the constants in the Constants class.
+     *
+     * @return array Validation results for REDIRECT_URL, EMAIL and REGION.
+     */
+    public function validateConstants(): array
+    {
+        $results = [];
 
-    /* ---------- REDIRECT_URL ---------- */
-    $url    = Constants::REDIRECT_URL;
-    $scheme = parse_url($url, PHP_URL_SCHEME);
-    $urlIsValid = filter_var($url, FILTER_VALIDATE_URL) !== false
-               && in_array($scheme, ['http', 'https'], true);
+        /* ---------- REDIRECT_URL ---------- */
+        $url    = Constants::REDIRECT_URL;
+        $scheme = parse_url($url, PHP_URL_SCHEME);
+        $urlIsValid = filter_var($url, FILTER_VALIDATE_URL) !== false
+            && in_array($scheme, ['http', 'https'], true);
 
-    $results['REDIRECT_URL'] = [
-        'value'   => $url,
-        'is_valid'=> $urlIsValid,
-        'message' => $urlIsValid
-            ? 'URL looks syntactically correct.'
-            : 'Invalid URL syntax or scheme (must start with http/https).',
-    ];
+        $results['REDIRECT_URL'] = [
+            'value'   => $url,
+            'is_valid' => $urlIsValid,
+            'message' => $urlIsValid
+                ? 'URL looks syntactically correct.'
+                : 'Invalid URL syntax or scheme (must start with http/https).',
+        ];
 
-    /* ---------- EMAIL ---------- */
-    $email       = Constants::EMAIL;
-    $emailIsValid = filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+        /* ---------- EMAIL ---------- */
+        $email       = Constants::EMAIL;
+        $emailIsValid = filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
 
-    $results['EMAIL'] = [
-        'value'   => $email,
-        'is_valid'=> $emailIsValid,
-        'message' => $emailIsValid
-            ? 'E-mail address is syntactically valid.'
-            : 'Invalid e-mail address syntax.',
-    ];
+        $results['EMAIL'] = [
+            'value'   => $email,
+            'is_valid' => $emailIsValid,
+            'message' => $emailIsValid
+                ? 'E-mail address is syntactically valid.'
+                : 'Invalid e-mail address syntax.',
+        ];
 
-    /* ---------- REGION ---------- */
-    $region        = Constants::REGION;
-    $validRegions  = ['cn', 'us', 'eu', 'as'];
-    $regionIsValid = in_array($region, $validRegions, true);
+        /* ---------- REGION ---------- */
+        $region        = Constants::REGION;
+        $validRegions  = ['cn', 'us', 'eu', 'as'];
+        $regionIsValid = in_array($region, $validRegions, true);
 
-    $results['REGION'] = [
-        'value'   => $region,
-        'is_valid'=> $regionIsValid,
-        'message' => $regionIsValid
-            ? 'Region code is recognised.'
-            : 'Invalid region code (allowed: cn, us, eu, as).',
-    ];
+        $results['REGION'] = [
+            'value'   => $region,
+            'is_valid' => $regionIsValid,
+            'message' => $regionIsValid
+                ? 'Region code is recognised.'
+                : 'Invalid region code (allowed: cn, us, eu, as).',
+        ];
 
-    return $results;
-}
+        return $results;
+    }
 
     /**
      * Sanitize a string by removing non-printable characters.
@@ -134,7 +140,8 @@ public function validateConstants(): array
      * @param string $string The string to be sanitized.
      * @return string The sanitized string.
      */
-    public function sanitizeString($input) {
+    public function sanitizeString($input)
+    {
         if (!is_string($input)) {
             return $input;
         }
@@ -153,22 +160,23 @@ public function validateConstants(): array
      * @param string $callerMethod The calling method name.
      * @param string $url The URL of the request.
      */
-    public function debugLog($class, $method, $params, $headers, $output, $callerClass, $callerMethod, $url) {
+    public function debugLog($class, $method, $params, $headers, $output, $callerClass, $callerMethod, $url)
+    {
         if (Constants::DEBUG !== 1) {
             return;
         }
         $date = date('Y-m-d H:i:s');
         $output = is_array($output) ? array_map([$this, 'sanitizeString'], $output) : $this->sanitizeString($output);
         $logEntry = sprintf(
-            "[%s] %s::%s invoked by %s::%s\nParameters: %s\nHeaders: %s\nOutput: %s\nURL: %s\n\n", 
-            $date, 
-            $class, 
-            $method, 
-            $callerClass, 
-            $callerMethod, 
-            json_encode($params), 
-            json_encode($headers), 
-            var_export($output, true), 
+            "[%s] %s::%s invoked by %s::%s\nParameters: %s\nHeaders: %s\nOutput: %s\nURL: %s\n\n",
+            $date,
+            $class,
+            $method,
+            $callerClass,
+            $callerMethod,
+            json_encode($params),
+            json_encode($headers),
+            var_export($output, true),
             $url
         );
         file_put_contents(Constants::JSON_LOG_DIR . '/debug.log', $logEntry, FILE_APPEND);

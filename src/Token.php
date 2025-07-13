@@ -120,14 +120,22 @@ class Token {
      *
      * @return array|null The token data or null if not set.
      */
-    public function getTokenData() {
+    public function getTokenData()
+    {
         return $this->tokenData;
     }
 
+    /**
+     * Get the current OAuth access-token.
+     *
+     * @return string|null  The access-token if it exists, or null when the
+     * client is not authenticated / token file is empty.
+     */
 
-    public function getAccessToken() {
-    return $this->tokenData['accessToken'] ?? null;
-}
+    public function getAccessToken()
+    {
+        return $this->tokenData['accessToken'] ?? null;
+    }
 
     /**
      * Clear the content of token.json file.
