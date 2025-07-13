@@ -108,7 +108,6 @@ class Devices
      * @return array The list of devices with their status.
      */
     public function getDevicesList(): array
-   
     {
         $devicesList = [];
         if ($this->devicesData && isset($this->devicesData['thingList'])) {

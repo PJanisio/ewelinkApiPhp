@@ -24,7 +24,6 @@ class Utils
      * @return string The generated nonce.
      */
     public function generateNonce()
-   
     {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $nonce = '';
@@ -42,7 +41,6 @@ class Utils
      * @return string The base64 encoded signature.
      */
     public function sign($data, $secret)
-   
     {
         $hash = hash_hmac('sha256', $data, $secret, true);
         return base64_encode($hash);
@@ -54,7 +52,6 @@ class Utils
      * @return array The captured code and region.
      */
     public function handleRedirect()
-   
     {
         $code = isset($_GET['code']) ? $_GET['code'] : null;
         $region = isset($_GET['region']) ? $_GET['region'] : null;
@@ -67,7 +64,6 @@ class Utils
      * @return array The validation results and creation timestamps of the JSON files.
      */
     public function checkJsonFiles()
-   
     {
         $files = glob(Constants::JSON_LOG_DIR . '/*.json');
         $results = [];
