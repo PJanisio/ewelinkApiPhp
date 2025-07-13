@@ -7,14 +7,15 @@
  * Dependencies: PHP 7.4+
  * Description: API connector for Sonoff / ewelink devices
  */
- 
 
  namespace pjanisio\ewelinkapiphp;
+
  use Exception;
  use RecursiveIteratorIterator;
  use RecursiveArrayIterator;
 
-class Devices {
+class Devices
+{
     private $devicesData;
     private $httpClient;
     private $home;
@@ -25,7 +26,8 @@ class Devices {
      *
      * @param HttpClient $httpClient The HTTP client instance.
      */
-    public function __construct(HttpClient $httpClient) {
+    public function __construct(HttpClient $httpClient)
+    {
         $this->httpClient = $httpClient;
         $this->home = new Home($httpClient);
         $this->home->fetchFamilyData();
@@ -38,7 +40,8 @@ class Devices {
     /**
      * Load devices data from a local JSON file.
      */
-    private function loadDevicesData() {
+    private function loadDevicesData()
+    {
         $devicesFile = Constants::JSON_LOG_DIR . '/devices.json';
         if (file_exists($devicesFile)) {
             $this->devicesData = json_decode(file_get_contents($devicesFile), true);
@@ -55,12 +58,13 @@ class Devices {
      * @return array The devices data.
      */
 
-     public function fetchDevicesData($lang = 'en') {
+    public function fetchDevicesData($lang = 'en')
+    {
         // Make a request but do NOT include 'familyId'
         $params = [
-            'lang' => $lang
+           'lang' => $lang
         ];
-        
+
         $rawData = $this->httpClient->getRequest('/v2/device/thing', $params);
         $this->devicesData = $rawData;
         file_put_contents(Constants::JSON_LOG_DIR . '/devices.json', json_encode($this->devicesData, JSON_PRETTY_PRINT));
@@ -74,7 +78,8 @@ class Devices {
      *
      * @return array|null The devices data.
      */
-    public function getDevicesData() {
+    public function getDevicesData()
+    {
         return $this->devicesData;
     }
 
@@ -84,7 +89,8 @@ class Devices {
      * @param string $deviceId The device ID.
      * @return array|null The device data or null if not found.
      */
-    public function getDeviceById($deviceId) {
+    public function getDeviceById($deviceId)
+    {
         if ($this->devicesData && isset($this->devicesData['thingList'])) {
             foreach ($this->devicesData['thingList'] as $device) {
                 if ($device['itemData']['deviceid'] === $deviceId) {
@@ -100,7 +106,8 @@ class Devices {
      *
      * @return array The list of devices with their status.
      */
-    public function getDevicesList() {
+    public function getDevicesList()
+    {
         $devicesList = [];
         if ($this->devicesData && isset($this->devicesData['thingList'])) {
             foreach ($this->devicesData['thingList'] as $device) {
@@ -111,7 +118,7 @@ class Devices {
                     'online' => $itemData['online'] == 1,
                     'isSupportChannelSplit' => $this->isMultiChannel($itemData['deviceid'])
                 ];
-                
+
                 $statusParam = $this->isMultiChannel($itemData['deviceid']) ? 'switches' : 'switch';
                 $switchStatus = $this->getDeviceParamLive($itemData['deviceid'], $statusParam);
                 $deviceStatus[$statusParam] = $switchStatus;
@@ -128,7 +135,8 @@ class Devices {
      * @param string $identifier The device name or ID.
      * @return string|null The device ID or null if not found.
      */
-    private function getDeviceIdByIdentifier($identifier) {
+    private function getDeviceIdByIdentifier($identifier)
+    {
         if (isset($this->devicesData['thingList'])) {
             foreach ($this->devicesData['thingList'] as $device) {
                 if ($device['itemData']['deviceid'] === $identifier || $device['itemData']['name'] === $identifier) {
@@ -145,7 +153,8 @@ class Devices {
      * @param string $identifier The device name or ID.
      * @return bool True if the device supports multiple channels, false otherwise.
      */
-    public function isMultiChannel($identifier) {
+    public function isMultiChannel($identifier)
+    {
         $deviceId = $this->getDeviceIdByIdentifier($identifier);
         if ($deviceId && isset($this->devicesData['thingList'])) {
             foreach ($this->devicesData['thingList'] as $device) {
@@ -164,7 +173,8 @@ class Devices {
      * @param string $identifier The device name or ID.
      * @return mixed|null The parameter value if found, null otherwise.
      */
-    public function searchDeviceParam($searchKey, $identifier) {
+    public function searchDeviceParam($searchKey, $identifier)
+    {
         $deviceId = $this->getDeviceIdByIdentifier($identifier);
         if ($deviceId && isset($this->devicesData['thingList'])) {
             foreach ($this->devicesData['thingList'] as $device) {
@@ -193,7 +203,8 @@ class Devices {
      * @return mixed The live parameter(s) value(s).
      * @throws Exception If there is an error in the response.
      */
-    public function getDeviceParamLive($identifier, $param, $type = 1) {
+    public function getDeviceParamLive($identifier, $param, $type = 1)
+    {
         $deviceId = $this->getDeviceIdByIdentifier($identifier);
         if (!$deviceId) {
             throw new Exception("Device not found.");
@@ -240,7 +251,8 @@ class Devices {
      * @return array|null The live parameters or null if not found.
      * @throws Exception If there is an error in the response.
      */
-    public function getAllDeviceParamLive($identifier, $type = 1) {
+    public function getAllDeviceParamLive($identifier, $type = 1)
+    {
         $deviceId = $this->getDeviceIdByIdentifier($identifier);
         if (!$deviceId) {
             throw new Exception("Device not found.");
@@ -275,7 +287,8 @@ class Devices {
      * @return mixed The result of the status update, either a string or a boolean.
      * @throws Exception If there is an error in the response or if a parameter does not exist.
      */
-    public function setDeviceStatus($identifier, $params, $returnText = 1) {
+    public function setDeviceStatus($identifier, $params, $returnText = 1)
+    {
         $deviceId = $this->getDeviceIdByIdentifier($identifier);
         if (!$deviceId) {
             throw new Exception("Device not found.");
@@ -301,7 +314,9 @@ class Devices {
             if ($isMultiChannel) {
                 $outlet = $param['outlet'];
                 foreach ($param as $key => $value) {
-                    if ($key == 'outlet') continue;
+                    if ($key == 'outlet') {
+                        continue;
+                    }
                     if (isset($currentParams['switches']) && is_array($currentParams['switches'])) {
                         $found = false;
                         foreach ($currentParams['switches'] as &$switch) {
@@ -380,7 +395,8 @@ class Devices {
      * @param string $identifier The device name or ID.
      * @return bool True if the device is online, false otherwise.
      */
-    public function isOnline($identifier) {
+    public function isOnline($identifier)
+    {
         $deviceId = $this->getDeviceIdByIdentifier($identifier);
         if (!$deviceId) {
             return false;
@@ -402,7 +418,8 @@ class Devices {
      * @return array The device history.
      * @throws Exception If there is an error in the response.
      */
-    public function getDeviceHistory($identifier) {
+    public function getDeviceHistory($identifier)
+    {
         $deviceId = $this->getDeviceIdByIdentifier($identifier);
         if (!$deviceId) {
             throw new Exception("Device not found.");
@@ -420,7 +437,7 @@ class Devices {
 
         return $response;
     }
-    
+
     /**
      * Initialize WebSocket connection and perform handshake.
      *
@@ -428,7 +445,8 @@ class Devices {
      * @return WebSocketClient The initialized WebSocket client.
      * @throws Exception If the device is not found or handshake fails.
      */
-    public function initializeWebSocketConnection($identifier) {
+    public function initializeWebSocketConnection($identifier)
+    {
         $deviceId = $this->getDeviceIdByIdentifier($identifier);
         if (!$deviceId) {
             throw new Exception("Device not found.");
@@ -450,7 +468,7 @@ class Devices {
 
         return $wsClient;
     }
-    
+
     /**
      * Get data of a device using WebSocket.
      *
@@ -459,7 +477,8 @@ class Devices {
      * @return array The response data.
      * @throws Exception If there is an error during the process.
      */
-    public function getDataWebSocket($identifier, $params) {
+    public function getDataWebSocket($identifier, $params)
+    {
         $deviceId = $this->getDeviceIdByIdentifier($identifier);
         if (!$deviceId) {
             throw new Exception("Device not found.");
@@ -488,7 +507,7 @@ class Devices {
 
         return $response['params'];
     }
-    
+
     /**
      * Set data of a device using WebSocket.
      *
@@ -497,7 +516,8 @@ class Devices {
      * @return array The response data.
      * @throws Exception If there is an error during the process.
      */
-    public function setDataWebSocket($identifier, $params) {
+    public function setDataWebSocket($identifier, $params)
+    {
         $deviceId = $this->getDeviceIdByIdentifier($identifier);
         if (!$deviceId) {
             throw new Exception("Device not found.");
@@ -535,7 +555,8 @@ class Devices {
      * @return bool True if the operation was successful, false otherwise.
      * @throws Exception If there is an error during the process.
      */
-    public function forceWakeUp($identifier) {
+    public function forceWakeUp($identifier)
+    {
         $deviceId = $this->getDeviceIdByIdentifier($identifier);
         if (!$deviceId) {
             throw new Exception("Device not found.");

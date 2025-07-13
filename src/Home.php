@@ -9,14 +9,17 @@
  */
 
 namespace pjanisio\ewelinkapiphp;
+
 use Exception;
 
-class Home {
+class Home
+{
     private $httpClient;
     private $familyData;
     private $currentFamilyId;
 
-    public function __construct(HttpClient $httpClient) {
+    public function __construct(HttpClient $httpClient)
+    {
         $this->httpClient = $httpClient;
     }
 
@@ -27,7 +30,8 @@ class Home {
      * @return array The family data.
      * @throws Exception If the request fails.
      */
-    public function fetchFamilyData($lang = 'en') {
+    public function fetchFamilyData($lang = 'en')
+    {
         $params = ['lang' => $lang];
         $response = $this->httpClient->getRequest('/v2/family', $params);
 
@@ -54,7 +58,8 @@ class Home {
      *
      * @return string|null The current family ID.
      */
-    public function getCurrentFamilyId() {
+    public function getCurrentFamilyId()
+    {
         return $this->currentFamilyId;
     }
 }

@@ -2,3 +2,4 @@
 .idea
 composer.lock
 .vscode
+tests/config/.phpunit.result.cache
