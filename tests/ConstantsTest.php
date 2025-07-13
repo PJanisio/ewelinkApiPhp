@@ -1,5 +1,9 @@
 <?php
 
+/*
+Dummy constants test to allow running tests in tests directory
+*/
+
 namespace pjanisio\ewelinkapiphp;
 
 final class Constants

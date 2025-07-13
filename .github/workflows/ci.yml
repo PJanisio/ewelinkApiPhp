@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ tests, main ]      # run on tests branch and on main
+    branches: [main, tests] # run on tests branch and on main
   pull_request: 
 
 jobs:
@@ -10,8 +10,12 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
-        php: ['7.4', '8.0', '8.2', '8.3', '8.4']   # nightly tag for 8.4
+        php: ['7.4','8.2','8.3', '8.4', '8.5'] # nightly tag for 8.5
+        include:
+          - php: '8.5'
+            allow_failure: true # don’t fail the whole build with not released php ver
 
     steps:
       # 1) Check out the repo
