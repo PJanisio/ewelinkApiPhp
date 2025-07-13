@@ -1,0 +1,10 @@
+<!-- tests/config/phpunit.xml.dist -->
+<phpunit
+    bootstrap="../ConstantsTest.php"
+    colors="true">
+    <testsuites>
+        <testsuite name="Unit">
+            <directory suffix="Test.php">../</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>
