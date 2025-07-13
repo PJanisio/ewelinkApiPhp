@@ -21,7 +21,7 @@
         "source": "https://github.com/PJanisio/ewelinkApiPhp"
     },
     "require": {
-        "php": "^7.4 || ^8.0",
+        "php": ">=7.4",
         "ext-json": "*",
         "ext-curl": "*",
         "ext-openssl": "*"
