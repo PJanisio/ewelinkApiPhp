@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main, tests] # run on tests branch and on main
+  pull_request: 
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['7.4','8.2','8.3', '8.4', '8.5'] # nightly tag for 8.5
+        include:
+          - php: '8.5'
+            allow_failure: true # don’t fail the whole build with not released php ver
+
+    steps:
+      # 1) Check out the repo
+      - uses: actions/checkout@v4
+
+      # 2) Set up PHP with required extensions
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: curl, openssl
+          ini-values: phar.readonly=0
+          tools: composer
+
+      # 3) Cache Composer downloads to speed up subsequent runs
+      - name: Cache Composer files
+        uses: actions/cache@v4
+        id: composer-cache
+        with:
+          path: |
+            ~/.composer/cache/files
+            ~/.cache/composer/files
+          key: composer-${{ matrix.php }}-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            composer-${{ matrix.php }}-
+
+      # 4) Install dependencies (dev tools included)
+      - run: composer install --no-interaction --prefer-dist --no-progress
+
+      # 5) Run the fast unit / gateway tests
+      - run: composer test
+
+      # 6) Static analysis and coding-style checks
+      - run: composer stan
+      - run: composer cs

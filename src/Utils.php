@@ -12,7 +12,6 @@ namespace pjanisio\ewelinkapiphp;
 
 class Utils
 {
-
     public function __construct()
     {
         //not needed for now
@@ -25,6 +24,7 @@ class Utils
      * @return string The generated nonce.
      */
     public function generateNonce()
+   
     {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $nonce = '';
@@ -42,6 +42,7 @@ class Utils
      * @return string The base64 encoded signature.
      */
     public function sign($data, $secret)
+   
     {
         $hash = hash_hmac('sha256', $data, $secret, true);
         return base64_encode($hash);
@@ -53,6 +54,7 @@ class Utils
      * @return array The captured code and region.
      */
     public function handleRedirect()
+   
     {
         $code = isset($_GET['code']) ? $_GET['code'] : null;
         $region = isset($_GET['region']) ? $_GET['region'] : null;
@@ -65,6 +67,7 @@ class Utils
      * @return array The validation results and creation timestamps of the JSON files.
      */
     public function checkJsonFiles()
+   
     {
         $files = glob(Constants::JSON_LOG_DIR . '/*.json');
         $results = [];
@@ -84,10 +87,10 @@ class Utils
     }
 
     /**
-     * Validate the constants in the Constants class.
-     *
-     * @return array Validation results for REDIRECT_URL, EMAIL and REGION.
-     */
+ * Validate the constants in the Constants class.
+ *
+ * @return array Validation results for REDIRECT_URL, EMAIL and REGION.
+ */
     public function validateConstants(): array
     {
         $results = [];
@@ -96,14 +99,14 @@ class Utils
         $url    = Constants::REDIRECT_URL;
         $scheme = parse_url($url, PHP_URL_SCHEME);
         $urlIsValid = filter_var($url, FILTER_VALIDATE_URL) !== false
-            && in_array($scheme, ['http', 'https'], true);
+               && in_array($scheme, ['http', 'https'], true);
 
         $results['REDIRECT_URL'] = [
-            'value'   => $url,
-            'is_valid' => $urlIsValid,
-            'message' => $urlIsValid
-                ? 'URL looks syntactically correct.'
-                : 'Invalid URL syntax or scheme (must start with http/https).',
+        'value'   => $url,
+        'is_valid' => $urlIsValid,
+        'message' => $urlIsValid
+            ? 'URL looks syntactically correct.'
+            : 'Invalid URL syntax or scheme (must start with http/https).',
         ];
 
         /* ---------- EMAIL ---------- */
@@ -111,11 +114,11 @@ class Utils
         $emailIsValid = filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
 
         $results['EMAIL'] = [
-            'value'   => $email,
-            'is_valid' => $emailIsValid,
-            'message' => $emailIsValid
-                ? 'E-mail address is syntactically valid.'
-                : 'Invalid e-mail address syntax.',
+        'value'   => $email,
+        'is_valid' => $emailIsValid,
+        'message' => $emailIsValid
+            ? 'E-mail address is syntactically valid.'
+            : 'Invalid e-mail address syntax.',
         ];
 
         /* ---------- REGION ---------- */
@@ -124,11 +127,11 @@ class Utils
         $regionIsValid = in_array($region, $validRegions, true);
 
         $results['REGION'] = [
-            'value'   => $region,
-            'is_valid' => $regionIsValid,
-            'message' => $regionIsValid
-                ? 'Region code is recognised.'
-                : 'Invalid region code (allowed: cn, us, eu, as).',
+        'value'   => $region,
+        'is_valid' => $regionIsValid,
+        'message' => $regionIsValid
+            ? 'Region code is recognised.'
+            : 'Invalid region code (allowed: cn, us, eu, as).',
         ];
 
         return $results;
@@ -137,10 +140,10 @@ class Utils
     /**
      * Sanitize a string by removing non-printable characters.
      *
-     * @param string $string The string to be sanitized.
+     * @param string $input The string to be sanitized.
      * @return string The sanitized string.
      */
-    public function sanitizeString($input)
+    public function sanitizeString($input): string
     {
         if (!is_string($input)) {
             return $input;

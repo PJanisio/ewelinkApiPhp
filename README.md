@@ -2,6 +2,7 @@
 
 [![Packagist](https://img.shields.io/packagist/v/pjanisio/ewelink-api-php?logo=composer)](https://packagist.org/packages/pjanisio/ewelink-api-php)
 [![PHP >= 7.4](https://img.shields.io/badge/PHP-7.4%2B-777bb3?logo=php)](https://www.php.net/supported-versions.php)
+[![CI](https://github.com/PJanisio/ewelinkApiPhp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/PJanisio/ewelinkApiPhp/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/PJanisio/ewelinkApiPhp)](LICENSE)
 
 `ewelink-api-php` lets you talk to your eWeLink–enabled devices (Sonoff, KingArt, etc.) **directly from PHP**. It wraps the official HTTP & WebSocket endpoints, handles OAuth, and gives you a neat object‑oriented façade.
