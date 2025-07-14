@@ -33,31 +33,50 @@ final class DummyHttpClient extends HttpClient
 
 final class WebSocketResolveTest extends TestCase
 {
-    public function testResolverBuildsWsUrl(): void
+    /**
+     * @dataProvider dispatchProvider
+     */
+    public function testResolverBuildsWsUrl(string $domain, int $port): void
     {
-        // arrange
         $dummy = new DummyHttpClient([
-            'domain' => 'eu-pconnect7.coolkit.cc',
-            'port'   => 8080,
+            'domain' => $domain,
+            'port' => $port,
         ]);
 
-        // act
+
         $ws = new WebSocketClient($dummy);
 
-        // reflect protected props
-        $urlProp  = new ReflectionProperty($ws, 'url');
+        // Reach into the protected properties that were filled in
+        // by resolveWebSocketUrl().
+        $urlProp = new ReflectionProperty($ws, 'url');
         $hostProp = new ReflectionProperty($ws, 'host');
         $portProp = new ReflectionProperty($ws, 'port');
         $urlProp->setAccessible(true);
         $hostProp->setAccessible(true);
         $portProp->setAccessible(true);
 
-        // assert
-        $expectedHost = gethostbyname('eu-pconnect7.coolkit.cc');
-        $expectedUrl  = sprintf('wss://%s:8080/api/ws', $expectedHost);
+
+        $expectedHost = gethostbyname($domain); // resolves to IP
+        $expectedUrl = sprintf('wss://%s:%d/api/ws', $expectedHost, $port);
 
         $this->assertSame($expectedUrl, $urlProp->getValue($ws));
         $this->assertSame($expectedHost, $hostProp->getValue($ws));
-        $this->assertSame(8080, $portProp->getValue($ws));
+        $this->assertSame($port, $portProp->getValue($ws));
+    }
+
+    /**
+     * Supplies one “dispatch” reply per region.
+     *
+     * @return array<array{string,int}>
+     */
+    public static function dispatchProvider(): array
+    {
+        return [
+            // domain,                                   port
+            ['cn-pconnect7.coolkit.cn', 8080],
+            ['us-pconnect7.coolkit.cc', 8080],
+            ['eu-pconnect7.coolkit.cc', 8080],
+            ['as-pconnect7.coolkit.cc', 8080],
+        ];
     }
 }
