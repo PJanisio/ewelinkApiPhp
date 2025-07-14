@@ -72,7 +72,7 @@ final class WebSocketResolveTest extends TestCase
     public static function dispatchProvider(): array
     {
         return [
-            // domain,                                   port
+            // domain, port
             ['cn-pconnect7.coolkit.cn', 8080],
             ['us-pconnect7.coolkit.cc', 8080],
             ['eu-pconnect7.coolkit.cc', 8080],
