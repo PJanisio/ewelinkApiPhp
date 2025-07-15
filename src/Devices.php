@@ -73,7 +73,6 @@ class Devices
         return $this->devicesData;
     }
 
-
     /**
      * Get the loaded devices data.
      *
