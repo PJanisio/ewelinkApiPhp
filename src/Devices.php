@@ -39,6 +39,7 @@ class Devices
 
     /**
      * Load devices data from a local JSON file.
+     * Obosolete in future
      */
     private function loadDevicesData()
     {
@@ -58,7 +59,7 @@ class Devices
      * @return array The devices data.
      */
 
-    public function fetchDevicesData($lang = 'en')
+    public function fetchDevicesData($lang = 'en'): array
     {
         // Make a request but do NOT include 'familyId'
         $params = [
@@ -105,7 +106,7 @@ class Devices
      *
      * @return array The list of devices with their status.
      */
-    public function getDevicesList()
+    public function getDevicesList(): array
     {
         $devicesList = [];
         if ($this->devicesData && isset($this->devicesData['thingList'])) {
@@ -152,7 +153,7 @@ class Devices
      * @param string $identifier The device name or ID.
      * @return bool True if the device supports multiple channels, false otherwise.
      */
-    public function isMultiChannel($identifier)
+    public function isMultiChannel($identifier): bool
     {
         $deviceId = $this->getDeviceIdByIdentifier($identifier);
         if ($deviceId && isset($this->devicesData['thingList'])) {
