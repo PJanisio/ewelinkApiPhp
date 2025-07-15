@@ -129,6 +129,12 @@ class Token
         return $this->tokenData;
     }
 
+    /**
+     * Get the current OAuth access-token.
+     *
+     * @return string|null  The access-token if it exists, or null when the
+     * client is not authenticated / token file is empty.
+     */
 
     public function getAccessToken()
     {
