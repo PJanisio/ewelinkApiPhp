@@ -11,6 +11,7 @@
 
 use pjanisio\ewelinkapiphp\Constants;
 use pjanisio\ewelinkapiphp\HttpClient;
+use pjanisio\ewelinkapiphp\Config;
 
 
 //Adjust path to composer generated autoload.php if needed
@@ -56,7 +57,7 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
         echo '<p>Token expiry time: ' . date('Y-m-d H:i:s', $tokenData['atExpiredTime'] / 1000) . '</p>';
 
         // ── Debug log link (only when DEBUG=1) ─────────────────────────────────
-        if (Constants::DEBUG === 1) {
+        if (Config::get('DEBUG') == 1) {
             echo '<h1>Debug is ON</h1>';
             echo '<ul>';
             echo '<li><a href="debug.log" target="_blank">debug.log</a></li>';
