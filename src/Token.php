@@ -61,6 +61,22 @@ class Token
         $this->tokenData = $this->httpClient->postRequest('/v2/user/oauth/token', $data);
         $this->writeTokenFileIfChanged();
 
+        //saving configuration after successful oAuth to config.json
+        $configArr = [
+            'APPID'        => Constants::APPID,
+            'APP_SECRET'   => Constants::APP_SECRET,
+            'REDIRECT_URL' => Constants::REDIRECT_URL,
+            'EMAIL'        => Constants::EMAIL,
+            'PASSWORD'     => Constants::PASSWORD,
+            'REGION'       => Constants::REGION,
+            'DEBUG'        => Constants::DEBUG,
+            'JSON_LOG_DIR' => Constants::JSON_LOG_DIR,
+        ];
+        file_put_contents(
+            Constants::JSON_LOG_DIR . '/config.json',
+            json_encode($configArr, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+        );
+
         return $this->tokenData;
     }
 
