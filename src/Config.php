@@ -56,7 +56,7 @@ class Config
                         );
                         self::$config = self::fallbackConfig();
                     } else {
-                        self::$config = $arr;
+                        self::$config = array_merge(self::fallbackConfig(), $arr);
                     }
                 }
             } else {

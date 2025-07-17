@@ -9,6 +9,8 @@
  */
 
 namespace pjanisio\ewelinkapiphp;
+use pjanisio\ewelinkapiphp\Config;
+use pjanisio\ewelinkapiphp\Utils;
 
 use Exception;
 
@@ -72,7 +74,7 @@ class Token
             'JSON_LOG_DIR' => Constants::JSON_LOG_DIR,
         ];
         //saving configuration after successful oAuth to config.json
-        \pjanisio\ewelinkapiphp\Config::save($configArr);
+        Config::save($configArr);
 
         return $this->tokenData;
     }
