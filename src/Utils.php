@@ -141,7 +141,7 @@ class Utils
      * @param string $input The string to be sanitized.
      * @return string The sanitized string.
      */
-    public function sanitizeString($input): string
+    public static function sanitizeString($input): string
     {
         if (!is_string($input)) {
             return $input;
@@ -161,13 +161,13 @@ class Utils
      * @param string $callerMethod The calling method name.
      * @param string $url The URL of the request.
      */
-    public function debugLog($class, $method, $params, $headers, $output, $callerClass, $callerMethod, $url)
+    public static function debugLog($class, $method, $params, $headers, $output, $callerClass, $callerMethod, $url)
     {
         if (Config::get('DEBUG') != 1) {
             return;
         }
         $date = date('Y-m-d H:i:s');
-        $output = is_array($output) ? array_map([$this, 'sanitizeString'], $output) : $this->sanitizeString($output);
+        $output = is_array($output) ? array_map([self::class, 'sanitizeString'], $output) : self::sanitizeString($output);
         $logEntry = sprintf(
             "[%s] %s::%s invoked by %s::%s\nParameters: %s\nHeaders: %s\nOutput: %s\nURL: %s\n\n",
             $date,
