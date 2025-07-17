@@ -61,7 +61,6 @@ class Token
         $this->tokenData = $this->httpClient->postRequest('/v2/user/oauth/token', $data);
         $this->writeTokenFileIfChanged();
 
-        //saving configuration after successful oAuth to config.json
         $configArr = [
             'APPID'        => Constants::APPID,
             'APP_SECRET'   => Constants::APP_SECRET,
@@ -72,10 +71,8 @@ class Token
             'DEBUG'        => Constants::DEBUG,
             'JSON_LOG_DIR' => Constants::JSON_LOG_DIR,
         ];
-        file_put_contents(
-            Constants::JSON_LOG_DIR . '/config.json',
-            json_encode($configArr, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
-        );
+        //saving configuration after successful oAuth to config.json
+        \pjanisio\ewelinkapiphp\Config::save($configArr);
 
         return $this->tokenData;
     }
