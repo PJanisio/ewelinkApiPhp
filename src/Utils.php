@@ -10,6 +10,8 @@
 
 namespace pjanisio\ewelinkapiphp;
 
+use pjanisio\ewelinkapiphp\Config;
+
 class Utils
 {
     public function __construct()
@@ -65,7 +67,7 @@ class Utils
      */
     public function checkJsonFiles()
     {
-        $files = glob(Constants::JSON_LOG_DIR . '/*.json');
+        $files = glob(Config::get('JSON_LOG_DIR') . '/*.json');
         $results = [];
 
         foreach ($files as $file) {
@@ -161,7 +163,7 @@ class Utils
      */
     public function debugLog($class, $method, $params, $headers, $output, $callerClass, $callerMethod, $url)
     {
-        if (Constants::DEBUG !== 1) {
+        if (Config::get('DEBUG') != 1) {
             return;
         }
         $date = date('Y-m-d H:i:s');
@@ -178,6 +180,6 @@ class Utils
             var_export($output, true),
             $url
         );
-        file_put_contents(Constants::JSON_LOG_DIR . '/debug.log', $logEntry, FILE_APPEND);
+        file_put_contents(Config::get('JSON_LOG_DIR') . '/debug.log', $logEntry, FILE_APPEND);
     }
 }

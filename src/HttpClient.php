@@ -10,6 +10,7 @@
 
  namespace pjanisio\ewelinkapiphp;
 
+ use pjanisio\ewelinkapiphp\Config;
  use Exception;
 
 class HttpClient
@@ -27,7 +28,7 @@ class HttpClient
     {
         $this->utils = new Utils();
 
-        // Validate constants
+        // Validate configuration
         $validationResults = $this->utils->validateConstants();
         $errors = [];
 
@@ -44,7 +45,7 @@ class HttpClient
             exit; //bail out
         }
 
-        $this->region = Constants::REGION; // Assign region from Constants
+        $this->region = Config::get('REGION'); // Assign region from Constants
         $this->loginUrl = $this->createLoginUrl('ewelinkapiphp'); // Default state
 
         list($this->code, $redirectRegion) = $this->utils->handleRedirect();
@@ -66,13 +67,13 @@ class HttpClient
     {
         $utils = new Utils();
         $seq = time() * 1000; // current timestamp in milliseconds
-        $this->authorization = $utils->sign(Constants::APPID . '_' . $seq, Constants::APP_SECRET);
+        $this->authorization = $utils->sign(Config::get('APPID') . '_' . $seq, Config::get('APP_SECRET'));
         $params = [
             'state' => $state,
-            'clientId' => Constants::APPID,
+            'clientId' => Config::get('APPID'),
             'authorization' => $this->authorization,
             'seq' => strval($seq),
-            'redirectUrl' => Constants::REDIRECT_URL,
+            'redirectUrl' => Config::get('REDIRECT_URL'),
             'nonce' => $utils->generateNonce(),
             'grantType' => 'authorization_code' // default grant type
         ];
@@ -149,7 +150,7 @@ class HttpClient
         $url = $this->getGatewayUrl() . $endpoint;
         $headers = [
             "Content-type: application/json; charset=utf-8",
-            "X-CK-Appid: " . Constants::APPID,
+            "X-CK-Appid: " . Config::get('APPID'),
             "X-CK-Nonce: " . $utils->generateNonce()
         ];
 
@@ -157,7 +158,7 @@ class HttpClient
             $token = $this->token->getAccessToken();
             $headers[] = "Authorization: Bearer $token";
         } else {
-            $authorization = $utils->sign(json_encode($data), Constants::APP_SECRET);
+            $authorization = $utils->sign(json_encode($data), Config::get('APP_SECRET'));
             $headers[] = "Authorization: Sign $authorization";
         }
 
