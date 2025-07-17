@@ -13,7 +13,7 @@ final class Constants
     public const REDIRECT_URL = 'https://example.com';
     public const REGION       = 'us';
     public const EMAIL        = 'tester@example.com';
-
+    public const PASSWORD = 'test-password';
     public const DEBUG        = 0;
     public const JSON_LOG_DIR = __DIR__;
     public const ERROR_CODES  = [];
