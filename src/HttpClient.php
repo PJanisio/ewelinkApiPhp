@@ -29,7 +29,7 @@ class HttpClient
         $this->utils = new Utils();
 
         // Validate configuration
-        $validationResults = $this->utils->validateConstants();
+        $validationResults = $this->utils->validateConfig();
         $errors = [];
 
         foreach ($validationResults as $key => $result) {
