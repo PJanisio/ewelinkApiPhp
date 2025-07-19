@@ -36,7 +36,10 @@ class Config
             $file = Constants::CONFIG_JSON_PATH;
             $jsonConfig = [];
             if (file_exists($file)) {
-                $json = @file_get_contents($file);
+                $json = file_get_contents($file);
+                if ($json === false) {
+                    trigger_error('Could not read config file: ' . $file, E_USER_WARNING);
+                }
                 $jsonConfig = is_string($json) ? json_decode($json, true) : [];
             }
             // merge order: overrides > config.json > constants
@@ -71,10 +74,10 @@ class Config
     {
         $file = Constants::CONFIG_JSON_PATH;
         $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-        $result = @file_put_contents($file, $json);
-        if ($result !== false) {
-            // Only update what’s saved to disk, NOT runtime overrides.
-            self::$config = null;
+        $result = file_put_contents($file, $json);
+        if ($result === false) {
+            trigger_error('Could not write to config file: ' . $file, E_USER_WARNING);
+            return;
         }
     }
 
@@ -83,7 +86,7 @@ class Config
      *
      * @return array
      */
-    private static function fallbackConfig(): array
+    public static function fallbackConfig(): array
     {
         return [
             'APPID'        => Constants::APPID,

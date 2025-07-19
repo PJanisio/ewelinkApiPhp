@@ -62,17 +62,10 @@ class Token
         $this->tokenData = $this->httpClient->postRequest('/v2/user/oauth/token', $data);
         $this->writeTokenFileIfChanged();
 
-        $configArr = [
-            'APPID'        => Config::get('APPID'),
-            'APP_SECRET'   => Config::get('APP_SECRET'),
-            'REDIRECT_URL' => Config::get('REDIRECT_URL'),
-            'EMAIL'        => Config::get('EMAIL'),
-            'PASSWORD'     => Config::get('PASSWORD'),
-            'REGION'       => Config::get('REGION'),
-            'DEBUG'        => Config::get('DEBUG'),
-            'JSON_LOG_DIR' => Config::get('JSON_LOG_DIR'),
-        ];
-        //saving configuration after successful oAuth to config.json
+        // Use fallbackConfig() keys to build config array to save
+        $keys = array_keys(Config::fallbackConfig());
+        $configArr = array_combine($keys, array_map([Config::class, 'get'], $keys));
+        // Saving configuration after successful oAuth to config.json
         Config::save($configArr);
 
         return $this->tokenData;

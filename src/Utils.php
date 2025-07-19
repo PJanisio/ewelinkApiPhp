@@ -148,9 +148,9 @@ class Utils
                 : 'Directory for config.json is NOT writable!';
         }
         $results['CONFIG_JSON_PATH'] = [
-            'path' => $configPath,
-            'is_writable' => $isWritable,
-            'message' => $message,
+            'value'    => $configPath,
+            'is_valid' => $isWritable,
+            'message'  => $message,
         ];
 
         return $results;
