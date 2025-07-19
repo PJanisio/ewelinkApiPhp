@@ -21,7 +21,7 @@ class Config
      *
      * @return array The configuration array.
      */
-    public static function load()
+    public static function load(): array
     {
         if (self::$config === null) {
             $file = Constants::CONFIG_JSON_PATH;
@@ -112,7 +112,7 @@ class Config
      *
      * @return array
      */
-    private static function fallbackConfig()
+    private static function fallbackConfig(): array
     {
         return [
             'APPID'        => Constants::APPID,

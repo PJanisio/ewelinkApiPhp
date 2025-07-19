@@ -87,7 +87,7 @@ class Utils
     /**
      * Validate the constants in the Constants class.
      *
-     * @return array Validation results for REDIRECT_URL, EMAIL and REGION.
+     * @return array Validation results for REDIRECT_URL, EMAIL, REGION, CONFIG_JSON PATH.
      */
     public function validateConfig(): array
     {
@@ -130,6 +130,27 @@ class Utils
             'message' => $regionIsValid
                 ? 'Region code is recognised.'
                 : 'Invalid region code (allowed: cn, us, eu, as).',
+        ];
+
+        // CONFIG_JSON_PATH writability check
+        $configPath = Constants::CONFIG_JSON_PATH;
+        $dir = dirname($configPath);
+
+        if (file_exists($configPath)) {
+            $isWritable = is_writable($configPath);
+            $message = $isWritable
+                ? 'config.json exists and is writable.'
+                : 'config.json exists but is NOT writable!';
+        } else {
+            $isWritable = is_writable($dir);
+            $message = $isWritable
+                ? 'Directory for config.json is writable.'
+                : 'Directory for config.json is NOT writable!';
+        }
+        $results['CONFIG_JSON_PATH'] = [
+            'path' => $configPath,
+            'is_writable' => $isWritable,
+            'message' => $message,
         ];
 
         return $results;
