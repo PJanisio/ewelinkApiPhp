@@ -11,7 +11,6 @@
 namespace pjanisio\ewelinkapiphp;
 
 use pjanisio\ewelinkapiphp\Config;
-use pjanisio\ewelinkapiphp\Utils;
 use Exception;
 
 class Token

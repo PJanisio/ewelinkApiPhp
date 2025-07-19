@@ -41,7 +41,6 @@
  */
 
 
-use pjanisio\ewelinkapiphp\Constants;
 use pjanisio\ewelinkapiphp\HttpClient;
 use pjanisio\ewelinkapiphp\Config;
 
