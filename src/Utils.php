@@ -10,6 +10,8 @@
 
 namespace pjanisio\ewelinkapiphp;
 
+use pjanisio\ewelinkapiphp\Config;
+
 class Utils
 {
     public function __construct()
@@ -65,7 +67,7 @@ class Utils
      */
     public function checkJsonFiles()
     {
-        $files = glob(Constants::JSON_LOG_DIR . '/*.json');
+        $files = glob(Config::get('JSON_LOG_DIR') . '/*.json');
         $results = [];
 
         foreach ($files as $file) {
@@ -83,51 +85,72 @@ class Utils
     }
 
     /**
- * Validate the constants in the Constants class.
- *
- * @return array Validation results for REDIRECT_URL, EMAIL and REGION.
- */
-    public function validateConstants(): array
+     * Validate the constants in the Constants class.
+     *
+     * @return array Validation results for REDIRECT_URL, EMAIL, REGION, CONFIG_JSON PATH.
+     */
+    public function validateConfig(): array
     {
         $results = [];
 
         /* ---------- REDIRECT_URL ---------- */
-        $url    = Constants::REDIRECT_URL;
+        $url = Config::get('REDIRECT_URL');
         $scheme = parse_url($url, PHP_URL_SCHEME);
         $urlIsValid = filter_var($url, FILTER_VALIDATE_URL) !== false
-               && in_array($scheme, ['http', 'https'], true);
+            && in_array($scheme, ['http', 'https'], true);
 
         $results['REDIRECT_URL'] = [
-        'value'   => $url,
-        'is_valid' => $urlIsValid,
-        'message' => $urlIsValid
-            ? 'URL looks syntactically correct.'
-            : 'Invalid URL syntax or scheme (must start with http/https).',
+            'value'   => $url,
+            'is_valid' => $urlIsValid,
+            'message' => $urlIsValid
+                ? 'URL looks syntactically correct.'
+                : 'Invalid URL syntax or scheme (must start with http/https).',
         ];
 
         /* ---------- EMAIL ---------- */
-        $email       = Constants::EMAIL;
+        $email = Config::get('EMAIL');
         $emailIsValid = filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
 
         $results['EMAIL'] = [
-        'value'   => $email,
-        'is_valid' => $emailIsValid,
-        'message' => $emailIsValid
-            ? 'E-mail address is syntactically valid.'
-            : 'Invalid e-mail address syntax.',
+            'value'   => $email,
+            'is_valid' => $emailIsValid,
+            'message' => $emailIsValid
+                ? 'E-mail address is syntactically valid.'
+                : 'Invalid e-mail address syntax.',
         ];
 
         /* ---------- REGION ---------- */
-        $region        = Constants::REGION;
+        $region = Config::get('REGION');
         $validRegions  = ['cn', 'us', 'eu', 'as'];
         $regionIsValid = in_array($region, $validRegions, true);
 
         $results['REGION'] = [
-        'value'   => $region,
-        'is_valid' => $regionIsValid,
-        'message' => $regionIsValid
-            ? 'Region code is recognised.'
-            : 'Invalid region code (allowed: cn, us, eu, as).',
+            'value'   => $region,
+            'is_valid' => $regionIsValid,
+            'message' => $regionIsValid
+                ? 'Region code is recognised.'
+                : 'Invalid region code (allowed: cn, us, eu, as).',
+        ];
+
+        // CONFIG_JSON_PATH writability check
+        $configPath = Constants::CONFIG_JSON_PATH;
+        $dir = dirname($configPath);
+
+        if (file_exists($configPath)) {
+            $isWritable = is_writable($configPath);
+            $message = $isWritable
+                ? 'config.json exists and is writable.'
+                : 'config.json exists but is NOT writable!';
+        } else {
+            $isWritable = is_writable($dir);
+            $message = $isWritable
+                ? 'Directory for config.json is writable.'
+                : 'Directory for config.json is NOT writable!';
+        }
+        $results['CONFIG_JSON_PATH'] = [
+            'value'    => $configPath,
+            'is_valid' => $isWritable,
+            'message'  => $message,
         ];
 
         return $results;
@@ -139,7 +162,7 @@ class Utils
      * @param string $input The string to be sanitized.
      * @return string The sanitized string.
      */
-    public function sanitizeString($input): string
+    public static function sanitizeString($input): string
     {
         if (!is_string($input)) {
             return $input;
@@ -159,13 +182,13 @@ class Utils
      * @param string $callerMethod The calling method name.
      * @param string $url The URL of the request.
      */
-    public function debugLog($class, $method, $params, $headers, $output, $callerClass, $callerMethod, $url)
+    public static function debugLog($class, $method, $params, $headers, $output, $callerClass, $callerMethod, $url)
     {
-        if (Constants::DEBUG !== 1) {
+        if (Config::get('DEBUG') != 1) {
             return;
         }
         $date = date('Y-m-d H:i:s');
-        $output = is_array($output) ? array_map([$this, 'sanitizeString'], $output) : $this->sanitizeString($output);
+        $output = is_array($output) ? array_map([self::class, 'sanitizeString'], $output) : self::sanitizeString($output);
         $logEntry = sprintf(
             "[%s] %s::%s invoked by %s::%s\nParameters: %s\nHeaders: %s\nOutput: %s\nURL: %s\n\n",
             $date,
@@ -178,6 +201,6 @@ class Utils
             var_export($output, true),
             $url
         );
-        file_put_contents(Constants::JSON_LOG_DIR . '/debug.log', $logEntry, FILE_APPEND);
+        file_put_contents(Config::get('JSON_LOG_DIR') . '/debug.log', $logEntry, FILE_APPEND);
     }
 }

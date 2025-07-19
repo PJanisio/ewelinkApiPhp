@@ -9,8 +9,40 @@
  */
 
 
-use pjanisio\ewelinkapiphp\Constants;
+ /**
+ * gateway.php - eWeLink API Example Entry Point
+ *
+ * This script demonstrates how to use the ewelinkApiPhp library for authenticating
+ * and interacting with Sonoff/eWeLink devices.
+ *
+ * ─────────────────────────────────────────────────────────────
+ * Configuration
+ *
+ * This script will automatically load configuration in the following priority:
+ *   1. Overrides passed to HttpClient() constructor (see below)
+ *   2. config.json file (created after first auth, or can be edited manually)
+ *   3. src/Constants.php as defaults/fallbacks
+ *
+ * To use runtime overrides (for example, different credentials for this run only):
+ *
+ *     $overrides = [
+ *         'EMAIL' => 'anotheruser@example.com',
+ *         'REGION' => 'us',
+ *         // any supported config keys
+ *     ];
+ *     $http = new HttpClient($overrides);
+ *
+ * Otherwise, just use the default:
+ *
+ *     $http = new HttpClient();
+ *
+ * For more info, see wiki.
+ * ─────────────────────────────────────────────────────────────
+ */
+
+
 use pjanisio\ewelinkapiphp\HttpClient;
+use pjanisio\ewelinkapiphp\Config;
 
 
 //Adjust path to composer generated autoload.php if needed
@@ -45,7 +77,7 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
         $tokenData = $token->getToken();
         echo '<h1>Token Data</h1>';
         echo '<pre>' . print_r($tokenData, true) . '</pre>';
-        $token->redirectToUrl(Constants::REDIRECT_URL);
+        $token->redirectToUrl(Config::get('REDIRECT_URL'));
     } catch (Exception $e) {
         echo 'Error: ' . $e->getMessage();
     }
@@ -56,7 +88,7 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
         echo '<p>Token expiry time: ' . date('Y-m-d H:i:s', $tokenData['atExpiredTime'] / 1000) . '</p>';
 
         // ── Debug log link (only when DEBUG=1) ─────────────────────────────────
-        if (Constants::DEBUG === 1) {
+        if (Config::get('DEBUG') == 1) {
             echo '<h1>Debug is ON</h1>';
             echo '<ul>';
             echo '<li><a href="debug.log" target="_blank">debug.log</a></li>';

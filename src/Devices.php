@@ -13,6 +13,8 @@
  use Exception;
  use RecursiveIteratorIterator;
  use RecursiveArrayIterator;
+ use pjanisio\ewelinkapiphp\Config;
+ use pjanisio\ewelinkapiphp\Utils;
 
 class Devices
 {
@@ -43,7 +45,7 @@ class Devices
      */
     private function loadDevicesData()
     {
-        $devicesFile = Constants::JSON_LOG_DIR . '/devices.json';
+        $devicesFile = Config::get('JSON_LOG_DIR') . '/devices.json';
         if (file_exists($devicesFile)) {
             $this->devicesData = json_decode(file_get_contents($devicesFile), true);
         } else {
@@ -63,12 +65,25 @@ class Devices
     {
         // Make a request but do NOT include 'familyId'
         $params = [
-           'lang' => $lang
+            'lang' => $lang
         ];
 
         $rawData = $this->httpClient->getRequest('/v2/device/thing', $params);
         $this->devicesData = $rawData;
-        file_put_contents(Constants::JSON_LOG_DIR . '/devices.json', json_encode($this->devicesData, JSON_PRETTY_PRINT));
+        $devicesFile = Config::get('JSON_LOG_DIR') . '/devices.json';
+        $result = @file_put_contents($devicesFile, json_encode($this->devicesData, JSON_PRETTY_PRINT));
+        if ($result === false) {
+            Utils::debugLog(
+                __CLASS__,
+                __FUNCTION__,
+                ['file' => $devicesFile, 'data' => $this->devicesData],
+                [],
+                'Could not write devices.json',
+                __CLASS__,
+                __FUNCTION__,
+                $devicesFile
+            );
+        }
 
         return $this->devicesData;
     }
