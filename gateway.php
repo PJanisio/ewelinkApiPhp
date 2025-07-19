@@ -78,7 +78,7 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
         $tokenData = $token->getToken();
         echo '<h1>Token Data</h1>';
         echo '<pre>' . print_r($tokenData, true) . '</pre>';
-        $token->redirectToUrl(Constants::REDIRECT_URL);
+        $token->redirectToUrl(Config::get('REDIRECT_URL'));
     } catch (Exception $e) {
         echo 'Error: ' . $e->getMessage();
     }
