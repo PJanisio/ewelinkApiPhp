@@ -10,6 +10,8 @@
 
 namespace pjanisio\ewelinkapiphp;
 
+use pjanisio\ewelinkapiphp\Config;
+use pjanisio\ewelinkapiphp\Utils;
 use Exception;
 
 class Home
@@ -49,7 +51,7 @@ class Home
 
         $this->currentFamilyId = $this->familyData['currentFamilyId'] ?? null;
 
-        file_put_contents(Constants::JSON_LOG_DIR . '/family.json', json_encode($this->familyData));
+        file_put_contents(Config::get('JSON_LOG_DIR') . '/family.json', json_encode($this->familyData));
         return $this->familyData;
     }
 

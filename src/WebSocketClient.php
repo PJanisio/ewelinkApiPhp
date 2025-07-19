@@ -10,6 +10,8 @@
 
 namespace pjanisio\ewelinkapiphp;
 
+use pjanisio\ewelinkapiphp\Config;
+use pjanisio\ewelinkapiphp\Utils;
 use Exception;
 
 class WebSocketClient
@@ -45,7 +47,7 @@ class WebSocketClient
      */
     private function resolveWebSocketUrl()
     {
-        $region = Constants::REGION;
+        $region = Config::get('REGION');
         $urls = [
             'cn' => 'https://cn-dispa.coolkit.cn/dispatch/app',
             'us' => 'https://us-dispa.coolkit.cc/dispatch/app',
@@ -163,7 +165,7 @@ class WebSocketClient
             'at' => $this->httpClient->getToken()->getAccessToken(),
             'userAgent' => 'app',
             'apikey' => $device['apikey'],
-            'appid' => Constants::APPID,
+            'appid' => Config::get('APPID'),
             'nonce' => $this->utils->generateNonce(),
             'sequence' => strval(round(microtime(true) * 1000))
         ];

@@ -19,22 +19,10 @@ Composer installs the library, creates `vendor/autoload.php`, and you’re ready
 
 ---
 
-## 🚀 Quick‑start
+## 🚀 Quick‑example (after authorization)
 
 ```php
 <?php
-require __DIR__.'/vendor/autoload.php';
-
-use pjanisio\ewelinkapiphp\Constants;
-use pjanisio\ewelinkapiphp\HttpClient;
-
-$http = new HttpClient();  // takes creds from constants / env
-$token = $http->getToken(); // OAuth flow (auto‑refreshes)
-
-$devices = $http->getDevices(); // Devices façade
-$list    = $devices->getDevicesList();
-
-print_r($list);  // see everything at once
 
 $lampId  = '100xxxxxx';
 $devices->setDeviceStatus($lampId, ['switch' => 'on']);  // turn it on

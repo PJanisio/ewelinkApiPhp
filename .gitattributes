@@ -1,0 +1,5 @@
+# Enforce LF line endings for PHP source files (windows vs unix)
+*.php text eol=lf
+
+# Treat all text files as text
+* text=auto

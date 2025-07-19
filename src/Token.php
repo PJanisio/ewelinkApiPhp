@@ -10,6 +10,8 @@
 
 namespace pjanisio\ewelinkapiphp;
 
+use pjanisio\ewelinkapiphp\Config;
+use pjanisio\ewelinkapiphp\Utils;
 use Exception;
 
 class Token
@@ -60,6 +62,19 @@ class Token
 
         $this->tokenData = $this->httpClient->postRequest('/v2/user/oauth/token', $data);
         $this->writeTokenFileIfChanged();
+
+        $configArr = [
+            'APPID'        => Constants::APPID,
+            'APP_SECRET'   => Constants::APP_SECRET,
+            'REDIRECT_URL' => Constants::REDIRECT_URL,
+            'EMAIL'        => Constants::EMAIL,
+            'PASSWORD'     => Constants::PASSWORD,
+            'REGION'       => Constants::REGION,
+            'DEBUG'        => Constants::DEBUG,
+            'JSON_LOG_DIR' => Constants::JSON_LOG_DIR,
+        ];
+        //saving configuration after successful oAuth to config.json
+        Config::save($configArr);
 
         return $this->tokenData;
     }
