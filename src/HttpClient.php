@@ -33,8 +33,10 @@ class HttpClient
         $errors = [];
 
         foreach ($validationResults as $key => $result) {
-            if (!$result['is_valid']) {
-                $errors[] = "{$result['message']} — {$key}: {$result['value']}";
+            if (!isset($result['is_valid']) || !$result['is_valid']) {
+                $msg = isset($result['message']) ? $result['message'] : 'Invalid config';
+                $val = isset($result['value']) ? $result['value'] : 'n/a';
+                $errors[] = "{$msg} — {$key}: {$val}";
             }
         }
 
