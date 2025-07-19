@@ -9,6 +9,38 @@
  */
 
 
+ /**
+ * gateway.php - eWeLink API Example Entry Point
+ *
+ * This script demonstrates how to use the ewelinkApiPhp library for authenticating
+ * and interacting with Sonoff/eWeLink devices.
+ *
+ * ─────────────────────────────────────────────────────────────
+ * Configuration
+ *
+ * This script will automatically load configuration in the following priority:
+ *   1. Overrides passed to HttpClient() constructor (see below)
+ *   2. config.json file (created after first auth, or can be edited manually)
+ *   3. src/Constants.php as defaults/fallbacks
+ *
+ * To use runtime overrides (for example, different credentials for this run only):
+ *
+ *     $overrides = [
+ *         'EMAIL' => 'anotheruser@example.com',
+ *         'REGION' => 'us',
+ *         // any supported config keys
+ *     ];
+ *     $http = new HttpClient($overrides);
+ *
+ * Otherwise, just use the default:
+ *
+ *     $http = new HttpClient();
+ *
+ * For more info, see wiki.
+ * ─────────────────────────────────────────────────────────────
+ */
+
+
 use pjanisio\ewelinkapiphp\Constants;
 use pjanisio\ewelinkapiphp\HttpClient;
 use pjanisio\ewelinkapiphp\Config;

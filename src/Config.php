@@ -14,54 +14,37 @@ class Config
 {
     /** @var array|null The loaded configuration array */
     private static $config = null;
+    private static $overrides = [];
+
+    /**
+     * Allow passing in an override array.
+     */
+    public static function setOverrides(array $overrides)
+    {
+        self::$overrides = $overrides;
+        // reset config to re-merge
+        self::$config = null;
+    }
 
     /**
      * Load configuration from config.json, or fallback to Constants if file is missing or invalid.
-     * Logs error via Utils::debugLog if file cannot be read or parsed.
-     *
      * @return array The configuration array.
      */
     public static function load(): array
     {
         if (self::$config === null) {
             $file = Constants::CONFIG_JSON_PATH;
+            $jsonConfig = [];
             if (file_exists($file)) {
                 $json = @file_get_contents($file);
-                if ($json === false) {
-                    // Log error
-                    Utils::debugLog(
-                        __CLASS__,
-                        __FUNCTION__,
-                        ['file' => $file],
-                        [],
-                        'Could not read config file',
-                        __CLASS__,
-                        __FUNCTION__,
-                        $file
-                    );
-                    self::$config = self::fallbackConfig();
-                } else {
-                    $arr = json_decode($json, true);
-                    if (!is_array($arr)) {
-                        // Log error
-                        Utils::debugLog(
-                            __CLASS__,
-                            __FUNCTION__,
-                            ['file' => $file, 'json' => $json],
-                            [],
-                            'Invalid JSON in config file',
-                            __CLASS__,
-                            __FUNCTION__,
-                            $file
-                        );
-                        self::$config = self::fallbackConfig();
-                    } else {
-                        self::$config = array_merge(self::fallbackConfig(), $arr);
-                    }
-                }
-            } else {
-                self::$config = self::fallbackConfig();
+                $jsonConfig = is_string($json) ? json_decode($json, true) : [];
             }
+            // merge order: overrides > config.json > constants
+            self::$config = array_merge(
+                self::fallbackConfig(),
+                is_array($jsonConfig) ? $jsonConfig : [],
+                self::$overrides // highest priority!
+            );
         }
         return self::$config;
     }
@@ -80,7 +63,6 @@ class Config
 
     /**
      * Save configuration array to config.json.
-     * Logs error via Utils::debugLog if write fails.
      *
      * @param array $data Configuration data to save.
      * @return void
@@ -90,20 +72,9 @@ class Config
         $file = Constants::CONFIG_JSON_PATH;
         $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         $result = @file_put_contents($file, $json);
-        if ($result === false) {
-            // Log error
-            Utils::debugLog(
-                __CLASS__,
-                __FUNCTION__,
-                ['file' => $file, 'data' => $data],
-                [],
-                'Could not write to config file',
-                __CLASS__,
-                __FUNCTION__,
-                $file
-            );
-        } else {
-            self::$config = $data; // update cache
+        if ($result !== false) {
+            // Only update what’s saved to disk, NOT runtime overrides.
+            self::$config = null;
         }
     }
 

@@ -24,8 +24,12 @@ class HttpClient
     private $devices;
     private $utils;
 
-    public function __construct()
+    public function __construct(array $configOverrides = [])
     {
+        //load configuration via arguments
+        if (!empty($configOverrides)) {
+            Config::setOverrides($configOverrides);
+        }
         $this->utils = new Utils();
 
         // Validate configuration
