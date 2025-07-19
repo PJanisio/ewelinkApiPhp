@@ -22,8 +22,6 @@ Composer installs the library, creates `vendor/autoload.php`, and you’re ready
 ## 🚀 Quick‑example (after authorization)
 
 ```php
-<?php
-
 $lampId  = '100xxxxxx';
 $devices->setDeviceStatus($lampId, ['switch' => 'on']);  // turn it on
 ```
@@ -63,7 +61,7 @@ Need an out‑of‑the‑box dashboard? Check the companion project **[ewelinkap
 ## ⚙️ Requirements
 
 * PHP **7.4 or newer**
-* Extensions: `curl`, `json` (both enabled by default on typical PHP installs)
+* Extensions: `curl`, `json`, `openssl` ( enabled by default on typical PHP installs)
 
 ---
 
