@@ -29,7 +29,7 @@ class Token
      */
     private function loadTokenData()
     {
-        $tokenFile = Constants::JSON_LOG_DIR . '/token.json';
+        $tokenFile = Config::get('JSON_LOG_DIR') . '/token.json';
         if (file_exists($tokenFile)) {
             $this->tokenData = json_decode(file_get_contents($tokenFile), true);
         }
@@ -56,21 +56,21 @@ class Token
         $data = [
             'grantType'    => 'authorization_code',
             'code'         => $this->httpClient->getCode(),
-            'redirectUrl'  => Constants::REDIRECT_URL,
+            'redirectUrl'  => Config::get('REDIRECT_URL'),
         ];
 
         $this->tokenData = $this->httpClient->postRequest('/v2/user/oauth/token', $data);
         $this->writeTokenFileIfChanged();
 
         $configArr = [
-            'APPID'        => Constants::APPID,
-            'APP_SECRET'   => Constants::APP_SECRET,
-            'REDIRECT_URL' => Constants::REDIRECT_URL,
-            'EMAIL'        => Constants::EMAIL,
-            'PASSWORD'     => Constants::PASSWORD,
-            'REGION'       => Constants::REGION,
-            'DEBUG'        => Constants::DEBUG,
-            'JSON_LOG_DIR' => Constants::JSON_LOG_DIR,
+            'APPID'        => Config::get('APPID'),
+            'APP_SECRET'   => Config::get('APP_SECRET'),
+            'REDIRECT_URL' => Config::get('REDIRECT_URL'),
+            'EMAIL'        => Config::get('EMAIL'),
+            'PASSWORD'     => Config::get('PASSWORD'),
+            'REGION'       => Config::get('REGION'),
+            'DEBUG'        => Config::get('DEBUG'),
+            'JSON_LOG_DIR' => Config::get('JSON_LOG_DIR'),
         ];
         //saving configuration after successful oAuth to config.json
         Config::save($configArr);
@@ -160,7 +160,7 @@ class Token
      */
     public function clearToken()
     {
-        $tokenFile = Constants::JSON_LOG_DIR . '/token.json';
+        $tokenFile = Config::get('JSON_LOG_DIR') . '/token.json';
         if (file_exists($tokenFile)) {
             file_put_contents($tokenFile, '', LOCK_EX);
             $this->tokenData = null;
@@ -185,7 +185,7 @@ class Token
      */
     private function writeTokenFileIfChanged()
     {
-        $file = Constants::JSON_LOG_DIR . '/token.json';
+        $file = Config::get('JSON_LOG_DIR') . '/token.json';
         $newJson = json_encode($this->tokenData, JSON_UNESCAPED_SLASHES);
 
         $oldJson = file_exists($file) ? file_get_contents($file) : '';
