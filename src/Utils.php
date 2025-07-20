@@ -203,4 +203,46 @@ class Utils
         );
         file_put_contents(Config::get('JSON_LOG_DIR') . '/debug.log', $logEntry, FILE_APPEND);
     }
+
+    /**
+ * Print HTML with links to debug log and raw JSON files if they exist.
+ *
+ * @return void
+ */
+    public static function showDebugAndJsonLinks()
+    {
+        // Show debug link if DEBUG is enabled
+        if (Config::get('DEBUG') == 1) {
+            echo '<h1>Debug is ON</h1>';
+            echo '<ul>';
+            if (file_exists(Config::get('JSON_LOG_DIR') . '/debug.log')) {
+                echo '<li><a href="debug.log" target="_blank">debug.log</a></li>';
+            }
+            echo '</ul>';
+        }
+
+        // List raw JSON files if they exist
+        $jsonFiles = [
+        'devices.json',
+        'family.json',
+        'token.json',
+        ];
+        $foundAny = false;
+        foreach ($jsonFiles as $filename) {
+            if (file_exists(Config::get('JSON_LOG_DIR') . '/' . $filename)) {
+                $foundAny = true;
+                break;
+            }
+        }
+        if ($foundAny) {
+            echo '<h1>JSON Files</h1><ul>';
+            foreach ($jsonFiles as $filename) {
+                if (file_exists(Config::get('JSON_LOG_DIR') . '/' . $filename)) {
+                    echo '<li><a href="' . htmlspecialchars($filename) . '" target="_blank">' . htmlspecialchars($filename) . '</a></li>';
+                }
+            }
+            echo '</ul>';
+            echo '-----------------------------------------------------------';
+        }
+    }
 }

@@ -9,7 +9,7 @@
  */
 
 
- /**
+/**
  * gateway.php - eWeLink API Example Entry Point
  *
  * This script demonstrates how to use the ewelinkApiPhp library for authenticating
@@ -43,6 +43,7 @@
 
 use pjanisio\ewelinkapiphp\HttpClient;
 use pjanisio\ewelinkapiphp\Config;
+use pjanisio\ewelinkapiphp\Utils;
 
 
 //Adjust path to composer generated autoload.php if needed
@@ -51,6 +52,7 @@ $autoloadCandidates = [
     __DIR__ . '/../../../autoload.php',
     __DIR__ . '/../../autoload.php',
 ];
+
 
 foreach ($autoloadCandidates as $file) {
     if (file_exists($file)) {
@@ -64,6 +66,10 @@ if (!class_exists(\Composer\Autoload\ClassLoader::class, false)) {
     exit(1);
 }
 
+//Security check for config.json
+Config::warnIfConfigExposed();
+
+//---------------------checks end-------------------------------
 
 //Class init
 $http = new HttpClient();
@@ -87,24 +93,8 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
         echo '<h1>You are authenticated!</h1>';
         echo '<p>Token expiry time: ' . date('Y-m-d H:i:s', $tokenData['atExpiredTime'] / 1000) . '</p>';
 
-        // ── Debug log link (only when DEBUG=1) ─────────────────────────────────
-        if (Config::get('DEBUG') == 1) {
-            echo '<h1>Debug is ON</h1>';
-            echo '<ul>';
-            echo '<li><a href="debug.log" target="_blank">debug.log</a></li>';
-            echo '</ul>';
-        }
-        // ────────────────────────────────────────────────────────────────────────
-
-        // ── Links to raw JSON files ─────────────────────────────────────────────
-        echo '<h1>JSON Files</h1>';
-        echo '<ul>';
-        echo '<li><a href="devices.json"    target="_blank">devices.json</a></li>';
-        echo '<li><a href="family.json"     target="_blank">family.json</a></li>';
-        echo '<li><a href="token.json"      target="_blank">token.json</a></li>';
-        echo '</ul>';
-        echo '-----------------------------------------------------------';
-        // ────────────────────────────────────────────────────────────────────────
+        //Display debug information and links to raw json files
+        Utils::showDebugAndJsonLinks();
 
         /*
         Inside try block you should put all methods f.e switching on/off devices, listing them etc
@@ -112,7 +102,7 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
         */
         try {
 
-            // List Devices
+            //List Devices
             $devs = $http->getDevices();
             $devsList = $devs->getDevicesList();
             echo '<h1>Devices List</h1>';
@@ -120,8 +110,7 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
         } catch (Exception $e) {
             echo 'Error: ' . $e->getMessage();
         }
-    } 
-    else {
+    } else {
         //Fallback to Authorization URL when token expired or not authorized yet
         $loginUrl = $http->getLoginUrl();
         echo '<a href="' . htmlspecialchars($loginUrl) . '">Authorize ewelinkApiPhp</a>';

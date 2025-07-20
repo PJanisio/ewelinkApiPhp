@@ -99,4 +99,20 @@ class Config
             'JSON_LOG_DIR' => Constants::JSON_LOG_DIR,
         ];
     }
+
+    public static function warnIfConfigExposed()
+    {
+        $configPath = self::get('CONFIG_JSON_PATH');
+        // Try to resolve to real path
+        $realConfig = realpath($configPath);
+        $webRoot = isset($_SERVER['DOCUMENT_ROOT']) ? realpath($_SERVER['DOCUMENT_ROOT']) : null;
+
+        if ($realConfig && $webRoot && strpos($realConfig, $webRoot) === 0) {
+            echo '<div style="color: red; font-weight: bold; margin: 16px 0;">';
+            echo '⚠️ <b>Security Warning:</b> <code>config.json</code> is stored inside your web server\'s public directory: <code>' . htmlspecialchars($realConfig) . '</code><br>';
+            echo 'Anyone could access it from the internet if not protected!<br>';
+            echo 'Move it outside the web root, update <code>CONFIG_JSON_PATH</code> in <code>Constants.php</code>, or restrict access with permissions or web server rules.<br>';
+            echo '</div>';
+        }
+    }
 }
