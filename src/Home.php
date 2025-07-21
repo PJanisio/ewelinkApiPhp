@@ -69,22 +69,19 @@ class Home
     /**
      * Get all homes/families.
      *
-     * @return array<int, array{id: string, name: string}>  Array of homes, each as ['id' => ..., 'name' => ...]
+     * @return array<int, array{id: string, name: string}>
      */
     public function getHomes(): array
     {
-        if (!$this->familyData) {
-            $this->fetchFamilyData();
-        }
-
-        $result = [];
-        foreach ($this->familyData['familyList'] as $home) {
-            $result[] = [
-                'id'   => $home['id'],
-                'name' => $home['name'],
-            ];
-        }
-        return $result;
+        return array_map(
+            static function ($home) {
+                return [
+                    'id'   => $home['id'],
+                    'name' => $home['name'],
+                ];
+            },
+            $this->familyData['familyList'] ?? []
+        );
     }
 
     /**
