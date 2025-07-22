@@ -71,4 +71,7 @@ MIT – do what you want, just keep the copyright notice.
 
 ---
 
-**Happy hacking & enjoy your smart devices!**
+## 🔗 Integrations & Use Cases
+
+* **Drupal eWeLink module** – integrate Sonoff devices into your Drupal site via [drupal.org/project/ewelink](https://www.drupal.org/project/ewelink)  
+* **Bee Hotel Reservation Access** – powers the Bee Hotel, see [Bee Hotel docs](https://www.drupal.org/docs/extending-drupal/contributed-modules/contributed-module-documentation/bee-hotel/11-reservation-access-by-beehotel)  
