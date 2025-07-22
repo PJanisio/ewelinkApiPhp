@@ -64,4 +64,44 @@ class Home
     {
         return $this->currentFamilyId;
     }
+
+
+    /**
+     * Get all homes/families.
+     *
+     * @return array<int, array{id: string, name: string}>
+     */
+    public function getHomes(): array
+    {
+        return array_map(
+            static function ($home) {
+                return [
+                    'id'   => $home['id'],
+                    'name' => $home['name'],
+                ];
+            },
+            $this->familyData['familyList'] ?? []
+        );
+    }
+
+    /**
+     * Get all rooms for a given family/home ID.
+     *
+     * @param string $familyId  The family/home ID.
+     * @return array<int, array{id: string, name: string, index: int}>  Array of rooms, or empty array if not found.
+     */
+    public function getRooms(string $familyId): array
+    {
+        if (!$this->familyData) {
+            $this->fetchFamilyData();
+        }
+
+        foreach ($this->familyData['familyList'] as $home) {
+            if ($home['id'] === $familyId) {
+                // Return all room data, or [] if roomList missing
+                return isset($home['roomList']) ? $home['roomList'] : [];
+            }
+        }
+        return [];
+    }
 }
