@@ -162,7 +162,8 @@ class HttpClient
             $token = $this->token->getAccessToken();
             $headers[] = "Authorization: Bearer $token";
         } else {
-            $authorization = $this->utils->sign(json_encode($data), Config::get('APP_SECRET'));
+            $payload = json_encode($data);
+            $authorization = $this->utils->sign($payload, Config::get('APP_SECRET'));
             $headers[] = "Authorization: Sign $authorization";
         }
 
