@@ -71,16 +71,15 @@ class HttpClient
      */
     public function createLoginUrl($state)
     {
-        $utils = new Utils();
         $seq = time() * 1000; // current timestamp in milliseconds
-        $this->authorization = $utils->sign(Config::get('APPID') . '_' . $seq, Config::get('APP_SECRET'));
+        $this->authorization = $this->utils->sign(Config::get('APPID') . '_' . $seq, Config::get('APP_SECRET'));
         $params = [
             'state' => $state,
             'clientId' => Config::get('APPID'),
             'authorization' => $this->authorization,
             'seq' => strval($seq),
             'redirectUrl' => Config::get('REDIRECT_URL'),
-            'nonce' => $utils->generateNonce(),
+            'nonce' => $this->utils->generateNonce(),
             'grantType' => 'authorization_code' // default grant type
         ];
 
@@ -152,19 +151,18 @@ class HttpClient
      */
     public function postRequest($endpoint, $data, $useTokenAuthorization = false)
     {
-        $utils = new Utils();
         $url = $this->getGatewayUrl() . $endpoint;
         $headers = [
             "Content-type: application/json; charset=utf-8",
             "X-CK-Appid: " . Config::get('APPID'),
-            "X-CK-Nonce: " . $utils->generateNonce()
+            "X-CK-Nonce: " . $this->utils->generateNonce()
         ];
 
         if ($useTokenAuthorization) {
             $token = $this->token->getAccessToken();
             $headers[] = "Authorization: Bearer $token";
         } else {
-            $authorization = $utils->sign(json_encode($data), Config::get('APP_SECRET'));
+            $authorization = $this->utils->sign(json_encode($data), Config::get('APP_SECRET'));
             $headers[] = "Authorization: Sign $authorization";
         }
 
