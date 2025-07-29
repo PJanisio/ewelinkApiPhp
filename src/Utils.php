@@ -21,18 +21,18 @@ class Utils
 
 
     /**
-     * Display an informational message (HTML safe).
-     * @param string $msg
+     * Display an informational message (escapes HTML by default).
+     * @param string $msg The message to display (will be HTML-escaped).
      * @return void
      */
     public static function displayInfo(string $msg): void
     {
-        echo '<div style="margin: 10px 0; color: #185800;">' . $msg . '</div>';
+        echo '<div style="margin: 10px 0; color: #185800;">' . htmlspecialchars($msg) . '</div>';
     }
 
     /**
-     * Display an error message (HTML safe).
-     * @param string $msg
+     * Display an error message (escapes HTML by default).
+     * @param string $msg The error message to display (will be HTML-escaped).
      * @return void
      */
     public static function displayError(string $msg): void
@@ -41,7 +41,6 @@ class Utils
         echo 'Error: ' . htmlspecialchars($msg);
         echo '</div>';
     }
-
 
     /**
      * Generate a nonce (an 7-digit alphanumeric random string).
