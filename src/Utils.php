@@ -21,6 +21,29 @@ class Utils
 
 
     /**
+     * Display an informational message (HTML safe).
+     * @param string $msg
+     * @return void
+     */
+    public static function displayInfo(string $msg): void
+    {
+        echo '<div style="margin: 10px 0; color: #185800;">' . $msg . '</div>';
+    }
+
+    /**
+     * Display an error message (HTML safe).
+     * @param string $msg
+     * @return void
+     */
+    public static function displayError(string $msg): void
+    {
+        echo '<div style="color: #fff; background: #c90000; padding: 10px; margin: 10px 0; font-weight: bold;">';
+        echo 'Error: ' . htmlspecialchars($msg);
+        echo '</div>';
+    }
+
+
+    /**
      * Generate a nonce (an 7-digit alphanumeric random string).
      *
      * @return string The generated nonce.
@@ -205,10 +228,10 @@ class Utils
     }
 
     /**
- * Print HTML with links to debug log and raw JSON files if they exist.
- *
- * @return void
- */
+     * Print HTML with links to debug log and raw JSON files if they exist.
+     *
+     * @return void
+     */
     public static function showDebugAndJsonLinks()
     {
         // Show debug link if DEBUG is enabled
@@ -223,9 +246,9 @@ class Utils
 
         // List raw JSON files if they exist
         $jsonFiles = [
-        'devices.json',
-        'family.json',
-        'token.json',
+            'devices.json',
+            'family.json',
+            'token.json',
         ];
         $foundAny = false;
         foreach ($jsonFiles as $filename) {
@@ -244,5 +267,70 @@ class Utils
             echo '</ul>';
             echo '-----------------------------------------------------------';
         }
+    }
+
+    /**
+     * Try to include Composer's autoloader from common locations.
+     * If not found, show error and exit.
+     */
+    public static function loadComposerAutoload()
+    {
+        $autoloadCandidates = [
+            __DIR__ . '/../vendor/autoload.php',
+            __DIR__ . '/../../../autoload.php',
+            __DIR__ . '/../../autoload.php',
+        ];
+        foreach ($autoloadCandidates as $file) {
+            if (file_exists($file)) {
+                require $file;
+                return true;
+            }
+        }
+        self::displayError('Composer autoloader not found; run <b>composer install</b> or fix autoload.php path.');
+        exit(1);
+    }
+
+
+    /**
+     * Handle the OAuth process:
+     * - If authorization code present, process token and redirect.
+     * - If already authorized, display info and call optional $afterAuthCallback.
+     * - If not authorized, show login link.
+     * @param HttpClient $http
+     * @param Token $token
+     * @param callable|null $afterAuthCallback Receives ($http, $token) after auth
+     * @return void
+     */
+    public static function handleAuthFlow($http, $token, $afterAuthCallback = null)
+    {
+        // OAuth redirect
+        if (isset($_GET['code']) && isset($_GET['region'])) {
+            try {
+                $tokenData = $token->getToken();
+                self::displayInfo('<h1>Token Data</h1><pre>' . print_r($tokenData, true) . '</pre>');
+                $token->redirectToUrl(Config::get('REDIRECT_URL'));
+            } catch (\Exception $e) {
+                self::displayError($e->getMessage());
+            }
+            exit;
+        }
+
+        // Already authenticated
+        if ($token->checkAndRefreshToken()) {
+            $tokenData = $token->getTokenData();
+            self::displayInfo('<h1>You are authenticated!</h1><p>Token expiry: ' .
+                date('Y-m-d H:i:s', $tokenData['atExpiredTime'] / 1000) . '</p>');
+            Config::warnIfConfigExposed();
+            self::showDebugAndJsonLinks();
+
+            if (is_callable($afterAuthCallback)) {
+                call_user_func($afterAuthCallback, $http, $token);
+            }
+        } else {
+            // Not authorized, show login link
+            $loginUrl = $http->getLoginUrl();
+            self::displayInfo('<a href="' . htmlspecialchars($loginUrl) . '">Authorize ewelinkApiPhp</a>');
+        }
+        exit;
     }
 }
