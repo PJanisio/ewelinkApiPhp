@@ -103,6 +103,11 @@ class Config
     public static function warnIfConfigExposed()
     {
         $configPath = self::get('CONFIG_JSON_PATH');
+        // Show warning only if the file actually exists
+        if (!file_exists($configPath)) {
+            return; // No config.json to expose
+        }
+
         // Try to resolve to real path
         $realConfig = realpath($configPath);
         $webRoot = isset($_SERVER['DOCUMENT_ROOT']) ? realpath($_SERVER['DOCUMENT_ROOT']) : null;
