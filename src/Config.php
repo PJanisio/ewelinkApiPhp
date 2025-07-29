@@ -100,10 +100,18 @@ class Config
         ];
     }
 
+    /**
+     * Warn the user if config.json is stored in a public web directory.
+     * No action is taken if config.json does not exist.
+     *
+     * @return void
+     */
+
     public static function warnIfConfigExposed()
     {
-        $configPath = self::get('CONFIG_JSON_PATH');
-        // Show warning only if the file actually exists
+        // Try to resolve to the correct config.json path
+        $configPath = self::get('CONFIG_JSON_PATH') ?? Constants::CONFIG_JSON_PATH;
+
         if (!file_exists($configPath)) {
             return; // No config.json to expose
         }

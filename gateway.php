@@ -25,11 +25,15 @@
  *
  * To use runtime overrides (for example, different credentials for this run only):
  *
- *     $overrides = [
- *         'EMAIL' => 'anotheruser@example.com',
- *         'REGION' => 'us',
- *         // any supported config keys
- *     ];
+ *    $overrides = [
+ *   'APPID'        => 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+ *   'APP_SECRET'   => 'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy',
+ *   'REDIRECT_URL' => 'https://yourdomain.com/ewelinkApiPhp/gateway.php', 
+ *   'EMAIL'        => 'you@domain.com',
+ *   'PASSWORD'     => 'xxxx', 
+ *   'REGION'       => 'eu'
+ *      ];
+ * 
  *     $http = new HttpClient($overrides);
  *
  * Otherwise, just use the default:
@@ -66,8 +70,6 @@ if (!class_exists(\Composer\Autoload\ClassLoader::class, false)) {
     exit(1);
 }
 
-//Security check for config.json
-Config::warnIfConfigExposed();
 
 //---------------------checks end-------------------------------
 
@@ -93,9 +95,11 @@ if (isset($_GET['code']) && isset($_GET['region'])) {
         echo '<h1>You are authenticated!</h1>';
         echo '<p>Token expiry time: ' . date('Y-m-d H:i:s', $tokenData['atExpiredTime'] / 1000) . '</p>';
 
+        // Display security warning if config.json exists
+        Config::warnIfConfigExposed();
+
         //Display debug information and links to raw json files
         Utils::showDebugAndJsonLinks();
-
         /*
         Inside try block you should put all methods f.e switching on/off devices, listing them etc
         Methods can be checked at wiki pages: https://github.com/PJanisio/ewelinkApiPhp/wiki
