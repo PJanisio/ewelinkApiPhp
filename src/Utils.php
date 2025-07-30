@@ -177,11 +177,11 @@ class Utils
             echo '<h2>You are authenticated!</h2><p>Token expiry: ' .
                  date('Y-m-d H:i:s', $tokenData['atExpiredTime'] / 1000) . '</p>';
             Config::warnIfConfigExposed();
-            self::showDebugAndJsonLinks();
 
             if (is_callable($afterAuthCallback)) {
                 $afterAuthCallback($http, $token);
             }
+            self::showDebugAndJsonLinks();
         } else {
             // 3. Not authorised yet -------------------------------------------
             $loginUrl = htmlspecialchars($http->getLoginUrl(), ENT_QUOTES, 'UTF-8');
