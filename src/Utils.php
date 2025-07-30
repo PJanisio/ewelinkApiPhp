@@ -14,204 +14,106 @@ use pjanisio\ewelinkapiphp\Config;
 
 class Utils
 {
-    public function __construct()
+    /** Generate an 8‑character alphanumeric nonce. */
+    public function generateNonce(): string
     {
-        //not needed for now
-    }
-
-
-    /**
-     * Display an informational message (escapes HTML by default).
-     * @param string $msg The message to display (will be HTML-escaped).
-     * @return void
-     */
-    public static function displayInfo(string $msg): void
-    {
-        echo '<div style="margin: 10px 0; color: #185800;">' . htmlspecialchars($msg) . '</div>';
-    }
-
-    /**
-     * Display an error message (escapes HTML by default).
-     * @param string $msg The error message to display (will be HTML-escaped).
-     * @return void
-     */
-    public static function displayError(string $msg): void
-    {
-        echo '<div style="color: #fff; background: #c90000; padding: 10px; margin: 10px 0; font-weight: bold;">';
-        echo 'Error: ' . htmlspecialchars($msg);
-        echo '</div>';
-    }
-
-    /**
-     * Generate a nonce (an 7-digit alphanumeric random string).
-     *
-     * @return string The generated nonce.
-     */
-    public function generateNonce()
-    {
-        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $nonce = '';
         for ($i = 0; $i < 8; $i++) {
-            $nonce .= $characters[random_int(0, strlen($characters) - 1)];
+            $nonce .= $chars[random_int(0, strlen($chars) - 1)];
         }
         return $nonce;
     }
 
-    /**
-     * Sign the data using HMAC-SHA256 and return a base64 encoded string.
-     *
-     * @param string $data The data to be signed.
-     * @param string $secret The secret key used for signing.
-     * @return string The base64 encoded signature.
-     */
-    public function sign($data, $secret)
+    /** Return base64‑encoded HMAC‑SHA256 signature. */
+    public function sign(string $data, string $secret): string
     {
-        $hash = hash_hmac('sha256', $data, $secret, true);
-        return base64_encode($hash);
+        return base64_encode(hash_hmac('sha256', $data, $secret, true));
     }
 
-    /**
-     * Handle redirect and capture code and region from URL.
-     *
-     * @return array The captured code and region.
-     */
-    public function handleRedirect()
+    /** Capture ?code & ?region from OAuth redirect. */
+    public function handleRedirect(): array
     {
-        $code = isset($_GET['code']) ? $_GET['code'] : null;
-        $region = isset($_GET['region']) ? $_GET['region'] : null;
-        return [$code, $region];
+        return [$_GET['code'] ?? null, $_GET['region'] ?? null];
     }
 
-    /**
-     * Check if JSON files in the specified directory are valid and retrieve their creation timestamps.
-     * Can be used for debugging - not used in any checks
-     * @return array The validation results and creation timestamps of the JSON files.
-     */
-    public function checkJsonFiles()
+    /** Validate JSON dump files (debug only). */
+    public function checkJsonFiles(): array
     {
-        $files = glob(Config::get('JSON_LOG_DIR') . '/*.json');
+        $files   = glob(Config::get('JSON_LOG_DIR') . '/*.json');
         $results = [];
-
         foreach ($files as $file) {
-            $content = file_get_contents($file);
-            $isValidJson = json_decode($content) !== null;
-            $creationTime = filectime($file);
             $results[] = [
-                'file' => $file,
-                'validation' => $isValidJson,
-                'creation_time' => $creationTime
+                'file'          => $file,
+                'validation'    => json_decode(file_get_contents($file)) !== null,
+                'creation_time' => filectime($file),
             ];
         }
-
         return $results;
     }
 
-    /**
-     * Validate the constants in the Constants class.
-     *
-     * @return array Validation results for REDIRECT_URL, EMAIL, REGION, CONFIG_JSON PATH.
-     */
+    /** Validate critical config values and filesystem permissions. */
     public function validateConfig(): array
     {
-        $results = [];
+        $out = [];
 
-        /* ---------- REDIRECT_URL ---------- */
-        $url = Config::get('REDIRECT_URL');
-        $scheme = parse_url($url, PHP_URL_SCHEME);
-        $urlIsValid = filter_var($url, FILTER_VALIDATE_URL) !== false
-            && in_array($scheme, ['http', 'https'], true);
-
-        $results['REDIRECT_URL'] = [
-            'value'   => $url,
-            'is_valid' => $urlIsValid,
-            'message' => $urlIsValid
-                ? 'URL looks syntactically correct.'
-                : 'Invalid URL syntax or scheme (must start with http/https).',
+        //REDIRECT_URL
+        $url   = Config::get('REDIRECT_URL');
+        $valid = filter_var($url, FILTER_VALIDATE_URL) && in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https']);
+        $out['REDIRECT_URL'] = [
+            'value'    => $url,
+            'is_valid' => $valid,
+            'message'  => $valid ? 'URL looks syntactically correct.' : 'Invalid URL or scheme.',
         ];
 
-        /* ---------- EMAIL ---------- */
+        //EMAIL
         $email = Config::get('EMAIL');
-        $emailIsValid = filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
-
-        $results['EMAIL'] = [
-            'value'   => $email,
-            'is_valid' => $emailIsValid,
-            'message' => $emailIsValid
-                ? 'E-mail address is syntactically valid.'
-                : 'Invalid e-mail address syntax.',
+        $valid = filter_var($email, FILTER_VALIDATE_EMAIL);
+        $out['EMAIL'] = [
+            'value'    => $email,
+            'is_valid' => $valid,
+            'message'  => $valid ? 'E‑mail syntax is valid.' : 'Invalid e‑mail address.',
         ];
 
-        /* ---------- REGION ---------- */
+        //REGION
         $region = Config::get('REGION');
-        $validRegions  = ['cn', 'us', 'eu', 'as'];
-        $regionIsValid = in_array($region, $validRegions, true);
-
-        $results['REGION'] = [
-            'value'   => $region,
-            'is_valid' => $regionIsValid,
-            'message' => $regionIsValid
-                ? 'Region code is recognised.'
-                : 'Invalid region code (allowed: cn, us, eu, as).',
+        $valid  = in_array($region, ['cn', 'us', 'eu', 'as'], true);
+        $out['REGION'] = [
+            'value'    => $region,
+            'is_valid' => $valid,
+            'message'  => $valid ? 'Region code recognised.' : 'Invalid region code.',
         ];
 
-        // CONFIG_JSON_PATH writability check
-        $configPath = Constants::CONFIG_JSON_PATH;
-        $dir = dirname($configPath);
-
-        if (file_exists($configPath)) {
-            $isWritable = is_writable($configPath);
-            $message = $isWritable
-                ? 'config.json exists and is writable.'
-                : 'config.json exists but is NOT writable!';
+        //CONFIG_JSON_PATH permissions
+        $path = Constants::CONFIG_JSON_PATH;
+        $dir  = dirname($path);
+        if (file_exists($path)) {
+            $ok  = is_writable($path);
+            $msg = $ok ? 'config.json exists and is writable.' : 'config.json exists but is NOT writable!';
         } else {
-            $isWritable = is_writable($dir);
-            $message = $isWritable
-                ? 'Directory for config.json is writable.'
-                : 'Directory for config.json is NOT writable!';
+            $ok  = is_writable($dir);
+            $msg = $ok ? 'Directory for config.json is writable.' : 'Directory for config.json is NOT writable!';
         }
-        $results['CONFIG_JSON_PATH'] = [
-            'value'    => $configPath,
-            'is_valid' => $isWritable,
-            'message'  => $message,
-        ];
+        $out['CONFIG_JSON_PATH'] = ['value' => $path, 'is_valid' => $ok, 'message' => $msg];
 
-        return $results;
+        return $out;
     }
 
-    /**
-     * Sanitize a string by removing non-printable characters.
-     *
-     * @param string $input The string to be sanitized.
-     * @return string The sanitized string.
-     */
+    /** Strip non‑printable characters (debug helper). */
     public static function sanitizeString($input): string
     {
-        if (!is_string($input)) {
-            return $input;
-        }
-        return preg_replace('/[[:^print:]]/', '', $input);
+        return is_string($input) ? preg_replace('/[[:^print:]]/', '', $input) : $input;
     }
 
-    /**
-     * Log debug information to a file.
-     *
-     * @param string $class The class name.
-     * @param string $method The method name.
-     * @param array $params The parameters sent in the request.
-     * @param array $headers The headers sent in the request.
-     * @param mixed $output The output of the request.
-     * @param string $callerClass The calling class name.
-     * @param string $callerMethod The calling method name.
-     * @param string $url The URL of the request.
-     */
-    public static function debugLog($class, $method, $params, $headers, $output, $callerClass, $callerMethod, $url)
+    /** Write a verbose request/response debug log when DEBUG = 1. */
+    public static function debugLog($class, $method, $params, $headers, $output, $callerClass, $callerMethod, $url): void
     {
         if (Config::get('DEBUG') != 1) {
             return;
         }
-        $date = date('Y-m-d H:i:s');
+        $date   = date('Y-m-d H:i:s');
         $output = is_array($output) ? array_map([self::class, 'sanitizeString'], $output) : self::sanitizeString($output);
-        $logEntry = sprintf(
+        $log    = sprintf(
             "[%s] %s::%s invoked by %s::%s\nParameters: %s\nHeaders: %s\nOutput: %s\nURL: %s\n\n",
             $date,
             $class,
@@ -223,112 +125,67 @@ class Utils
             var_export($output, true),
             $url
         );
-        file_put_contents(Config::get('JSON_LOG_DIR') . '/debug.log', $logEntry, FILE_APPEND);
+        file_put_contents(Config::get('JSON_LOG_DIR') . '/debug.log', $log, FILE_APPEND);
     }
 
-    /**
-     * Print HTML with links to debug log and raw JSON files if they exist.
-     *
-     * @return void
-     */
-    public static function showDebugAndJsonLinks()
+    /** Show quick links to debug log + raw JSON dumps. */
+    public static function showDebugAndJsonLinks(): void
     {
-        // Show debug link if DEBUG is enabled
         if (Config::get('DEBUG') == 1) {
-            echo '<h1>Debug is ON</h1>';
-            echo '<ul>';
+            echo '<h2>Debug mode is ON</h2><ul>';
             if (file_exists(Config::get('JSON_LOG_DIR') . '/debug.log')) {
                 echo '<li><a href="debug.log" target="_blank">debug.log</a></li>';
             }
             echo '</ul>';
         }
 
-        // List raw JSON files if they exist
-        $jsonFiles = [
-            'devices.json',
-            'family.json',
-            'token.json',
-        ];
-        $foundAny = false;
-        foreach ($jsonFiles as $filename) {
-            if (file_exists(Config::get('JSON_LOG_DIR') . '/' . $filename)) {
-                $foundAny = true;
-                break;
-            }
-        }
-        if ($foundAny) {
-            echo '<h1>JSON Files</h1><ul>';
-            foreach ($jsonFiles as $filename) {
-                if (file_exists(Config::get('JSON_LOG_DIR') . '/' . $filename)) {
-                    echo '<li><a href="' . htmlspecialchars($filename) . '" target="_blank">' . htmlspecialchars($filename) . '</a></li>';
+        $jsonFiles = ['devices.json', 'family.json', 'token.json'];
+        $hasFiles  = array_filter($jsonFiles, fn($f) => file_exists(Config::get('JSON_LOG_DIR') . '/' . $f));
+        if ($hasFiles) {
+            echo '<h2>JSON Files</h2><ul>';
+            foreach ($jsonFiles as $f) {
+                if (file_exists(Config::get('JSON_LOG_DIR') . '/' . $f)) {
+                    echo '<li><a href="' . htmlspecialchars($f) . '" target="_blank">' . htmlspecialchars($f) . '</a></li>';
                 }
             }
-            echo '</ul>';
-            echo '-----------------------------------------------------------';
+            echo '</ul><hr />';
         }
     }
 
-    /**
-     * Try to include Composer's autoloader from common locations.
-     * If not found, show error and exit.
-     */
-    public static function loadComposerAutoload()
-    {
-        $autoloadCandidates = [
-            __DIR__ . '/../vendor/autoload.php',
-            __DIR__ . '/../../../autoload.php',
-            __DIR__ . '/../../autoload.php',
-        ];
-        foreach ($autoloadCandidates as $file) {
-            if (file_exists($file)) {
-                require $file;
-                return true;
-            }
-        }
-        self::displayError('Composer autoloader not found; run <b>composer install</b> or fix autoload.php path.');
-        exit(1);
-    }
+    /* ------------------------------------------------------------------ */
+    /*  OAuth / flow helper                                               */
+    /* ------------------------------------------------------------------ */
 
-
-    /**
-     * Handle the OAuth process:
-     * - If authorization code present, process token and redirect.
-     * - If already authorized, display info and call optional $afterAuthCallback.
-     * - If not authorized, show login link.
-     * @param HttpClient $http
-     * @param Token $token
-     * @param callable|null $afterAuthCallback Receives ($http, $token) after auth
-     * @return void
-     */
-    public static function handleAuthFlow($http, $token, $afterAuthCallback = null)
+    /** Handle full OAuth flow and invoke $afterAuthCallback after login. */
+    public static function handleAuthFlow($http, $token, $afterAuthCallback = null): void
     {
-        // OAuth redirect
-        if (isset($_GET['code']) && isset($_GET['region'])) {
+        // 1. Return from provider ----------------------------------------------
+        if (isset($_GET['code'], $_GET['region'])) {
             try {
                 $tokenData = $token->getToken();
-                self::displayInfo('<h1>Token Data</h1><pre>' . print_r($tokenData, true) . '</pre>');
+                echo '<h2>Token Data</h2><pre>' . print_r($tokenData, true) . '</pre>';
                 $token->redirectToUrl(Config::get('REDIRECT_URL'));
             } catch (\Exception $e) {
-                self::displayError($e->getMessage());
+                echo '<strong>Error:</strong> ' . htmlspecialchars($e->getMessage());
             }
             exit;
         }
 
-        // Already authenticated
+        // 2. Already authorised -------------------------------------------------
         if ($token->checkAndRefreshToken()) {
             $tokenData = $token->getTokenData();
-            self::displayInfo('<h1>You are authenticated!</h1><p>Token expiry: ' .
-                date('Y-m-d H:i:s', $tokenData['atExpiredTime'] / 1000) . '</p>');
+            echo '<h2>You are authenticated!</h2><p>Token expiry: ' .
+                 date('Y-m-d H:i:s', $tokenData['atExpiredTime'] / 1000) . '</p>';
             Config::warnIfConfigExposed();
             self::showDebugAndJsonLinks();
 
             if (is_callable($afterAuthCallback)) {
-                call_user_func($afterAuthCallback, $http, $token);
+                $afterAuthCallback($http, $token);
             }
         } else {
-            // Not authorized, show login link
-            $loginUrl = $http->getLoginUrl();
-            self::displayInfo('<a href="' . htmlspecialchars($loginUrl) . '">Authorize ewelinkApiPhp</a>');
+            // 3. Not authorised yet -------------------------------------------
+            $loginUrl = htmlspecialchars($http->getLoginUrl(), ENT_QUOTES, 'UTF-8');
+            echo '<a href="' . $loginUrl . '">Authorize ewelinkApiPhp</a>';
         }
         exit;
     }
