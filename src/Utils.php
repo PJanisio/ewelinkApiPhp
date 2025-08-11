@@ -57,47 +57,106 @@ class Utils
     {
         $out = [];
 
-        //REDIRECT_URL
+        // REDIRECT_URL
         $url   = Config::get('REDIRECT_URL');
-        $valid = filter_var($url, FILTER_VALIDATE_URL) && in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https']);
+        $valid = filter_var($url, FILTER_VALIDATE_URL) && in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true);
         $out['REDIRECT_URL'] = [
             'value'    => $url,
-            'is_valid' => $valid,
+            'is_valid' => (bool)$valid,
             'message'  => $valid ? 'URL looks syntactically correct.' : 'Invalid URL or scheme.',
         ];
 
-        //EMAIL
+        // EMAIL
         $email = Config::get('EMAIL');
-        $valid = filter_var($email, FILTER_VALIDATE_EMAIL);
+        $emailOk = (bool)filter_var($email, FILTER_VALIDATE_EMAIL);
         $out['EMAIL'] = [
             'value'    => $email,
-            'is_valid' => $valid,
-            'message'  => $valid ? 'E‑mail syntax is valid.' : 'Invalid e‑mail address.',
+            'is_valid' => $emailOk,
+            'message'  => $emailOk ? 'E-mail syntax is valid.' : 'Invalid e-mail address.',
         ];
 
-        //REGION
+        // REGION
         $region = Config::get('REGION');
-        $valid  = in_array($region, ['cn', 'us', 'eu', 'as'], true);
+        $regionOk  = in_array($region, ['cn', 'us', 'eu', 'as'], true);
         $out['REGION'] = [
             'value'    => $region,
-            'is_valid' => $valid,
-            'message'  => $valid ? 'Region code recognised.' : 'Invalid region code.',
+            'is_valid' => $regionOk,
+            'message'  => $regionOk ? 'Region code recognised.' : 'Invalid region code.',
         ];
 
-        //CONFIG_JSON_PATH permissions
-        $path = Constants::CONFIG_JSON_PATH;
-        $dir  = dirname($path);
-        if (file_exists($path)) {
-            $ok  = is_writable($path);
-            $msg = $ok ? 'config.json exists and is writable.' : 'config.json exists but is NOT writable!';
+        // OPTIONAL: ensure credentials are present (non-empty strings)
+        $appid      = Config::get('APPID');
+        $appSecret  = Config::get('APP_SECRET');
+        $appidOk    = is_string($appid) && $appid !== '';
+        $secretOk   = is_string($appSecret) && $appSecret !== '';
+        $out['APPID'] = [
+            'value'    => $appid,
+            'is_valid' => $appidOk,
+            'message'  => $appidOk ? 'APPID set.' : 'APPID is empty.',
+        ];
+        $out['APP_SECRET'] = [
+            'value'    => $appSecret ? substr($appSecret, 0, 4) . '…' : '',
+            'is_valid' => $secretOk,
+            'message'  => $secretOk ? 'APP_SECRET set.' : 'APP_SECRET is empty.',
+        ];
+
+        // JSON_LOG_DIR + config.json permissions
+        $logDirRaw = (string)(Config::get('JSON_LOG_DIR') ?? '');
+        $logDir    = rtrim($logDirRaw, "/\\"); // normalize
+        if ($logDir === '') {
+            $out['JSON_LOG_DIR'] = [
+                'value'    => $logDirRaw,
+                'is_valid' => false,
+                'message'  => 'JSON_LOG_DIR is empty.',
+            ];
+        } elseif (file_exists($logDir) && !is_dir($logDir)) {
+            // Edge case: path exists but is a file
+            $out['JSON_LOG_DIR'] = [
+                'value'    => $logDir,
+                'is_valid' => false,
+                'message'  => 'JSON_LOG_DIR points to a file, not a directory.',
+            ];
+        } elseif (!is_dir($logDir)) {
+            $parent = dirname($logDir) ?: '.';
+            $ok  = is_writable($parent) && !file_exists($logDir); // can create dir here?
+            $msg = $ok
+                ? 'JSON_LOG_DIR does not exist but parent is writable (will be created on first save).'
+                : 'JSON_LOG_DIR does not exist and parent directory is NOT writable!';
+            $out['JSON_LOG_DIR'] = ['value' => $logDir, 'is_valid' => $ok, 'message' => $msg];
         } else {
-            $ok  = is_writable($dir);
-            $msg = $ok ? 'Directory for config.json is writable.' : 'Directory for config.json is NOT writable!';
+            $ok  = is_writable($logDir);
+            $msg = $ok ? 'JSON_LOG_DIR exists and is writable.' : 'JSON_LOG_DIR exists but is NOT writable!';
+            $out['JSON_LOG_DIR'] = ['value' => $logDir, 'is_valid' => $ok, 'message' => $msg];
         }
-        $out['CONFIG_JSON_PATH'] = ['value' => $path, 'is_valid' => $ok, 'message' => $msg];
+
+        // Use a safe default if constant missing in older installs
+        $saveEnabled = \defined(\pjanisio\ewelinkapiphp\Constants::class . '::SAVE_CONFIG_JSON')
+            ? \pjanisio\ewelinkapiphp\Constants::SAVE_CONFIG_JSON
+            : true;
+
+        // config.json checks
+        $cfgFile = ($logDir === '' ? 'config.json' : $logDir . DIRECTORY_SEPARATOR . 'config.json');
+        if ($saveEnabled === true) {
+            if (file_exists($cfgFile)) {
+                $ok2  = is_writable($cfgFile);
+                $msg2 = $ok2 ? 'config.json is writable.' : 'config.json exists but is NOT writable!';
+            } else {
+                // Directory must be writable to create config.json
+                $ok2  = $logDir !== '' && is_dir($logDir) && is_writable($logDir);
+                $msg2 = $ok2 ? 'Directory writable; config.json can be created.' : 'Directory NOT writable; cannot create config.json!';
+            }
+            $out['CONFIG_JSON_FILE'] = ['value' => $cfgFile, 'is_valid' => $ok2, 'message' => $msg2];
+        } else {
+            $out['CONFIG_JSON_FILE'] = [
+                'value'    => $cfgFile,
+                'is_valid' => true,
+                'message'  => 'Saving disabled (SAVE_CONFIG_JSON=false); config.json will not be read or written.',
+            ];
+        }
 
         return $out;
     }
+
 
     /** Strip non‑printable characters (debug helper). */
     public static function sanitizeString($input): string
@@ -175,7 +234,7 @@ class Utils
         if ($token->checkAndRefreshToken()) {
             $tokenData = $token->getTokenData();
             echo '<h2>You are authenticated!</h2><p>Token expiry: ' .
-                 date('Y-m-d H:i:s', $tokenData['atExpiredTime'] / 1000) . '</p>';
+                date('Y-m-d H:i:s', $tokenData['atExpiredTime'] / 1000) . '</p>';
             Config::warnIfConfigExposed();
 
             if (is_callable($afterAuthCallback)) {

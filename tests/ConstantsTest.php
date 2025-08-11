@@ -13,7 +13,7 @@ final class TestConstants
     public const DEBUG        = 0;
     public const JSON_LOG_DIR = __DIR__;
     public const ERROR_CODES  = [];
-    public const CONFIG_JSON_PATH = __DIR__ . '/test-config.json';
+    public const JSON_LOG_DIR = __DIR__ . '/test-config.json';
 }
 
 require dirname(__DIR__) . '/vendor/autoload.php';
