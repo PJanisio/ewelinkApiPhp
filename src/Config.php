@@ -33,20 +33,23 @@ class Config
     public static function load(): array
     {
         if (self::$config === null) {
-            $file = Constants::CONFIG_JSON_PATH;
+            $file = self::configFilePath();
             $jsonConfig = [];
-            if (file_exists($file)) {
+
+            // One switch for simplicity: when true we also read from config.json
+            if (Constants::SAVE_CONFIG_JSON === true && file_exists($file)) {
                 $json = file_get_contents($file);
                 if ($json === false) {
                     trigger_error('Could not read config file: ' . $file, E_USER_WARNING);
                 }
                 $jsonConfig = is_string($json) ? json_decode($json, true) : [];
             }
-            // merge order: overrides > config.json > constants
+
+            // merge order: overrides > json (optional) > constants
             self::$config = array_merge(
                 self::fallbackConfig(),
                 is_array($jsonConfig) ? $jsonConfig : [],
-                self::$overrides // highest priority!
+                self::$overrides
             );
         }
         return self::$config;
@@ -70,14 +73,18 @@ class Config
      * @param array $data Configuration data to save.
      * @return void
      */
-    public static function save(array $data)
+    public static function save(array $data): void
     {
-        $file = Constants::CONFIG_JSON_PATH;
+        // Same switch controls saving
+        if (Constants::SAVE_CONFIG_JSON !== true) {
+            return; // do nothing when disabled
+        }
+
+        $file = self::configFilePath();
         $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         $result = file_put_contents($file, $json);
         if ($result === false) {
             trigger_error('Could not write to config file: ' . $file, E_USER_WARNING);
-            return;
         }
     }
 
@@ -109,23 +116,49 @@ class Config
 
     public static function warnIfConfigExposed()
     {
-        // Try to resolve to the correct config.json path
-        $configPath = self::get('CONFIG_JSON_PATH') ?? Constants::CONFIG_JSON_PATH;
+        $configPath = self::configFilePath();
 
         if (!file_exists($configPath)) {
-            return; // No config.json to expose
+            return; // No config.json to talk about
         }
 
-        // Try to resolve to real path
-        $realConfig = realpath($configPath);
-        $webRoot = isset($_SERVER['DOCUMENT_ROOT']) ? realpath($_SERVER['DOCUMENT_ROOT']) : null;
+        // Resolve paths (best-effort)
+        $realConfig = realpath($configPath) ?: $configPath;
+        $webRoot    = isset($_SERVER['DOCUMENT_ROOT']) ? (realpath($_SERVER['DOCUMENT_ROOT']) ?: null) : null;
 
-        if ($realConfig && $webRoot && strpos($realConfig, $webRoot) === 0) {
-            echo '<div style="color: red; font-weight: bold; margin: 16px 0;">';
-            echo '⚠️ <b>Security Warning:</b> <code>config.json</code> is stored inside your web server\'s public directory: <code>' . htmlspecialchars($realConfig) . '</code><br>';
+        // If saving is disabled but the file exists, inform the user
+        if (Constants::SAVE_CONFIG_JSON !== true) {
+            echo '<div style="color: red; margin: 16px 0;">';
+            echo '⚠️ <b>Security Warning:</b> <code>SAVE_CONFIG_JSON=false</code>, but <code>config.json</code> still exists at ';
+            echo '<code>' . htmlspecialchars($realConfig) . '</code>.<br>';
+            echo 'The library will ignore it, but the file may still be accessible on disk (or via the web server).<br>';
+            echo 'Please delete <code>config.json</code>.';
+            echo '</div>';
+            // Continue with the exposure warning below (in case it sits in webroot)
+        }
+
+        // Existing security check: warn if the file sits under the public web root
+        if ($webRoot && strpos($realConfig, $webRoot) === 0 && Constants::SAVE_CONFIG_JSON === true) {
+            echo '<div style="color: red; margin: 16px 0;">';
+            echo '⚠️ <b>Security Warning:</b> <code>config.json</code> is stored inside your web server\'s public directory: ';
+            echo '<code>' . htmlspecialchars($realConfig) . '</code><br>';
             echo 'Anyone could access it from the internet if not protected!<br>';
-            echo 'Move it outside the web root, update <code>CONFIG_JSON_PATH</code> in <code>Constants.php</code>, or restrict access with permissions or web server rules.<br>';
+            echo 'Move it outside the web root by changing <code>JSON_LOG_DIR</code> in <code>Constants.php</code>, ';
+            echo 'or restrict access with permissions or web server rules.';
             echo '</div>';
         }
+    }
+
+    /**
+     * Get the path to the config.json file.
+     * Uses overrides first, then falls back to Constants.
+     *
+     * @return string The path to config.json.
+     */
+    private static function configFilePath(): string
+    {
+        // Use overrides first (per-site), then constants
+        $dir = self::$overrides['JSON_LOG_DIR'] ?? Constants::JSON_LOG_DIR;
+        return rtrim($dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'config.json';
     }
 }

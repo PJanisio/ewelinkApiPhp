@@ -38,11 +38,11 @@ class Constants
     // Enable or disable debug logging
     public const DEBUG = 0; // Change to 1 to enable debug logging
 
-    // Config.json storage path - change it to wherever you want config.json should be saved after first sucessfull authorization
-    public const CONFIG_JSON_PATH = __DIR__ . '/../config.json';
-
     // Path for JSON logs directory
     public const JSON_LOG_DIR = __DIR__ . '/..';
+
+    // Enable or disable saving the config.json file
+    public const SAVE_CONFIG_JSON = true;
 
     // Error codes
     public const ERROR_CODES = [
