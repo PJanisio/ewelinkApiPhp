@@ -116,22 +116,35 @@ class Config
 
     public static function warnIfConfigExposed()
     {
-        // Try to resolve to the correct config.json path
         $configPath = self::configFilePath();
 
         if (!file_exists($configPath)) {
-            return; // No config.json to expose
+            return; // No config.json to talk about
         }
 
-        // Try to resolve to real path
-        $realConfig = realpath($configPath);
-        $webRoot = isset($_SERVER['DOCUMENT_ROOT']) ? realpath($_SERVER['DOCUMENT_ROOT']) : null;
+        // Resolve paths (best-effort)
+        $realConfig = realpath($configPath) ?: $configPath;
+        $webRoot    = isset($_SERVER['DOCUMENT_ROOT']) ? (realpath($_SERVER['DOCUMENT_ROOT']) ?: null) : null;
 
-        if ($realConfig && $webRoot && strpos($realConfig, $webRoot) === 0) {
-            echo '<div style="color: red; font-weight: bold; margin: 16px 0;">';
-            echo '⚠️ <b>Security Warning:</b> <code>config.json</code> is stored inside your web server\'s public directory: <code>' . htmlspecialchars($realConfig) . '</code><br>';
+        // If saving is disabled but the file exists, inform the user
+        if (Constants::SAVE_CONFIG_JSON !== true) {
+            echo '<div style="color: red; margin: 16px 0;">';
+            echo '⚠️ <b>Security Warning:</b> <code>SAVE_CONFIG_JSON=false</code>, but <code>config.json</code> still exists at ';
+            echo '<code>' . htmlspecialchars($realConfig) . '</code>.<br>';
+            echo 'The library will ignore it, but the file may still be accessible on disk (or via the web server).<br>';
+            echo 'Please delete <code>config.json</code>.';
+            echo '</div>';
+            // Continue with the exposure warning below (in case it sits in webroot)
+        }
+
+        // Existing security check: warn if the file sits under the public web root
+        if ($webRoot && strpos($realConfig, $webRoot) === 0 && Constants::SAVE_CONFIG_JSON === true) {
+            echo '<div style="color: red; margin: 16px 0;">';
+            echo '⚠️ <b>Security Warning:</b> <code>config.json</code> is stored inside your web server\'s public directory: ';
+            echo '<code>' . htmlspecialchars($realConfig) . '</code><br>';
             echo 'Anyone could access it from the internet if not protected!<br>';
-            echo 'Move it outside the web root, update <code>JSON_LOG_DIR</code> in <code>Constants.php</code>, or restrict access with permissions or web server rules.<br>';
+            echo 'Move it outside the web root by changing <code>JSON_LOG_DIR</code> in <code>Constants.php</code>, ';
+            echo 'or restrict access with permissions or web server rules.';
             echo '</div>';
         }
     }

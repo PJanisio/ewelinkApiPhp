@@ -39,6 +39,8 @@ $overrides = [
     'EMAIL'        => 'you@domain.com',
     'PASSWORD'     => 'your_password',
     'REGION'       => 'eu',
+    'JSON_LOG_DIR' => __DIR__ . '/json_logs', // must be writable
+    'DEBUG'        => 0,
 ];
 $http = new HttpClient($overrides);
 */
