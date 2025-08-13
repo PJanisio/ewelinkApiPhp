@@ -43,7 +43,7 @@ class Devices
      * Load devices data from a local JSON file.
      * Obosolete in future
      */
-    private function loadDevicesData()
+    private function loadDevicesData(): void
     {
         $devicesFile = Config::get('JSON_LOG_DIR') . '/devices.json';
         if (file_exists($devicesFile)) {
@@ -410,7 +410,7 @@ class Devices
      * @param string $identifier The device name or ID.
      * @return bool True if the device is online, false otherwise.
      */
-    public function isOnline($identifier)
+    public function isOnline($identifier): bool
     {
         $deviceId = $this->getDeviceIdByIdentifier($identifier);
         if (!$deviceId) {
@@ -460,7 +460,7 @@ class Devices
      * @return WebSocketClient The initialized WebSocket client.
      * @throws Exception If the device is not found or handshake fails.
      */
-    public function initializeWebSocketConnection($identifier)
+    public function initializeWebSocketConnection($identifier): WebSocketClient
     {
         $deviceId = $this->getDeviceIdByIdentifier($identifier);
         if (!$deviceId) {
@@ -570,7 +570,7 @@ class Devices
      * @return bool True if the operation was successful, false otherwise.
      * @throws Exception If there is an error during the process.
      */
-    public function forceWakeUp($identifier)
+    public function forceWakeUp($identifier): bool
     {
         $deviceId = $this->getDeviceIdByIdentifier($identifier);
         if (!$deviceId) {

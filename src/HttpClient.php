@@ -69,7 +69,7 @@ class HttpClient
      * @param string $state The state parameter for the OAuth flow.
      * @return string The constructed login URL.
      */
-    public function createLoginUrl($state)
+    public function createLoginUrl($state): string
     {
         $seq = time() * 1000; // current timestamp in milliseconds
         $this->authorization = $this->utils->sign(Config::get('APPID') . '_' . $seq, Config::get('APP_SECRET'));
@@ -93,7 +93,7 @@ class HttpClient
      *
      * @return string The login URL.
      */
-    public function getLoginUrl()
+    public function getLoginUrl(): string
     {
         return $this->loginUrl;
     }
@@ -124,7 +124,7 @@ class HttpClient
      * @return string The gateway URL.
      * @throws Exception If the region is invalid.
      */
-    public function getGatewayUrl()
+    public function getGatewayUrl(): string
     {
         switch ($this->region) {
             case 'cn':
@@ -263,7 +263,7 @@ class HttpClient
      *
      * @return Token The Token instance.
      */
-    public function getToken()
+    public function getToken(): Token
     {
         return $this->token;
     }
@@ -273,7 +273,7 @@ class HttpClient
      *
      * @return Devices The Devices instance.
      */
-    public function getDevices()
+    public function getDevices(): Devices
     {
         if ($this->devices === null) {
             // Ensure we have a valid token first
@@ -302,7 +302,7 @@ class HttpClient
      *
      * @return Home The Home instance.
      */
-    public function getHome()
+    public function getHome(): Home
     {
         if ($this->home === null) {
             $this->home = new Home($this);
@@ -313,9 +313,9 @@ class HttpClient
     /**
      * Get the current family ID.
      *
-     * @return string|null The current family ID.
+     * @return string The current family ID.
      */
-    public function getCurrentFamilyId()
+    public function getCurrentFamilyId(): string
     {
         return $this->home->getCurrentFamilyId();
     }

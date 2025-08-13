@@ -32,7 +32,7 @@ class Home
      * @return array The family data.
      * @throws Exception If the request fails.
      */
-    public function fetchFamilyData($lang = 'en')
+    public function fetchFamilyData($lang = 'en'): array
     {
         $params = ['lang' => $lang];
         $response = $this->httpClient->getRequest('/v2/family', $params);
@@ -74,7 +74,7 @@ class Home
     public function getHomes(): array
     {
         return array_map(
-            static function ($home) {
+            static function ($home): array {
                 return [
                     'id'   => $home['id'],
                     'name' => $home['name'],

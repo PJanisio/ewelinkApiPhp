@@ -27,7 +27,7 @@ class Token
     /**
      * Load token data from token.json file.
      */
-    private function loadTokenData()
+    private function loadTokenData(): void
     {
         $tokenFile = Config::get('JSON_LOG_DIR') . '/token.json';
         if (file_exists($tokenFile)) {
@@ -40,7 +40,7 @@ class Token
      *
      * @return string The login URL.
      */
-    public function getLoginUrl()
+    public function getLoginUrl(): string
     {
         return $this->httpClient->getLoginUrl();
     }
@@ -151,7 +151,7 @@ class Token
     /**
      * Clear the content of token.json file.
      */
-    public function clearToken()
+    public function clearToken(): void
     {
         $tokenFile = Config::get('JSON_LOG_DIR') . '/token.json';
         if (file_exists($tokenFile)) {
@@ -166,7 +166,7 @@ class Token
      * @param string $url The URL to redirect to.
      * @param int $delay The delay in seconds before redirecting.
      */
-    public function redirectToUrl($url, $delay = 1)
+    public function redirectToUrl($url, $delay = 1): void
     {
         echo '<p>You will be redirected in 1 second...</p>';
         echo '<meta http-equiv="refresh" content="' . $delay . ';url=' . htmlspecialchars($url) . '">';
@@ -176,7 +176,7 @@ class Token
      * Write `token.json` only when the contents have genuinely changed.
      * Saves I/O and prolongs SD-card life on Pi deployments.
      */
-    private function writeTokenFileIfChanged()
+    private function writeTokenFileIfChanged(): void
     {
         $file = Config::get('JSON_LOG_DIR') . '/token.json';
         $newJson = json_encode($this->tokenData, JSON_UNESCAPED_SLASHES);
