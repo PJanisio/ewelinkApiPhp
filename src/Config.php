@@ -19,7 +19,7 @@ class Config
     /**
      * Allow passing in an override array.
      */
-    public static function setOverrides(array $overrides)
+    public static function setOverrides(array $overrides): void
     {
         self::$overrides = $overrides;
         // reset config to re-merge
@@ -114,7 +114,7 @@ class Config
      * @return void
      */
 
-    public static function warnIfConfigExposed()
+    public static function warnIfConfigExposed(): void
     {
         $configPath = self::configFilePath();
 
