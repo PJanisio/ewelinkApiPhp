@@ -32,7 +32,7 @@ class Home
      * @return array The family data.
      * @throws Exception If the request fails.
      */
-    public function fetchFamilyData($lang = 'en'): array
+    public function fetchFamilyData(string $lang = 'en'): array
     {
         $params = ['lang' => $lang];
         $response = $this->httpClient->getRequest('/v2/family', $params);

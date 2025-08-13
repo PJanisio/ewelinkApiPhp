@@ -313,9 +313,9 @@ class HttpClient
     /**
      * Get the current family ID.
      *
-     * @return string The current family ID.
+     * @return string or null. The current family ID.
      */
-    public function getCurrentFamilyId(): string
+    public function getCurrentFamilyId(): ?string
     {
         return $this->home->getCurrentFamilyId();
     }

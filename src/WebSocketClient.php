@@ -178,7 +178,7 @@ class WebSocketClient
      * @param array|string $params The parameters to query.
      * @return array The query data.
      */
-    public function createQueryData($device, $params): array
+    public function createQueryData(array $device, $params): array
     {
         return [
             'action' => 'query',
@@ -198,7 +198,7 @@ class WebSocketClient
      * @param string $selfApikey The receiver's apikey.
      * @return array The update data.
      */
-    public function createUpdateData($device, $params, $selfApikey): array
+    public function createUpdateData(array $device, array $params, string $selfApikey): array
     {
         return [
             'action' => 'update',
@@ -343,7 +343,7 @@ class WebSocketClient
      * @param string $data The data to decode.
      * @return string The decoded data.
      */
-    private function hybi10Decode($data): string
+    private function hybi10Decode(string $data): string
     {
         $bytes = $data;
         $dataLength = '';

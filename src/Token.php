@@ -166,7 +166,7 @@ class Token
      * @param string $url The URL to redirect to.
      * @param int $delay The delay in seconds before redirecting.
      */
-    public function redirectToUrl($url, $delay = 1): void
+    public function redirectToUrl(string $url, int $delay = 1): void
     {
         echo '<p>You will be redirected in 1 second...</p>';
         echo '<meta http-equiv="refresh" content="' . $delay . ';url=' . htmlspecialchars($url) . '">';
