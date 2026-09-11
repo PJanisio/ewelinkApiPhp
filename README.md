@@ -56,6 +56,21 @@ Need an out‑of‑the‑box dashboard? Check the companion project **[ewelinkap
 * **Getting started / API reference →** see the [Wiki Pages](https://github.com/PJanisio/ewelinkApiPhp/wiki)
 * **Developer notes** (architecture, contribution guide) → [Developers Wiki](https://github.com/PJanisio/ewelinkApiPhp/wiki/Developers)
 
+### Realtime listener
+
+The WebSocket client can now stay connected and stream updates instead of opening a socket for a single request. Once the connection is established, you can subscribe to a device and receive updates through a callback:
+
+```php
+$devices = $httpClient->getDevices();
+$devices->listenForUpdates('Kitchen light', function (array $message) {
+    if (isset($message['params'])) {
+        var_dump($message['params']);
+    }
+}, ['switch', 'online'], 30);
+```
+
+This keeps the socket alive for a short listening window and is suitable for real-time dashboards or event-driven monitoring.
+
 ---
 
 ## ⚙️ Requirements
