@@ -6,6 +6,7 @@ namespace pjanisio\ewelinkapiphp\Tests;
 
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
+use pjanisio\ewelinkapiphp\Config;
 use pjanisio\ewelinkapiphp\HttpClient;
 use pjanisio\ewelinkapiphp\WebSocketClient;
 
@@ -21,7 +22,6 @@ final class DummyHttpClient extends HttpClient
     public function __construct(array $dispatchReply)
     {
         $this->reply = $dispatchReply;
-        parent::__construct();
     }
 
     /** @inheritDoc */
@@ -38,11 +38,12 @@ final class WebSocketResolveTest extends TestCase
      */
     public function testResolverBuildsWsUrl(string $domain, int $port): void
     {
+        Config::setOverrides(['REGION' => 'eu']);
+
         $dummy = new DummyHttpClient([
             'domain' => $domain,
             'port' => $port,
         ]);
-
 
         $ws = new WebSocketClient($dummy);
 
@@ -51,9 +52,11 @@ final class WebSocketResolveTest extends TestCase
         $urlProp = new ReflectionProperty($ws, 'url');
         $hostProp = new ReflectionProperty($ws, 'host');
         $portProp = new ReflectionProperty($ws, 'port');
-        $urlProp->setAccessible(true);
-        $hostProp->setAccessible(true);
-        $portProp->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $urlProp->setAccessible(true);
+            $hostProp->setAccessible(true);
+            $portProp->setAccessible(true);
+        }
 
 
         $expectedHost = gethostbyname($domain); // resolves to IP

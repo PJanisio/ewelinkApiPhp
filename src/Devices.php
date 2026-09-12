@@ -524,6 +524,47 @@ class Devices
     }
 
     /**
+     * Listen for a device's live updates over the same WebSocket connection.
+     *
+     * @param string $identifier The device name or ID.
+     * @param callable $callback Callback receiving each decoded message.
+     * @param array|string $params Query parameters to subscribe for.
+     * @param int $seconds How long to stay attached while listening.
+     * @return array<int, mixed> Messages received while listening.
+     */
+    public function listenForUpdates(string $identifier, callable $callback, $params = ['switch', 'online'], int $seconds = 30): array
+    {
+        $deviceId = $this->getDeviceIdByIdentifier($identifier);
+        if (!$deviceId) {
+            throw new Exception("Device not found.");
+        }
+
+        $device = $this->getDeviceById($deviceId);
+        if (!$device) {
+            $errorCode = 'DEVICE_NOT_FOUND';
+            $errorMsg = Constants::ERROR_CODES[$errorCode] ?? 'Unknown error';
+            throw new Exception($errorMsg);
+        }
+
+        if (!isset($this->wsClient)) {
+            $this->wsClient = $this->initializeWebSocketConnection($identifier);
+        }
+
+        $queryData = $this->wsClient->createQueryData($device, $params);
+        $this->wsClient->send(json_encode($queryData));
+
+        return $this->wsClient->listen($callback, $seconds);
+    }
+
+    /**
+     * Backward-friendly alias for the realtime listener.
+     */
+    public function listenForDeviceUpdates(string $identifier, callable $callback, $params = ['switch', 'online'], int $seconds = 30): array
+    {
+        return $this->listenForUpdates($identifier, $callback, $params, $seconds);
+    }
+
+    /**
      * Set data of a device using WebSocket.
      *
      * @param string $identifier The device name or ID.

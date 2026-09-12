@@ -246,6 +246,50 @@ class WebSocketClient
     }
 
     /**
+     * Listen for incoming websocket events until the timeout expires.
+     *
+     * @param callable $listener Receives decoded JSON payloads as they arrive.
+     * @param int $seconds How long to keep listening before returning.
+     * @return array<int, mixed> Messages received during the listening window.
+     */
+    public function listen(callable $listener, int $seconds = 30): array
+    {
+        if (!$this->socket) {
+            throw new Exception(Constants::ERROR_CODES['NO_VALID_WS_CONNECTION'] ?? 'Unknown error');
+        }
+
+        $messages = [];
+        $deadline = microtime(true) + max(0, $seconds);
+
+        while (microtime(true) < $deadline) {
+            $this->maybePing();
+            $read = [$this->socket];
+            $write = null;
+            $except = null;
+
+            $available = @stream_select($read, $write, $except, 1, 0);
+            if ($available === false || $available === 0) {
+                continue;
+            }
+
+            $payload = $this->receive();
+            if ($payload === '') {
+                continue;
+            }
+
+            $decoded = json_decode($payload, true);
+            if (json_last_error() !== JSON_ERROR_NONE && $payload !== 'null') {
+                $decoded = $payload;
+            }
+
+            $messages[] = $decoded;
+            $listener($decoded);
+        }
+
+        return $messages;
+    }
+
+    /**
      * Close the WebSocket connection and stop the ping process.
      */
     public function close(): void
