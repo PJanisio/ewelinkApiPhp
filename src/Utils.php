@@ -230,7 +230,7 @@ class Utils
         if ($token->checkAndRefreshToken()) {
             $tokenData = $token->getTokenData();
             echo '<h2>You are authenticated!</h2><p>Token expiry: ' .
-                date('Y-m-d H:i:s', $tokenData['atExpiredTime'] / 1000) . '</p>';
+                date('Y-m-d H:i:s', intdiv((int) $tokenData['atExpiredTime'], 1000)) . '</p>';
             Config::warnIfConfigExposed();
             self::showDebugAndJsonLinks();
 
