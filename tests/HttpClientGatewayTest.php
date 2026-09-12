@@ -34,7 +34,6 @@ final class HttpClientGatewayTest extends TestCase
         $ok   = curl_exec($ch);                                   // bool|false
         $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);  // 0 if none
         $err  = curl_error($ch);
-        curl_close($ch);
 
         /* ── 1. Could not even open the socket → skip, not fail ───────────── */
         if ($ok === false) {

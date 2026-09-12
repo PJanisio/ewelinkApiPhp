@@ -52,9 +52,11 @@ final class WebSocketResolveTest extends TestCase
         $urlProp = new ReflectionProperty($ws, 'url');
         $hostProp = new ReflectionProperty($ws, 'host');
         $portProp = new ReflectionProperty($ws, 'port');
-        $urlProp->setAccessible(true);
-        $hostProp->setAccessible(true);
-        $portProp->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $urlProp->setAccessible(true);
+            $hostProp->setAccessible(true);
+            $portProp->setAccessible(true);
+        }
 
 
         $expectedHost = gethostbyname($domain); // resolves to IP
